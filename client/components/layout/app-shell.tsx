@@ -12,12 +12,12 @@ export function AppShell({
   className?: string;
 }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)]">
       <div className="mx-auto flex min-h-screen w-full max-w-[1400px]">
-        <div className="hidden w-64 border-r border-white/10 lg:block">{sidebar}</div>
+        <div className="hidden w-64 border-r border-[color:var(--border)] lg:block">{sidebar}</div>
         <div className="flex-1">
           {header && (
-            <header className="border-b border-white/10 bg-slate-950/80 px-6 py-4">
+            <header className="border-b border-[color:var(--border)] bg-[color:var(--surface-soft)] px-6 py-4">
               {header}
             </header>
           )}

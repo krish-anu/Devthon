@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/auth/auth-provider';
 import { toast } from '@/components/ui/use-toast';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const schema = z.object({
   email: z.string().email(),
@@ -41,10 +42,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-6 py-12">
+      <ThemeToggle className="fixed right-6 top-6" />
       <Card className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">Turn Your Waste Into Wealth</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Turn Your Waste Into Wealth</p>
           <h1 className="text-2xl font-semibold">Welcome Back</h1>
         </div>
         <Button
@@ -56,7 +58,7 @@ export default function LoginPage() {
         >
           Continue with Google
         </Button>
-        <div className="text-xs text-white/40">or continue with email</div>
+        <div className="text-xs text-[color:var(--muted)]">or continue with email</div>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2">
             <Label>Email</Label>
@@ -68,9 +70,9 @@ export default function LoginPage() {
             <Input type="password" placeholder="????????" {...register('password')} />
             {errors.password && <p className="text-xs text-rose-400">{errors.password.message}</p>}
           </div>
-          <div className="flex items-center justify-between text-xs text-white/60">
-            <button type="button" className="hover:text-white">Forgot password?</button>
-            <Link href="/signup" className="text-emerald-200">Create account</Link>
+          <div className="flex items-center justify-between text-xs text-[color:var(--muted)]">
+            <button type="button" className="hover:text-[color:var(--foreground)]">Forgot password?</button>
+            <Link href="/signup" className="text-[color:var(--brand)]">Create account</Link>
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in...' : 'Login'}

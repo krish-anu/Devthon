@@ -53,8 +53,8 @@ export default function NotificationsPage() {
               <h3 className="text-lg font-semibold">{item.title}</h3>
               <Badge variant={levelVariant[item.level]}>{item.level}</Badge>
             </div>
-            <p className="text-sm text-white/70">{item.message}</p>
-            <p className="text-xs text-white/50">
+            <p className="text-sm text-[color:var(--muted)]">{item.message}</p>
+            <p className="text-xs text-[color:var(--muted)]">
               {new Date(item.createdAt).toLocaleString()}
             </p>
           </Card>
@@ -64,3 +64,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+

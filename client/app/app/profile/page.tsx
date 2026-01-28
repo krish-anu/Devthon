@@ -78,8 +78,8 @@ export default function ProfilePage() {
         </div>
         <div>
           <h3 className="text-xl font-semibold">{user?.fullName ?? 'User'}</h3>
-          <p className="text-sm text-white/70">{user?.email}</p>
-          <p className="text-xs text-white/50">Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '--'}</p>
+          <p className="text-sm text-[color:var(--muted)]">{user?.email}</p>
+          <p className="text-xs text-[color:var(--muted)]">Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '--'}</p>
         </div>
       </Card>
 
@@ -129,22 +129,23 @@ export default function ProfilePage() {
 
         <TabsContent value="security">
           <Card>
-            <p className="text-sm text-white/70">Security settings coming soon.</p>
+            <p className="text-sm text-[color:var(--muted)]">Security settings coming soon.</p>
           </Card>
         </TabsContent>
 
         <TabsContent value="notifications">
           <Card>
-            <p className="text-sm text-white/70">Notification preferences coming soon.</p>
+            <p className="text-sm text-[color:var(--muted)]">Notification preferences coming soon.</p>
           </Card>
         </TabsContent>
 
         <TabsContent value="payment">
           <Card>
-            <p className="text-sm text-white/70">Manage your payout methods soon.</p>
+            <p className="text-sm text-[color:var(--muted)]">Manage your payout methods soon.</p>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+

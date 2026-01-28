@@ -4,16 +4,20 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:pointer-events-none disabled:opacity-60',
+  'inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--background)] disabled:pointer-events-none disabled:opacity-60',
   {
     variants: {
       variant: {
         default: 'bg-emerald-500 text-slate-950 hover:bg-emerald-400',
-        secondary: 'bg-white/10 text-white hover:bg-white/20',
-        outline: 'border border-white/20 text-white hover:bg-white/10',
-        ghost: 'text-white hover:bg-white/10',
+        secondary:
+          'bg-[color:var(--surface-strong)] text-[color:var(--foreground)] hover:bg-[color:var(--surface)]',
+        outline:
+          'border border-[color:var(--border)] text-[color:var(--foreground)] hover:bg-[color:var(--surface)]',
+        ghost:
+          'text-[color:var(--foreground)] hover:bg-[color:var(--surface)]',
         danger: 'bg-rose-500 text-white hover:bg-rose-400',
-        muted: 'bg-slate-900 text-white/70 hover:text-white',
+        muted:
+          'bg-[color:var(--surface-strong)] text-[color:var(--muted)] hover:text-[color:var(--foreground)]',
       },
       size: {
         sm: 'h-9 px-4',

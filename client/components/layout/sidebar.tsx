@@ -22,9 +22,9 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-full flex-col gap-6 bg-slate-950/80 p-6 text-white">
+    <aside className="flex h-full w-full flex-col gap-6 bg-[color:var(--surface-soft)] p-6 text-[color:var(--foreground)]">
       <div className="space-y-1">
-        <span className="text-xs uppercase tracking-[0.3em] text-emerald-300/70">{title}</span>
+        <span className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)] opacity-70">{title}</span>
         <div className="text-lg font-semibold">Trash2Cash</div>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
@@ -35,8 +35,8 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-xl px-4 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white',
-                active && 'bg-emerald-500/20 text-white',
+                'flex items-center gap-3 rounded-xl px-4 py-2 text-sm text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--foreground)]',
+                active && 'bg-emerald-500/20 text-[color:var(--foreground)]',
               )}
             >
               {item.icon}

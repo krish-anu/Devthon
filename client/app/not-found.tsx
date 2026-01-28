@@ -4,15 +4,15 @@ import { Card } from '@/components/ui/card';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12">
-      <Link href="/" className="absolute right-6 top-6 text-sm text-emerald-200">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-6 py-12">
+      <Link href="/" className="absolute right-6 top-6 text-sm text-[color:var(--brand)]">
         Go Home
       </Link>
       <Card className="w-full max-w-md space-y-6 text-center">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">Page Not Found</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Page Not Found</p>
           <h1 className="text-3xl font-semibold">We can't find that page.</h1>
-          <p className="mt-2 text-sm text-white/70">
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
             The page you are looking for might have moved or never existed.
           </p>
         </div>

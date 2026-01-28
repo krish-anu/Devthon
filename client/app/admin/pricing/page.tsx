@@ -49,10 +49,10 @@ export default function AdminPricingPage() {
     <div className="space-y-6">
       <Card className="grid gap-4 md:grid-cols-2">
         {items.map((item) => (
-          <div key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div key={item.id} className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">{item.wasteCategory.name}</h3>
-              <div className="flex items-center gap-2 text-xs text-white/60">
+              <div className="flex items-center gap-2 text-xs text-[color:var(--muted)]">
                 <Checkbox
                   checked={item.isActive}
                   onCheckedChange={(checked) => updateItem(item.id, { isActive: Boolean(checked) })}
@@ -62,7 +62,7 @@ export default function AdminPricingPage() {
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div>
-                <label className="text-xs text-white/60">Min Price (LKR/kg)</label>
+                <label className="text-xs text-[color:var(--muted)]">Min Price (LKR/kg)</label>
                 <Input
                   type="number"
                   value={item.minPriceLkrPerKg}
@@ -70,7 +70,7 @@ export default function AdminPricingPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-white/60">Max Price (LKR/kg)</label>
+                <label className="text-xs text-[color:var(--muted)]">Max Price (LKR/kg)</label>
                 <Input
                   type="number"
                   value={item.maxPriceLkrPerKg}
@@ -85,3 +85,4 @@ export default function AdminPricingPage() {
     </div>
   );
 }
+

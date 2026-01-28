@@ -23,12 +23,12 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitive.Viewport.displayName;
 
 const toastVariants = {
-  default: 'border-white/10 bg-slate-950 text-white',
+  default: 'border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--foreground)]',
   success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
   error: 'border-rose-500/30 bg-rose-500/10 text-rose-100',
   warning: 'border-amber-400/30 bg-amber-400/10 text-amber-100',
   info: 'border-sky-400/30 bg-sky-400/10 text-sky-100',
-  loading: 'border-white/20 bg-white/5 text-white/80',
+  loading: 'border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)]',
 };
 
 const Toast = React.forwardRef<
@@ -67,7 +67,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-white/70', className)}
+    className={cn('text-sm text-[color:var(--muted)]', className)}
     {...props}
   />
 ));
@@ -80,7 +80,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitive.Action
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 hover:bg-white/10',
+      'inline-flex items-center justify-center rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--foreground)] hover:bg-[color:var(--surface)]',
       className,
     )}
     {...props}
@@ -94,7 +94,7 @@ const ToastClose = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Close
     ref={ref}
-    className={cn('text-white/50 transition hover:text-white', className)}
+    className={cn('text-[color:var(--muted)] transition hover:text-[color:var(--foreground)]', className)}
     toast-close=""
     {...props}
   >

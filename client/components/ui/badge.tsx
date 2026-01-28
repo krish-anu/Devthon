@@ -11,7 +11,7 @@ const badgeVariants = cva(
         warning: 'bg-amber-400/20 text-amber-200',
         danger: 'bg-rose-500/20 text-rose-200',
         info: 'bg-sky-500/20 text-sky-200',
-        outline: 'border border-white/15 text-white/70',
+        outline: 'border border-[color:var(--border)] text-[color:var(--muted)]',
       },
     },
     defaultVariants: {

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   --background: #05070f;
   --foreground: #f8fafc;
   --card: #0b1220;
@@ -8,6 +9,45 @@
   --brand: #4ade80;
   --brand-strong: #22c55e;
   --accent: #38bdf8;
+  --border: rgba(255, 255, 255, 0.12);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-strong: rgba(255, 255, 255, 0.08);
+  --surface-soft: rgba(255, 255, 255, 0.02);
+  --ring: rgba(74, 222, 128, 0.65);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --background: #e6f7e9;
+  --foreground: #0f172a;
+  --card: #f6fff8;
+  --muted: #475569;
+  --brand: #16a34a;
+  --brand-strong: #15803d;
+  --accent: #0ea5e9;
+  --border: rgba(15, 23, 42, 0.12);
+  --surface: rgba(15, 23, 42, 0.04);
+  --surface-strong: rgba(15, 23, 42, 0.08);
+  --surface-soft: rgba(15, 23, 42, 0.02);
+  --ring: rgba(22, 163, 74, 0.35);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --background: #e6f7e9;
+    --foreground: #0f172a;
+    --card: #f6fff8;
+    --muted: #475569;
+    --brand: #16a34a;
+    --brand-strong: #15803d;
+    --accent: #0ea5e9;
+    --border: rgba(15, 23, 42, 0.12);
+    --surface: rgba(15, 23, 42, 0.04);
+    --surface-strong: rgba(15, 23, 42, 0.08);
+    --surface-soft: rgba(15, 23, 42, 0.02);
+    --ring: rgba(22, 163, 74, 0.35);
+  }
 }
 
 @theme inline {
@@ -45,4 +85,18 @@ h5 {
   background-image: radial-gradient(circle at 20% 20%, rgba(74, 222, 128, 0.15), transparent 40%),
     radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.18), transparent 45%),
     radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.06), transparent 40%);
+}
+
+:root[data-theme='light'] .section-grid {
+  background-image: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.2), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.12), transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.16), transparent 45%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .section-grid {
+    background-image: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.2), transparent 45%),
+      radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.12), transparent 45%),
+      radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.16), transparent 45%);
+  }
 }

@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -24,13 +25,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         header={
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">User Portal</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">User Portal</p>
               <h2 className="text-lg font-semibold">Welcome back, {user?.fullName?.split(' ')[0] ?? 'User'}</h2>
             </div>
-            <Button variant="outline" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="outline" size="sm" onClick={() => logout()}>
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         }
       >

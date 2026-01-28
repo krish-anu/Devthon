@@ -101,12 +101,12 @@ export default function NewBookingPage() {
             <div key={label} className="flex items-center gap-2">
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
-                  step === index + 1 ? 'bg-emerald-400 text-slate-950' : 'bg-white/10 text-white/60'
+                  step === index + 1 ? 'bg-emerald-400 text-slate-950' : 'bg-[color:var(--surface-strong)] text-[color:var(--muted)]'
                 }`}
               >
                 {index + 1}
               </div>
-              <span className="text-xs text-white/60">{label}</span>
+              <span className="text-xs text-[color:var(--muted)]">{label}</span>
             </div>
           ))}
         </div>
@@ -122,12 +122,12 @@ export default function NewBookingPage() {
                 className={`rounded-2xl border px-4 py-4 text-left ${
                   selectedCategory?.id === item.id
                     ? 'border-emerald-400 bg-emerald-400/10'
-                    : 'border-white/10 bg-white/5'
+                    : 'border-[color:var(--border)] bg-[color:var(--surface)]'
                 }`}
                 onClick={() => setSelectedCategory(item)}
               >
                 <p className="text-lg font-semibold">{item.wasteCategory.name}</p>
-                <p className="text-xs text-white/60">LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg</p>
+                <p className="text-xs text-[color:var(--muted)]">LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg</p>
               </button>
             ))}
           </div>
@@ -144,7 +144,7 @@ export default function NewBookingPage() {
                 className={`rounded-xl border px-4 py-3 text-left ${
                   weightRange.label === option.label
                     ? 'border-emerald-400 bg-emerald-400/10'
-                    : 'border-white/10 bg-white/5'
+                    : 'border-[color:var(--border)] bg-[color:var(--surface)]'
                 }`}
                 onClick={() => setWeightRange(option)}
               >
@@ -152,7 +152,7 @@ export default function NewBookingPage() {
               </button>
             ))}
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Estimated earnings: LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
           </div>
         </Card>
@@ -179,7 +179,7 @@ export default function NewBookingPage() {
               <Textarea value={specialInstructions} onChange={(event) => setSpecialInstructions(event.target.value)} />
             </div>
           </div>
-          <div className="h-48 rounded-2xl border border-dashed border-white/20 bg-white/5 p-4 text-sm text-white/50">
+          <div className="h-48 rounded-2xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)]">
             Map Placeholder
           </div>
         </Card>
@@ -198,7 +198,7 @@ export default function NewBookingPage() {
                   className={`rounded-xl border px-4 py-3 text-left text-sm ${
                     scheduledTimeSlot === slot
                       ? 'border-emerald-400 bg-emerald-400/10'
-                      : 'border-white/10 bg-white/5'
+                      : 'border-[color:var(--border)] bg-[color:var(--surface)]'
                   }`}
                 >
                   {slot}
@@ -213,25 +213,25 @@ export default function NewBookingPage() {
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Confirm Booking</h3>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/60">Category</p>
+            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <p className="text-sm text-[color:var(--muted)]">Category</p>
               <p className="text-lg font-semibold">{selectedCategory?.wasteCategory.name ?? '--'}</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/60">Estimated Weight</p>
+            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <p className="text-sm text-[color:var(--muted)]">Estimated Weight</p>
               <p className="text-lg font-semibold">{weightRange.label}</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/60">Pickup Address</p>
+            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <p className="text-sm text-[color:var(--muted)]">Pickup Address</p>
               <p className="text-lg font-semibold">{addressLine1 || '--'}</p>
-              <p className="text-sm text-white/60">{city} {postalCode}</p>
+              <p className="text-sm text-[color:var(--muted)]">{city} {postalCode}</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/60">Time Slot</p>
+            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <p className="text-sm text-[color:var(--muted)]">Time Slot</p>
               <p className="text-lg font-semibold">{scheduledTimeSlot}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm text-white/70">
+          <div className="flex items-center gap-3 text-sm text-[color:var(--muted)]">
             <Checkbox checked={terms} onCheckedChange={(checked) => setTerms(Boolean(checked))} />
             I agree to the pickup terms and quality inspection policy.
           </div>
@@ -251,3 +251,4 @@ export default function NewBookingPage() {
     </div>
   );
 }
+

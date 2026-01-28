@@ -93,12 +93,12 @@ export default function AdminDashboardPage() {
         <h3 className="text-lg font-semibold">Recent Activity</h3>
         <div className="mt-4 space-y-3">
           {(data?.recentActivity ?? []).map((activity: any) => (
-            <div key={activity.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+            <div key={activity.id} className="flex items-center justify-between rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm">
               <div>
                 <p className="font-semibold">{activity.user?.fullName ?? 'User'} booked {activity.wasteCategory?.name}</p>
-                <p className="text-xs text-white/60">{new Date(activity.createdAt).toLocaleString()}</p>
+                <p className="text-xs text-[color:var(--muted)]">{new Date(activity.createdAt).toLocaleString()}</p>
               </div>
-              <span className="text-xs text-white/60">{activity.status}</span>
+              <span className="text-xs text-[color:var(--muted)]">{activity.status}</span>
             </div>
           ))}
         </div>
@@ -106,3 +106,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+

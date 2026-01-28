@@ -34,16 +34,17 @@ export default function AdminDriversPage() {
           <Card key={driver.id} className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">{driver.name}</h3>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+              <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1 text-xs text-[color:var(--muted)]">
                 {driver.status.replace('_', ' ')}
               </span>
             </div>
-            <p className="text-sm text-white/60">Rating: {driver.rating} ?</p>
-            <p className="text-sm text-white/60">Pickup count: {driver.pickupCount}</p>
-            <p className="text-sm text-white/60">Vehicle: {driver.vehicleType}</p>
+            <p className="text-sm text-[color:var(--muted)]">Rating: {driver.rating} ?</p>
+            <p className="text-sm text-[color:var(--muted)]">Pickup count: {driver.pickupCount}</p>
+            <p className="text-sm text-[color:var(--muted)]">Vehicle: {driver.vehicleType}</p>
           </Card>
         ))}
       </div>
     </div>
   );
 }
+

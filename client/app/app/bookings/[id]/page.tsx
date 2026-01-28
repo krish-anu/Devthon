@@ -27,15 +27,15 @@ export default function BookingDetailsPage() {
       <Card className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">Booking Tracking</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Booking Tracking</p>
             <h2 className="text-2xl font-semibold">Booking {booking?.id?.slice(0, 8) ?? ''}</h2>
           </div>
-          <div className="text-sm text-white/60">Estimated Arrival 15 minutes</div>
+          <div className="text-sm text-[color:var(--muted)]">Estimated Arrival 15 minutes</div>
         </div>
         <div className="grid gap-4 md:grid-cols-4">
           {steps.map((step, index) => (
-            <div key={step} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <p className="text-xs text-white/60">Step {index + 1}</p>
+            <div key={step} className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
+              <p className="text-xs text-[color:var(--muted)]">Step {index + 1}</p>
               <p className="text-sm font-semibold">{step}</p>
             </div>
           ))}
@@ -47,7 +47,7 @@ export default function BookingDetailsPage() {
           <h3 className="text-lg font-semibold">Driver Info</h3>
           <div className="space-y-2">
             <p className="text-sm">{booking?.driver?.name ?? 'Assigned soon'}</p>
-            <p className="text-xs text-white/60">Rating: {booking?.driver?.rating ?? '4.7'} ?</p>
+            <p className="text-xs text-[color:var(--muted)]">Rating: {booking?.driver?.rating ?? '4.7'} ?</p>
             <div className="flex gap-3">
               <Button variant="outline" size="sm">
                 <Phone className="h-4 w-4" />
@@ -62,7 +62,7 @@ export default function BookingDetailsPage() {
         </Card>
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Live Tracking Map</h3>
-          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 text-sm text-white/60">
+          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] text-sm text-[color:var(--muted)]">
             Map Placeholder
           </div>
         </Card>

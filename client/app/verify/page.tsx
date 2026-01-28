@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { authApi } from '@/lib/api';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function VerifyPage() {
   const [code, setCode] = useState(Array(6).fill(''));
@@ -35,10 +36,11 @@ export default function VerifyPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-6 py-12">
+      <ThemeToggle className="fixed right-6 top-6" />
       <Card className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">Verify Your Identity</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Verify Your Identity</p>
           <h1 className="text-2xl font-semibold">Enter the 6-digit code</h1>
         </div>
         <div className="flex gap-2">
@@ -47,12 +49,12 @@ export default function VerifyPage() {
               key={index}
               value={digit}
               onChange={(event) => handleChange(index, event.target.value)}
-              className="h-12 w-12 rounded-xl border border-white/10 bg-slate-950/60 text-center text-lg text-white"
+              className="h-12 w-12 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] text-center text-lg text-[color:var(--foreground)]"
               maxLength={1}
             />
           ))}
         </div>
-        <div className="text-xs text-white/60">Resend code in {seconds}s</div>
+        <div className="text-xs text-[color:var(--muted)]">Resend code in {seconds}s</div>
         <Button className="w-full" onClick={handleVerify}>
           Verify
         </Button>

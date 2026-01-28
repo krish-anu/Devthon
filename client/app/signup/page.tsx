@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/components/auth/auth-provider';
 import { toast } from '@/components/ui/use-toast';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -50,10 +51,11 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-6 py-12">
+      <ThemeToggle className="fixed right-6 top-6" />
       <Card className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">Join the Green Revolution</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Join the Green Revolution</p>
           <h1 className="text-2xl font-semibold">Create your account</h1>
         </div>
         <Button
@@ -65,7 +67,7 @@ export default function SignupPage() {
         >
           Continue with Google
         </Button>
-        <div className="text-xs text-white/40">or sign up with email</div>
+        <div className="text-xs text-[color:var(--muted)]">or sign up with email</div>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2">
             <Label>Full Name</Label>
@@ -98,7 +100,7 @@ export default function SignupPage() {
                   className={`rounded-full border px-4 py-2 text-xs ${
                     watch('type') === type
                       ? 'border-emerald-400 bg-emerald-400/20 text-emerald-100'
-                      : 'border-white/10 text-white/60'
+                      : 'border-[color:var(--border)] text-[color:var(--muted)]'
                   }`}
                 >
                   {type === 'HOUSEHOLD' ? 'Household' : 'Business'}
@@ -106,7 +108,7 @@ export default function SignupPage() {
               ))}
             </div>
           </div>
-          <div className="flex items-start gap-3 text-xs text-white/70">
+          <div className="flex items-start gap-3 text-xs text-[color:var(--muted)]">
             <Checkbox checked={termsChecked} onCheckedChange={(checked) => setValue('terms', Boolean(checked))} />
             <span>
               I agree to the terms and privacy policy.
@@ -117,8 +119,8 @@ export default function SignupPage() {
             {isSubmitting ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
-        <div className="text-xs text-white/60">
-          Already have an account? <Link href="/login" className="text-emerald-200">Login</Link>
+        <div className="text-xs text-[color:var(--muted)]">
+          Already have an account? <Link href="/login" className="text-[color:var(--brand)]">Login</Link>
         </div>
       </Card>
     </div>

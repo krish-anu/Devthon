@@ -21,7 +21,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
-        <select className="h-11 rounded-xl border border-white/10 bg-slate-950/40 px-4 text-sm text-white/70">
+        <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
           <option>All Types</option>
           <option>Household</option>
           <option>Business</option>
@@ -58,7 +58,7 @@ export default function AdminUsersPage() {
                 <TableCell>{user.status}</TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="rounded-full border border-white/10 p-2 text-white/70">
+                    <DropdownMenuTrigger className="rounded-full border border-[color:var(--border)] p-2 text-[color:var(--muted)]">
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -75,3 +75,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
