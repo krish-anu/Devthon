@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:16
+    container_name: trash2cash-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: trash2cash
+      POSTGRES_PASSWORD: trash2cash
+      POSTGRES_DB: trash2cash
+    ports:
+      - '5432:5432'
+    volumes:
+      - trash2cash-data:/var/lib/postgresql/data
+
+volumes:
+  trash2cash-data:
