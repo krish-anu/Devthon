@@ -17,6 +17,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: { sub: string; role: string }) {
+    // Log payload for debugging auth failures (temporary)
+    // eslint-disable-next-line no-console
+    console.debug('JwtStrategy validate payload:', payload);
     return payload;
   }
 }

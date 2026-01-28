@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { authApi, apiFetch } from '@/lib/api';
-import { clearAuth, getStoredUser, setAuth, updateStoredUser } from '@/lib/auth';
-import { User } from '@/lib/types';
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { authApi, apiFetch } from "@/lib/api";
+import {
+  clearAuth,
+  getStoredUser,
+  setAuth,
+  updateStoredUser,
+  getAccessToken,
+} from "@/lib/auth";
+import { User } from "@/lib/types";
 
 interface AuthContextValue {
   user: User | null;
@@ -14,7 +20,7 @@ interface AuthContextValue {
     email: string;
     phone: string;
     password: string;
-    type: 'HOUSEHOLD' | 'BUSINESS';
+    type: "HOUSEHOLD" | "BUSINESS";
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -37,14 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(latest);
     };
 
-    window.addEventListener('t2c-auth', sync);
-    return () => window.removeEventListener('t2c-auth', sync);
+    window.addEventListener("t2c-auth", sync);
+    return () => window.removeEventListener("t2c-auth", sync);
   }, []);
 
   useEffect(() => {
     const init = async () => {
+      // If there's no access token stored, skip the /me request to avoid 401s
+      const token = getAccessToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const me = await apiFetch<User>('/me');
+        const me = await apiFetch<User>("/me");
         updateStoredUser(me);
         setUser(me);
       } catch {
@@ -70,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string;
     phone: string;
     password: string;
-    type: 'HOUSEHOLD' | 'BUSINESS';
+    type: "HOUSEHOLD" | "BUSINESS";
   }) => {
     const data = await authApi.register(payload);
     setAuth(data);
@@ -88,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    const me = await apiFetch<User>('/me');
+    const me = await apiFetch<User>("/me");
     updateStoredUser(me);
     setUser(me);
   };
@@ -104,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }

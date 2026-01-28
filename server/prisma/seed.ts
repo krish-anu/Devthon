@@ -83,7 +83,7 @@ async function main() {
         pickupCount: 64,
         vehicleType: 'Three-wheeler',
         status: DriverStatus.OFFLINE,
-      },
+      }, 
     }),
   ]);
 
