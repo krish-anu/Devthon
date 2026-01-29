@@ -203,7 +203,6 @@ export default function ProfilePage() {
           <TabsTrigger value="personal">Personal info</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="payment">Payment Methods</TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal">
@@ -516,14 +515,6 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payment">
-          <Card>
-            <p className="text-sm text-[color:var(--muted)]">
-              Manage your payout methods soon.
-            </p>
           </Card>
         </TabsContent>
       </Tabs>
