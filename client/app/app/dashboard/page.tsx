@@ -32,7 +32,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
-        <p className="text-sm text-[color:var(--muted)]">Dashboard</p>
+        <p className="text-sm text-(--muted)">Dashboard</p>
         <h1 className="text-2xl font-semibold">Welcome back, {user?.fullName?.split(' ')[0] ?? 'User'}!</h1>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
@@ -45,7 +45,7 @@ export default function DashboardPage() {
       <Card className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h3 className="text-xl font-semibold">Ready for another pickup?</h3>
-          <p className="text-sm text-[color:var(--muted)]">Book your next collection and earn more.</p>
+          <p className="text-sm text-(--muted)">Book your next collection and earn more.</p>
         </div>
         <Button asChild>
           <Link href="/app/bookings/new">+ Book New Pickup</Link>
@@ -75,7 +75,7 @@ export default function DashboardPage() {
               {bookings.slice(0, 5).map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell>
-                    <Link href={`/app/bookings/${booking.id}`} className="text-[color:var(--brand)]">
+                    <Link href={`/app/bookings/${booking.id}`} className="text-(--brand)">
                       {booking.id.slice(0, 8)}
                     </Link>
                   </TableCell>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
               ))}
               {!bookings.length && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-[color:var(--muted)]">
+                  <TableCell colSpan={6} className="text-center text-(--muted)">
                     No bookings yet.
                   </TableCell>
                 </TableRow>
