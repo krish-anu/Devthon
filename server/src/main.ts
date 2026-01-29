@@ -10,6 +10,22 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
+  // Render a background-colored level badge using ANSI escapes for console output
+  const levelBadge = (level: string) => {
+    const L = (level || '').toLowerCase();
+    switch (L) {
+      case 'error':
+        return `\x1b[41m ${level.toUpperCase()} \x1b[0m`; // red background
+      case 'warn':
+        return `\x1b[43m ${level.toUpperCase()} \x1b[0m`; // yellow background
+      case 'info':
+        return `\x1b[42m ${level.toUpperCase()} \x1b[0m`; // green background
+      case 'debug':
+        return `\x1b[44m ${level.toUpperCase()} \x1b[0m`; // blue background
+      default:
+        return `\x1b[45m ${level.toUpperCase()} \x1b[0m`; // magenta background
+    }
+  };
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger({
       transports: [
@@ -17,30 +33,21 @@ async function bootstrap() {
         new winston.transports.Console({
           format:
             process.env.NODE_ENV === 'production'
-              ? winston.format.combine(
-                  winston.format.timestamp(),
-                  winston.format.json(),
-                )
+              ? winston.format.combine(winston.format.timestamp(), winston.format.json())
               : winston.format.combine(
-                  winston.format.colorize({ all: true }),
                   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-                  winston.format.printf(
-                    ({ timestamp, level, message, ...meta }) => {
-                      let msg =
-                        typeof message === 'string'
-                          ? message
-                          : JSON.stringify(message);
-                      let metaStr = '';
-                      try {
-                        const keys = Object.keys(meta || {});
-                        if (keys.length)
-                          metaStr = '\n' + JSON.stringify(meta, null, 2);
-                      } catch (e) {
-                        metaStr = String(meta);
-                      }
-                      return `${timestamp} ${level}: ${msg}${metaStr}`;
-                    },
-                  ),
+                  winston.format.printf(({ timestamp, level, message, ...meta }) => {
+                    const badge = levelBadge(level as string);
+                    const msg = typeof message === 'string' ? message : JSON.stringify(message);
+                    let metaStr = '';
+                    try {
+                      const keys = Object.keys(meta || {});
+                      if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
+                    } catch (e) {
+                      metaStr = String(meta);
+                    }
+                    return `${timestamp} ${badge} ${msg}${metaStr}`;
+                  }),
                 ),
         }),
         // File transport stays JSON for log processing and rotation
@@ -51,6 +58,27 @@ async function bootstrap() {
           format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.json(),
+          ),
+        }),
+        // Also write a human-readable rotated log (no JSON) for quick inspection
+        new winston.transports.DailyRotateFile({
+          filename: 'logs/trash2cash-readable-%DATE%.log',
+          datePattern: 'YYYY-MM-DD',
+          maxFiles: '14d',
+          format: winston.format.combine(
+            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            winston.format.printf(({ timestamp, level, message, ...meta }) => {
+              const lvl = (level || '').toUpperCase();
+              let msg = typeof message === 'string' ? message : JSON.stringify(message);
+              let metaStr = '';
+              try {
+                const keys = Object.keys(meta || {});
+                if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
+              } catch (e) {
+                metaStr = String(meta);
+              }
+              return `${timestamp} [${lvl}] ${msg}${metaStr}`;
+            }),
           ),
         }),
       ],

@@ -16,6 +16,18 @@ ls -lah logs/
 tail -f logs/trash2cash-$(date +%F).log
 ```
 
+- Tail the human-readable rotated log (no JSON):
+
+```bash
+tail -f logs/trash2cash-readable-$(date +%F).log
+```
+
+- Use the pretty-logs viewer (JSON-aware) if you want colorized/filtered output:
+
+```bash
+npm run logs:watch
+```
+
 - Pretty-print JSON stream with `jq`:
 
 ```bash
