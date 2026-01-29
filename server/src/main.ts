@@ -33,21 +33,30 @@ async function bootstrap() {
         new winston.transports.Console({
           format:
             process.env.NODE_ENV === 'production'
-              ? winston.format.combine(winston.format.timestamp(), winston.format.json())
+              ? winston.format.combine(
+                  winston.format.timestamp(),
+                  winston.format.json(),
+                )
               : winston.format.combine(
                   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-                  winston.format.printf(({ timestamp, level, message, ...meta }) => {
-                    const badge = levelBadge(level as string);
-                    const msg = typeof message === 'string' ? message : JSON.stringify(message);
-                    let metaStr = '';
-                    try {
-                      const keys = Object.keys(meta || {});
-                      if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
-                    } catch (e) {
-                      metaStr = String(meta);
-                    }
-                    return `${timestamp} ${badge} ${msg}${metaStr}`;
-                  }),
+                  winston.format.printf(
+                    ({ timestamp, level, message, ...meta }) => {
+                      const badge = levelBadge(level as string);
+                      const msg =
+                        typeof message === 'string'
+                          ? message
+                          : JSON.stringify(message);
+                      let metaStr = '';
+                      try {
+                        const keys = Object.keys(meta || {});
+                        if (keys.length)
+                          metaStr = '\n' + JSON.stringify(meta, null, 2);
+                      } catch (e) {
+                        metaStr = String(meta);
+                      }
+                      return `${timestamp} ${badge} ${msg}${metaStr}`;
+                    },
+                  ),
                 ),
         }),
         // File transport stays JSON for log processing and rotation
@@ -69,7 +78,8 @@ async function bootstrap() {
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
             winston.format.printf(({ timestamp, level, message, ...meta }) => {
               const lvl = (level || '').toUpperCase();
-              let msg = typeof message === 'string' ? message : JSON.stringify(message);
+              let msg =
+                typeof message === 'string' ? message : JSON.stringify(message);
               let metaStr = '';
               try {
                 const keys = Object.keys(meta || {});
