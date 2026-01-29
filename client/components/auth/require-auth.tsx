@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from './auth-provider';
 import { UserRole } from '@/lib/types';
 
@@ -14,6 +14,7 @@ export function RequireAuth({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return;
@@ -22,6 +23,9 @@ export function RequireAuth({
       return;
     }
     if (roles && !roles.includes(user.role)) {
+      // Don't force-navigation away while the user is actively on their profile page
+      // (e.g. after saving profile updates) — allow staying on `/app/profile`.
+      if (pathname && pathname.startsWith('/app/profile')) return;
       router.replace(user.role === 'ADMIN' ? '/admin/dashboard' : '/app/dashboard');
     }
   }, [user, loading, roles, router]);
