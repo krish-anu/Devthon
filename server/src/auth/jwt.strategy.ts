@@ -16,10 +16,30 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: { sub: string; role: string }) {
+  validate(payload: {
+    sub: string;
+    role: string;
+    iat?: number;
+    exp?: number;
+    [key: string]: any;
+  }) {
+    // Convert iat/exp (seconds) to readable ISO timestamps for downstream use
+    const result = { ...payload } as any;
+    try {
+      if (typeof payload.iat === 'number') {
+        result.iatReadable = new Date(payload.iat * 1000).toISOString();
+      }
+      if (typeof payload.exp === 'number') {
+        result.expReadable = new Date(payload.exp * 1000).toISOString();
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to parse iat/exp in JWT payload', e);
+    }
+
     // Log payload for debugging auth failures (temporary)
     // eslint-disable-next-line no-console
-    console.debug('JwtStrategy validate payload:', payload);
-    return payload;
+    console.debug('JwtStrategy validate payload:', result);
+    return result;
   }
 }
