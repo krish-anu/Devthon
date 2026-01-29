@@ -379,9 +379,143 @@ export default function ProfilePage() {
 
         <TabsContent value="notifications">
           <Card>
-            <p className="text-sm text-[color:var(--muted)]">
-              Notification preferences coming soon.
-            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h4 className="mb-2 text-sm font-semibold">
+                  Browser notifications
+                </h4>
+                <p className="mb-3 text-sm text-[color:var(--muted)]">
+                  Allow the browser to show notifications even when this tab is
+                  in the background.
+                </p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm">Status</p>
+                    <p className="text-xs text-[color:var(--muted)]">
+                      {typeof window !== "undefined" &&
+                      localStorage.getItem("notifyEnabled")
+                        ? "Enabled"
+                        : "Disabled"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={async () => {
+                        if (typeof window === "undefined") return;
+                        try {
+                          const perm = await Notification.requestPermission();
+                          if (perm !== "granted") {
+                            toast({
+                              title: "Permission required",
+                              description:
+                                "Please allow notifications in your browser settings.",
+                              variant: "warning",
+                            });
+                            return;
+                          }
+                          if ("serviceWorker" in navigator) {
+                            try {
+                              await navigator.serviceWorker.register(
+                                "/notification-sw.js",
+                              );
+                            } catch (err) {
+                              // registration failed, continue
+                            }
+                          }
+                          localStorage.setItem("notifyEnabled", "1");
+                          toast({
+                            title: "Notifications enabled",
+                            description:
+                              "You can receive notifications when the app is in background.",
+                            variant: "success",
+                          });
+                        } catch (e: any) {
+                          toast({
+                            title: "Enable failed",
+                            description:
+                              e?.message ?? "Could not enable notifications",
+                            variant: "error",
+                          });
+                        }
+                      }}
+                    >
+                      Enable
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (typeof window === "undefined") return;
+                        localStorage.removeItem("notifyEnabled");
+                        toast({
+                          title: "Notifications disabled",
+                          description: "Browser notifications turned off.",
+                          variant: "default",
+                        });
+                      }}
+                    >
+                      Disable
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Button
+                    onClick={async () => {
+                      try {
+                        if (
+                          navigator.serviceWorker &&
+                          navigator.serviceWorker.controller
+                        ) {
+                          navigator.serviceWorker.controller.postMessage({
+                            type: "TEST_NOTIFICATION",
+                            title: "Test notification",
+                            body: "This is a test from Trash2Cash.",
+                          });
+                          toast({
+                            title: "Test sent",
+                            description:
+                              "Test notification posted to service worker.",
+                            variant: "success",
+                          });
+                          return;
+                        }
+                      } catch (e) {
+                        // fallback
+                      }
+                      if (Notification.permission === "granted") {
+                        new Notification("Test notification", {
+                          body: "This is a test from Trash2Cash.",
+                        });
+                        toast({
+                          title: "Test shown",
+                          description: "Notification displayed.",
+                          variant: "success",
+                        });
+                      } else {
+                        toast({
+                          title: "Cannot show",
+                          description: "Allow notifications first.",
+                          variant: "warning",
+                        });
+                      }
+                    }}
+                  >
+                    Send test notification
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="mb-2 text-sm font-semibold">
+                  Notification delivery
+                </h4>
+                <p className="text-sm text-[color:var(--muted)]">
+                  When enabled and a backend push subscription exists,
+                  notifications can be delivered while the app is not open. This
+                  enables the browser permission and registers a lightweight
+                  service worker for handling notifications.
+                </p>
+              </div>
+            </div>
           </Card>
         </TabsContent>
 
