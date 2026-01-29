@@ -31,6 +31,46 @@
 $ npm install
 ```
 
+## Prisma
+
+After cloning the repo, set up your database connection and generate/apply Prisma artifacts:
+
+- Create a `.env` file at the project root and set `DATABASE_URL` (example):
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/dev_db"
+```
+
+- Install dependencies and generate the Prisma client:
+
+```bash
+cd server
+npm install
+npm run prisma:generate
+```
+
+- Apply migrations (development) or deploy existing migrations:
+
+```bash
+# For local development (creates/updates migrations and applies them)
+npm run prisma:migrate
+
+# To apply existing migrations (e.g. CI / production)
+npx prisma migrate deploy
+```
+
+- (Optional) Seed the database and open Prisma Studio:
+
+```bash
+npm run seed
+npm run prisma:studio
+```
+
+Notes:
+
+- Ensure `DATABASE_URL` points to a reachable database before running migrations or seeds.
+- Use `npx prisma db push` if you want to push the schema without running migrations.
+
 ## Compile and run the project
 
 ```bash
