@@ -20,19 +20,19 @@ export default function PendingPickupsPage() {
         <div className="flex flex-1 flex-wrap gap-3">
           <input
             type="date"
-            className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+            className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
           />
           <input
             type="time"
-            className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+            className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
           />
           <input
             type="date"
-            className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+            className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
           />
           <input
             type="time"
-            className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+            className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
           />
         </div>
       </Card>
@@ -62,7 +62,7 @@ export default function PendingPickupsPage() {
             ))}
             {!pickups.length && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-[color:var(--muted)]">
+                <TableCell colSpan={6} className="text-center text-(--muted)">
                   No pending pickups.
                 </TableCell>
               </TableRow>
