@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
@@ -55,6 +55,16 @@ export default function VerifyPage() {
     window.location.href = "/users/dashboard";
   };
 
+  const handleResend = () => {
+    if (seconds > 0) return;
+    setSeconds(45);
+    toast({
+      title: "Code resent",
+      description: "A new verification code has been sent.",
+      variant: "info",
+    });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
       <ThemeToggle className="fixed right-6 top-6" />
@@ -95,7 +105,7 @@ export default function VerifyPage() {
             Resend
           </button>
         </p>
-      </div>
-    </AuthLayout>
+      </Card>
+    </div>
   );
 }
