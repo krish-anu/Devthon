@@ -77,34 +77,39 @@ export default function BookingHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="flex flex-wrap items-center gap-3">
-        <select className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)">
-          <option>Last 30 Days</option>
-          <option>Last 90 Days</option>
-        </select>
-        <select className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)">
-          <option>All Types</option>
-          <option>Plastic</option>
-          <option>Metal</option>
-        </select>
-        <select
-          value={status}
-          onChange={(event) => setStatus(event.target.value)}
-          className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
-        >
-          <option value="">All Status</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="CANCELLED">Cancelled</option>
-          <option value="REFUNDED">Refunded</option>
-        </select>
-        <Input
-          placeholder="Search bookings"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <Button variant="outline" onClick={exportCsv}>
-          Export CSV
-        </Button>
+      <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
+            <option>Last 30 Days</option>
+            <option>Last 90 Days</option>
+          </select>
+          <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
+            <option>All Types</option>
+            <option>Plastic</option>
+            <option>Metal</option>
+          </select>
+          <select
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+            className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+          >
+            <option value="">All Status</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="REFUNDED">Refunded</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            className="min-w-[180px]"
+            placeholder="Search bookings"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Button variant="outline" onClick={exportCsv}>
+            Export CSV
+          </Button>
+        </div>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -120,8 +125,8 @@ export default function BookingHistoryPage() {
         />
       </div>
 
-      <Card>
-        <Table>
+      <Card className="overflow-x-auto">
+        <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
               <TableHead>Booking ID</TableHead>
@@ -138,7 +143,7 @@ export default function BookingHistoryPage() {
                 <TableCell>
                   <a
                     href={`/users/bookings/${booking.id}`}
-                    className="text-(--brand)"
+                    className="text-[color:var(--brand)] hover:underline"
                   >
                     {booking.id.slice(0, 8)}
                   </a>
@@ -160,14 +165,17 @@ export default function BookingHistoryPage() {
             ))}
             {!bookings.length && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-(--muted)">
+                <TableCell
+                  colSpan={6}
+                  className="text-center text-[color:var(--muted)]"
+                >
                   No bookings found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        <div className="mt-4 flex items-center justify-between text-sm text-(--muted)">
+        <div className="mt-4 flex items-center justify-between text-sm text-[color:var(--muted)]">
           <span>Page 1 of 1</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm">

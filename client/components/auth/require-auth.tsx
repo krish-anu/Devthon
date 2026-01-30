@@ -43,8 +43,8 @@ export function RequireAuth({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="rounded-2xl border border-(--border) bg-(--surface) px-6 py-4 text-sm text-(--muted)">
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--background)] text-[color:var(--foreground)]">
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-6 py-4 text-sm text-[color:var(--muted)]">
           Checking access...
         </div>
       </div>

@@ -118,7 +118,7 @@ export default function SignupPage() {
               </svg>
               Sign up with Google
             </Button>
-            <div className="text-xs text-muted">or sign up with email</div>
+            <div className="text-xs text-[color:var(--muted)]">or sign up with email</div>
 
             <form
               className="space-y-4"
@@ -202,7 +202,7 @@ export default function SignupPage() {
                       className={`rounded-full border px-4 py-2 text-xs ${
                         watch("type") === type
                           ? "border-emerald-400 bg-emerald-400/20 text-emerald-100"
-                          : "border-border text-muted"
+                          : "border-[color:var(--border)] text-[color:var(--muted)]"
                       }`}
                     >
                       {type === "HOUSEHOLD" ? "Household" : "Business"}
@@ -210,7 +210,7 @@ export default function SignupPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-start gap-3 text-xs text-muted">
+              <div className="flex items-start gap-3 text-xs text-[color:var(--muted)]">
                 <Checkbox
                   checked={termsChecked}
                   onCheckedChange={(checked) =>
@@ -239,7 +239,7 @@ export default function SignupPage() {
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
-            <div className="text-xs text-muted">
+            <div className="text-xs text-[color:var(--muted)]">
               Already have an account?{" "}
               <Link href="/login" className="text-[var(--brand)]">
                 Login

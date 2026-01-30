@@ -22,16 +22,16 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-full flex-col gap-6 bg-(--surface-soft) p-6 text-foreground">
+    <aside className="flex h-full w-full flex-col gap-6 bg-gradient-to-b from-emerald-600 to-emerald-400 p-6 text-white md:rounded-r-3xl">
       <div className="space-y-1">
-        <span className="text-xs uppercase tracking-[0.3em] text-(--brand) opacity-70">
+        <span className="text-xs uppercase tracking-widest opacity-80">
           {title}
         </span>
-        <div className="text-lg font-semibold">Trash2Cash</div>
+        <div className="text-2xl font-bold">Trash2Cash</div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-2 mt-2">
         {items.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
@@ -39,17 +39,18 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-4 py-2 text-sm text-(--muted) transition hover:bg-(--surface-strong) hover:text-foreground",
-                active && "bg-emerald-500/20 text-foreground",
+                "flex items-center gap-3 rounded-lg px-4 py-2 text-sm text-white/90 transition-colors hover:bg-white/10",
+                active && "bg-white/20 font-semibold",
               )}
             >
               {item.icon}
-              {item.label}
+              <span className="truncate">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-      {footer && <div>{footer}</div>}
+
+      {footer && <div className="mt-4 text-sm text-white/90">{footer}</div>}
     </aside>
   );
 }
