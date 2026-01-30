@@ -39,7 +39,7 @@ export default function DriverBookingsPage() {
                 <TableCell>
                   <Link
                     href={`/driver/bookings/${b.id}`}
-                    className="text-[color:var(--brand)]"
+                    className="text-(--brand)"
                   >
                     {b.id.slice(0, 8)}
                   </Link>
@@ -53,10 +53,7 @@ export default function DriverBookingsPage() {
             ))}
             {!bookings.length && (
               <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="text-center text-[color:var(--muted)]"
-                >
+                <TableCell colSpan={4} className="text-center text-(--muted)">
                   No bookings assigned.
                 </TableCell>
               </TableRow>

@@ -1,36 +1,37 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { NotificationItem } from '@/lib/types';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/components/ui/use-toast';
-import { ToastAction } from '@/components/ui/toast';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { NotificationItem } from "@/lib/types";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 const levelVariant = {
-  INFO: 'info',
-  SUCCESS: 'default',
-  WARNING: 'warning',
-  ERROR: 'danger',
+  INFO: "info",
+  SUCCESS: "default",
+  WARNING: "warning",
+  ERROR: "danger",
 } as const;
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const { data } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: () => apiFetch<NotificationItem[]>('/notifications'),
+    queryKey: ["notifications"],
+    queryFn: () => apiFetch<NotificationItem[]>("/notifications"),
   });
 
   const mutation = useMutation({
-    mutationFn: () => apiFetch('/notifications/mark-all-read', { method: 'POST' }),
+    mutationFn: () =>
+      apiFetch("/notifications/mark-all-read", { method: "POST" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast({
-        title: 'Notifications cleared',
-        description: 'All alerts marked as read.',
-        variant: 'success',
+        title: "Notifications cleared",
+        description: "All alerts marked as read.",
+        variant: "success",
         action: <ToastAction altText="Undo">UNDO</ToastAction>,
       });
     },
@@ -53,8 +54,8 @@ export default function NotificationsPage() {
               <h3 className="text-lg font-semibold">{item.title}</h3>
               <Badge variant={levelVariant[item.level]}>{item.level}</Badge>
             </div>
-            <p className="text-sm text-[color:var(--muted)]">{item.message}</p>
-            <p className="text-xs text-[color:var(--muted)]">
+            <p className="text-sm text-(--muted)">{item.message}</p>
+            <p className="text-xs text-(--muted)">
               {new Date(item.createdAt).toLocaleString()}
             </p>
           </Card>
@@ -64,4 +65,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-

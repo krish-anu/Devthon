@@ -188,8 +188,8 @@ export default function ProfilePage() {
         </div>
         <div>
           <h3 className="text-xl font-semibold">{user?.fullName ?? "User"}</h3>
-          <p className="text-sm text-[color:var(--muted)]">{user?.email}</p>
-          <p className="text-xs text-[color:var(--muted)]">
+          <p className="text-sm text-(--muted)">{user?.email}</p>
+          <p className="text-xs text-(--muted)">
             Member since{" "}
             {user?.createdAt
               ? new Date(user.createdAt).toLocaleDateString()
@@ -323,7 +323,7 @@ export default function ProfilePage() {
                 <h4 className="mb-2 text-sm font-semibold">
                   Two-step verification
                 </h4>
-                <p className="mb-3 text-sm text-[color:var(--muted)]">
+                <p className="mb-3 text-sm text-(--muted)">
                   Add an extra layer of security by requiring a one-time code on
                   sign in.
                 </p>
@@ -331,7 +331,7 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm">Status</p>
-                      <p className="text-xs text-[color:var(--muted)]">
+                      <p className="text-xs text-(--muted)">
                         {twoStepEnabled ? "Enabled" : "Disabled"}
                       </p>
                     </div>
@@ -383,14 +383,14 @@ export default function ProfilePage() {
                 <h4 className="mb-2 text-sm font-semibold">
                   Browser notifications
                 </h4>
-                <p className="mb-3 text-sm text-[color:var(--muted)]">
+                <p className="mb-3 text-sm text-(--muted)">
                   Allow the browser to show notifications even when this tab is
                   in the background.
                 </p>
                 <div className="flex items-center gap-3">
                   <div>
                     <p className="text-sm">Status</p>
-                    <p className="text-xs text-[color:var(--muted)]">
+                    <p className="text-xs text-(--muted)">
                       {typeof window !== "undefined" &&
                       localStorage.getItem("notifyEnabled")
                         ? "Enabled"
@@ -507,7 +507,7 @@ export default function ProfilePage() {
                 <h4 className="mb-2 text-sm font-semibold">
                   Notification delivery
                 </h4>
-                <p className="text-sm text-[color:var(--muted)]">
+                <p className="text-sm text-(--muted)">
                   When enabled and a backend push subscription exists,
                   notifications can be delivered while the app is not open. This
                   enables the browser permission and registers a lightweight

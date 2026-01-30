@@ -117,12 +117,12 @@ export default function NewBookingPage() {
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
                   step === index + 1
                     ? "bg-emerald-400 text-slate-950"
-                    : "bg-[color:var(--surface-strong)] text-[color:var(--muted)]"
+                    : "bg-(--surface-strong) text-(--muted)"
                 }`}
               >
                 {index + 1}
               </div>
-              <span className="text-xs text-[color:var(--muted)]">{label}</span>
+              <span className="text-xs text-(--muted)">{label}</span>
             </div>
           ))}
         </div>
@@ -138,14 +138,14 @@ export default function NewBookingPage() {
                 className={`rounded-2xl border px-4 py-4 text-left ${
                   selectedCategory?.id === item.id
                     ? "border-emerald-400 bg-emerald-400/10"
-                    : "border-[color:var(--border)] bg-[color:var(--surface)]"
+                    : "border-(--border) bg-(--surface)"
                 }`}
                 onClick={() => setSelectedCategory(item)}
               >
                 <p className="text-lg font-semibold">
                   {item.wasteCategory.name}
                 </p>
-                <p className="text-xs text-[color:var(--muted)]">
+                <p className="text-xs text-(--muted)">
                   LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg
                 </p>
               </button>
@@ -164,7 +164,7 @@ export default function NewBookingPage() {
                 className={`rounded-xl border px-4 py-3 text-left ${
                   weightRange.label === option.label
                     ? "border-emerald-400 bg-emerald-400/10"
-                    : "border-[color:var(--border)] bg-[color:var(--surface)]"
+                    : "border-(--border) bg-(--surface)"
                 }`}
                 onClick={() => setWeightRange(option)}
               >
@@ -172,7 +172,7 @@ export default function NewBookingPage() {
               </button>
             ))}
           </div>
-          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--muted)">
             Estimated earnings: LKR {estimate.min.toFixed(0)} -{" "}
             {estimate.max.toFixed(0)}
           </div>
@@ -212,7 +212,7 @@ export default function NewBookingPage() {
               />
             </div>
           </div>
-          <div className="h-48 rounded-2xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)]">
+          <div className="h-48 rounded-2xl border border-dashed border-(--border) bg-(--surface) p-4 text-sm text-(--muted)">
             Map Placeholder
           </div>
         </Card>
@@ -235,7 +235,7 @@ export default function NewBookingPage() {
                   className={`rounded-xl border px-4 py-3 text-left text-sm ${
                     scheduledTimeSlot === slot
                       ? "border-emerald-400 bg-emerald-400/10"
-                      : "border-[color:var(--border)] bg-[color:var(--surface)]"
+                      : "border-(--border) bg-(--surface)"
                   }`}
                 >
                   {slot}
@@ -250,33 +250,29 @@ export default function NewBookingPage() {
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Confirm Booking</h3>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <p className="text-sm text-[color:var(--muted)]">Category</p>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <p className="text-sm text-(--muted)">Category</p>
               <p className="text-lg font-semibold">
                 {selectedCategory?.wasteCategory.name ?? "--"}
               </p>
             </div>
-            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <p className="text-sm text-[color:var(--muted)]">
-                Estimated Weight
-              </p>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <p className="text-sm text-(--muted)">Estimated Weight</p>
               <p className="text-lg font-semibold">{weightRange.label}</p>
             </div>
-            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <p className="text-sm text-[color:var(--muted)]">
-                Pickup Address
-              </p>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <p className="text-sm text-(--muted)">Pickup Address</p>
               <p className="text-lg font-semibold">{addressLine1 || "--"}</p>
-              <p className="text-sm text-[color:var(--muted)]">
+              <p className="text-sm text-(--muted)">
                 {city} {postalCode}
               </p>
             </div>
-            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <p className="text-sm text-[color:var(--muted)]">Time Slot</p>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <p className="text-sm text-(--muted)">Time Slot</p>
               <p className="text-lg font-semibold">{scheduledTimeSlot}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm text-[color:var(--muted)]">
+          <div className="flex items-center gap-3 text-sm text-(--muted)">
             <Checkbox
               checked={terms}
               onCheckedChange={(checked) => setTerms(Boolean(checked))}
