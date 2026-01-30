@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
-import { authApi } from '@/lib/api';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
+import { authApi } from "@/lib/api";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function VerifyPage() {
-  const [code, setCode] = useState(Array(6).fill(''));
+  const [code, setCode] = useState(Array(6).fill(""));
   const [seconds, setSeconds] = useState(45);
 
   useEffect(() => {
@@ -25,14 +25,22 @@ export default function VerifyPage() {
   };
 
   const handleVerify = async () => {
-    const otp = code.join('');
+    const otp = code.join("");
     if (otp.length < 6) {
-      toast({ title: 'Enter full code', description: 'Please enter all 6 digits.', variant: 'warning' });
+      toast({
+        title: "Enter full code",
+        description: "Please enter all 6 digits.",
+        variant: "warning",
+      });
       return;
     }
     await authApi.verifyOtp({ code: otp });
-    toast({ title: 'Verified', description: 'Your account is ready.', variant: 'success' });
-    window.location.href = '/users/dashboard';
+    toast({
+      title: "Verified",
+      description: "Your account is ready.",
+      variant: "success",
+    });
+    window.location.href = "/users/dashboard";
   };
 
   return (
@@ -40,7 +48,9 @@ export default function VerifyPage() {
       <ThemeToggle className="fixed right-6 top-6" />
       <Card className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Verify Your Identity</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">
+            Verify Your Identity
+          </p>
           <h1 className="text-2xl font-semibold">Enter the 6-digit code</h1>
         </div>
         <div className="flex gap-2">
@@ -54,7 +64,9 @@ export default function VerifyPage() {
             />
           ))}
         </div>
-        <div className="text-xs text-[color:var(--muted)]">Resend code in {seconds}s</div>
+        <div className="text-xs text-[color:var(--muted)]">
+          Resend code in {seconds}s
+        </div>
         <Button className="w-full" onClick={handleVerify}>
           Verify
         </Button>
