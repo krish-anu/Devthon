@@ -12,28 +12,61 @@ import { StatusPill } from '@/components/shared/status-pill';
 export default function AdminBookingsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
 
   const { data } = useQuery({
-    queryKey: ['admin-bookings', status, search],
-    queryFn: () =>
-      apiFetch<any[]>(`/admin/bookings?${new URLSearchParams({
-        ...(status ? { status } : {}),
-        ...(search ? { search } : {}),
-      }).toString()}`),
+    queryKey: ['admin-bookings', status, search, dateFilter],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (status) params.append('status', status);
+      if (search) params.append('search', search);
+      
+      // Add date filter for "This Month"
+      if (dateFilter === 'thisMonth') {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        params.append('from', firstDay.toISOString().split('T')[0]);
+        params.append('to', lastDay.toISOString().split('T')[0]);
+      }
+      
+      return apiFetch<any[]>(`/admin/bookings?${params.toString()}`);
+    },
   });
 
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-2">
-          {['All Status', 'This Month', 'SCHEDULED', 'COMPLETED', 'CANCELLED'].map((pill) => (
+          <Button
+            variant={dateFilter === 'all' && status === '' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => {
+              setDateFilter('all');
+              setStatus('');
+            }}
+          >
+            All Status
+          </Button>
+          <Button
+            variant={dateFilter === 'thisMonth' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setDateFilter('thisMonth')}
+          >
+            This Month
+          </Button>
+          {['SCHEDULED', 'COMPLETED', 'CANCELLED', 'REFUNDED'].map((statusOption) => (
             <Button
-              key={pill}
-              variant={status === (pill === 'All Status' ? '' : pill) ? 'default' : 'outline'}
+              key={statusOption}
+              variant={status === statusOption && dateFilter === 'all' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setStatus(pill === 'All Status' || pill === 'This Month' ? '' : pill)}
+              onClick={() => {
+                setStatus(statusOption);
+                setDateFilter('all');
+              }}
             >
-              {pill}
+              {statusOption}
             </Button>
           ))}
         </div>
