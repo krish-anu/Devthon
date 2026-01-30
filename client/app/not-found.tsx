@@ -21,7 +21,7 @@ export default function NotFound() {
         <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-700">
           <Link href="/">Go Home</Link>
         </Button>
-      </header>
+      </Card>
 
       {/* Content */}
       <div className="flex flex-1 items-center justify-center px-6 py-12">
