@@ -13,7 +13,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen">
       {/* Left Panel - Green Gradient */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-linear-to-b from-emerald-500 to-emerald-600 p-10 text-white">
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-gradient-to-b from-emerald-500 to-emerald-600 p-10 text-white">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
             <Recycle className="h-6 w-6" />
