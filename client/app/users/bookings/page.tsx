@@ -114,7 +114,7 @@ export default function BookingHistoryPage() {
             {bookings.map((booking) => (
               <TableRow key={booking.id}>
                 <TableCell>
-                  <a href={`/app/bookings/${booking.id}`} className="text-[color:var(--brand)]">
+                  <a href={`/users/bookings/${booking.id}`} className="text-[color:var(--brand)]">
                     {booking.id.slice(0, 8)}
                   </a>
                 </TableCell>

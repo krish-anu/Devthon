@@ -32,7 +32,7 @@ export default function VerifyPage() {
     }
     await authApi.verifyOtp({ code: otp });
     toast({ title: 'Verified', description: 'Your account is ready.', variant: 'success' });
-    window.location.href = '/app/dashboard';
+    window.location.href = '/users/dashboard';
   };
 
   return (

@@ -79,7 +79,7 @@ export default function NewBookingPage() {
         }),
       });
       toast({ title: 'Booking confirmed', description: 'Your pickup is scheduled.', variant: 'success' });
-      window.location.href = '/app/bookings';
+      window.location.href = '/users/bookings';
     } catch (error: any) {
       toast({ title: 'Booking failed', description: error?.message, variant: 'error' });
     }

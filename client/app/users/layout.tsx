@@ -11,11 +11,11 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navItems = [
-    { label: 'Dashboard', href: '/app/dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
-    { label: 'Booking History', href: '/app/bookings', icon: <History className="h-4 w-4" /> },
-    { label: 'Pending Pickups', href: '/app/pending-pickups', icon: <Truck className="h-4 w-4" /> },
-    { label: 'Notifications', href: '/app/notifications', icon: <Bell className="h-4 w-4" /> },
-    { label: 'Profile Settings', href: '/app/profile', icon: <Settings className="h-4 w-4" /> },
+    { label: 'Dashboard', href: '/users/dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
+    { label: 'Booking History', href: '/users/bookings', icon: <History className="h-4 w-4" /> },
+    { label: 'Pending Pickups', href: '/users/pending-pickups', icon: <Truck className="h-4 w-4" /> },
+    { label: 'Notifications', href: '/users/notifications', icon: <Bell className="h-4 w-4" /> },
+    { label: 'Profile Settings', href: '/users/profile', icon: <Settings className="h-4 w-4" /> },
   ];
 
   return (
