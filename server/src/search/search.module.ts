@@ -9,3 +9,4 @@ import { GeminiModule } from '../gemini/gemini.module';
   controllers: [SearchController],
 })
 export class SearchModule {}
+  

@@ -6,7 +6,11 @@ import type { Cache } from 'cache-manager';
 export class CacheExampleService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  async getOrSet<T>(key: string, ttl: number, fetcher: () => Promise<T>): Promise<T> {
+  async getOrSet<T>(
+    key: string,
+    ttl: number,
+    fetcher: () => Promise<T>,
+  ): Promise<T> {
     const cached = await this.cacheManager.get<T>(key);
     if (cached) return cached;
     const data = await fetcher();
@@ -15,4 +19,3 @@ export class CacheExampleService {
     return data;
   }
 }
- 

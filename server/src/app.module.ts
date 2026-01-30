@@ -43,7 +43,10 @@ import { LoggingModule } from './common/logger/logger.module';
             return { store, ttl };
           } catch (e) {
             // eslint-disable-next-line no-console
-            console.warn('Redis cache store init failed, falling back to memory', e);
+            console.warn(
+              'Redis cache store init failed, falling back to memory',
+              e,
+            );
           }
         }
         return { ttl: 60 * 60 * 24 };
