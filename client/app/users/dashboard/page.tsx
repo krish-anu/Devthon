@@ -48,15 +48,15 @@ export default function DashboardPage() {
           <p className="text-sm text-(--muted)">Book your next collection and earn more.</p>
         </div>
         <Button asChild>
-          <Link href="/app/bookings/new">+ Book New Pickup</Link>
+          <Link href="/users/bookings/new">+ Book New Pickup</Link>
         </Button>
       </Card>
 
       <Card>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Recent Bookings</h3>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/app/bookings">View all</Link>
+            <Button variant="outline" size="sm" asChild>
+            <Link href="/users/bookings">View all</Link>
           </Button>
         </div>
         <div className="mt-4">
@@ -75,7 +75,7 @@ export default function DashboardPage() {
               {bookings.slice(0, 5).map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell>
-                    <Link href={`/app/bookings/${booking.id}`} className="text-(--brand)">
+                    <Link href={`/users/bookings/${booking.id}`} className="text-(--brand)">
                       {booking.id.slice(0, 8)}
                     </Link>
                   </TableCell>

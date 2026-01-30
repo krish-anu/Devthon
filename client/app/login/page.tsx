@@ -31,7 +31,7 @@ export default function LoginPage() {
     try {
       const user = await login(values.email, values.password);
       toast({ title: 'Welcome back!', description: 'Redirecting to your dashboard.', variant: 'success' });
-      window.location.href = user.role === 'ADMIN' ? '/admin/dashboard' : '/app/dashboard';
+      window.location.href = user.role === 'ADMIN' ? '/admin/dashboard' : '/users/dashboard';
     } catch (error: any) {
       toast({
         title: 'Login failed',
