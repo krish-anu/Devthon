@@ -50,22 +50,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
         header={
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
-                User Portal
-              </p>
-              <h2 className="text-lg font-semibold">
-                Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={() => logout()}>
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
+          <div className="flex items-center justify-end gap-3">
+            <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={() => logout()}>
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           </div>
         }
       >

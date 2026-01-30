@@ -180,40 +180,58 @@ export default function ProfilePage() {
     }
   };
 
+  const initials = user?.fullName
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() ?? "U";
+
   return (
     <div className="space-y-6">
-      <Card className="flex flex-wrap items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-xl font-semibold">
-          {user?.fullName?.[0] ?? "U"}
+      {/* Header */}
+      <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
+
+      {/* Profile Card */}
+      <Card className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-2xl font-bold text-emerald-600 dark:bg-emerald-900/30">
+            {initials}
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-foreground">{user?.fullName ?? "User"}</h3>
+            <p className="text-sm text-(--muted)">{user?.email}</p>
+            <p className="text-xs text-(--muted)">
+              Member since{" "}
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+                : "--"}
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-xl font-semibold">{user?.fullName ?? "User"}</h3>
-          <p className="text-sm text-(--muted)">{user?.email}</p>
-          <p className="text-xs text-(--muted)">
-            Member since{" "}
-            {user?.createdAt
-              ? new Date(user.createdAt).toLocaleDateString()
-              : "--"}
-          </p>
-        </div>
+        <Button variant="outline" className="border-emerald-500 text-emerald-500 hover:bg-emerald-50">
+          Change photo
+        </Button>
       </Card>
 
       <Tabs defaultValue="personal">
-        <TabsList>
-          <TabsTrigger value="personal">Personal info</TabsTrigger>
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="personal">Personal Info</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="payment">Payment Methods</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="personal">
+        <TabsContent value="personal" className="mt-6">
           <Card>
+            <h4 className="mb-4 text-lg font-semibold text-foreground">Personal Information</h4>
             <form
               className="grid gap-4 md:grid-cols-2"
               onSubmit={handleSubmit(onSubmit)}
             >
               <div className="space-y-2">
-                <Label>First Name</Label>
-                <Input {...register("firstName")} />
+                <Label className="text-sm text-(--muted)">First Name</Label>
+                <Input {...register("firstName")} placeholder="John" />
                 {errors.firstName && (
                   <p className="text-xs text-rose-400">
                     {errors.firstName.message}
@@ -221,8 +239,8 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Last Name</Label>
-                <Input {...register("lastName")} />
+                <Label className="text-sm text-(--muted)">Last name</Label>
+                <Input {...register("lastName")} placeholder="Doe" />
                 {errors.lastName && (
                   <p className="text-xs text-rose-400">
                     {errors.lastName.message}
@@ -230,8 +248,8 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input {...register("email")} />
+                <Label className="text-sm text-(--muted)">Email Address</Label>
+                <Input {...register("email")} placeholder="john.doe@email.com" />
                 {errors.email && (
                   <p className="text-xs text-rose-400">
                     {errors.email.message}
@@ -239,8 +257,8 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input {...register("phone")} />
+                <Label className="text-sm text-(--muted)">Phone Number</Label>
+                <Input {...register("phone")} placeholder="+1 (555) 123-4567" />
                 {errors.phone && (
                   <p className="text-xs text-rose-400">
                     {errors.phone.message}
@@ -248,8 +266,8 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Address</Label>
-                <Input {...register("address")} />
+                <Label className="text-sm text-(--muted)">Address</Label>
+                <Input {...register("address")} placeholder="123 Main Street, Downtown, NY 10001" />
                 {errors.address && (
                   <p className="text-xs text-rose-400">
                     {errors.address.message}
@@ -257,7 +275,7 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="flex gap-3 md:col-span-2">
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="bg-emerald-500 text-white hover:bg-emerald-600">
                   Save Changes
                 </Button>
                 <Button type="button" variant="outline">
@@ -268,17 +286,17 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security">
+        <TabsContent value="security" className="mt-6">
           <Card>
             <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <h4 className="mb-2 text-sm font-semibold">Change password</h4>
+                <h4 className="mb-4 text-lg font-semibold text-foreground">Change password</h4>
                 <form
                   className="grid gap-3"
                   onSubmit={pwHandleSubmit(onChangePassword)}
                 >
                   <div className="space-y-2">
-                    <Label>Current password</Label>
+                    <Label className="text-sm text-(--muted)">Current password</Label>
                     <Input type="password" {...pwRegister("currentPassword")} />
                     {pwErrors.currentPassword && (
                       <p className="text-xs text-rose-400">
@@ -287,7 +305,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>New password</Label>
+                    <Label className="text-sm text-(--muted)">New password</Label>
                     <Input type="password" {...pwRegister("newPassword")} />
                     {pwErrors.newPassword && (
                       <p className="text-xs text-rose-400">
@@ -296,7 +314,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Confirm new password</Label>
+                    <Label className="text-sm text-(--muted)">Confirm new password</Label>
                     <Input type="password" {...pwRegister("confirmPassword")} />
                     {pwErrors.confirmPassword && (
                       <p className="text-xs text-rose-400">
@@ -514,6 +532,20 @@ export default function ProfilePage() {
                   service worker for handling notifications.
                 </p>
               </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payment" className="mt-6">
+          <Card>
+            <h4 className="mb-4 text-lg font-semibold text-foreground">Payment Methods</h4>
+            <p className="text-sm text-(--muted)">
+              Add or manage your payment methods for receiving payouts.
+            </p>
+            <div className="mt-4">
+              <Button variant="outline" className="border-emerald-500 text-emerald-500 hover:bg-emerald-50">
+                + Add Payment Method
+              </Button>
             </div>
           </Card>
         </TabsContent>
