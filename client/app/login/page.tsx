@@ -65,11 +65,11 @@ export default function LoginPage() {
             Sign in to continue to your dashboard
           </p>
         </div>
-        <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+        <div className="flex items-center justify-center w-full h-full bg-background px-6 py-6 lg:py-12">
           <ThemeToggle className="fixed right-6 top-6" />
           <Card className="w-full max-w-md space-y-6">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--brand)]">
                 Turn Your Waste Into Wealth
               </p>
               <h1 className="text-2xl font-semibold">Welcome Back</h1>
@@ -106,7 +106,9 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </Button>
-            <div className="text-xs text-(--muted)">or continue with email</div>
+            <div className="text-xs text-[var(--muted)]">
+              or continue with email
+            </div>
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-2">
                 <Label>Email</Label>
@@ -130,16 +132,20 @@ export default function LoginPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center justify-between text-xs text-(--muted)">
+              <div className="flex items-center justify-between text-xs text-[var(--muted)]">
                 <button type="button" className="hover:text-foreground">
                   Forgot password?
                 </button>
-                <Link href="/signup" className="text-(--brand)">
+                <Link href="/signup" className="text-[var(--brand)]">
                   Create account
                 </Link>
               </div>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Signing in..." : "Login"}
+              <Button
+                type="submit"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-11"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
             </form>
 
