@@ -31,14 +31,14 @@ export default function HomePage() {
     : fallbackPricing;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)]">
       <div className="section-grid">
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
           <div className="flex items-center gap-3 text-lg font-semibold">
             <div className="h-10 w-10 rounded-2xl bg-emerald-500/20"></div>
             Trash2Cash
           </div>
-          <nav className="hidden items-center gap-6 text-sm text-muted md:flex">
+          <nav className="hidden items-center gap-6 text-sm text-[color:var(--muted)] md:flex">
             <a href="#how" className="hover:text-foreground">
               How it works
             </a>
@@ -86,23 +86,27 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex-1">
-            <Card className="space-y-6 border-emerald-400/20 bg-linear-to-br from-emerald-500/10 via-transparent to-sky-500/10">
-              <div className="text-sm uppercase tracking-[0.3em] text-(--brand)">
+            <Card className="space-y-6 border-[color:var(--brand)] bg-[color:var(--card)]">
+              <div className="text-sm uppercase tracking-[0.3em] text-[color:var(--brand)]">
                 Live Impact
               </div>
               <div className="grid gap-4">
-                <div className="rounded-xl border border-border bg-surface px-4 py-3">
-                  <p className="text-xs text-muted">Active pickups this week</p>
+                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
+                  <p className="text-xs text-[color:var(--muted)]">
+                    Active pickups this week
+                  </p>
                   <p className="text-2xl font-semibold">126</p>
                 </div>
-                <div className="rounded-xl border border-border bg-surface px-4 py-3">
-                  <p className="text-xs text-muted">
+                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
+                  <p className="text-xs text-[color:var(--muted)]">
                     Average payout per booking
                   </p>
                   <p className="text-2xl font-semibold">LKR 1,420</p>
                 </div>
-                <div className="rounded-xl border border-border bg-surface px-4 py-3">
-                  <p className="text-xs text-muted">CO? saved today</p>
+                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
+                  <p className="text-xs text-[color:var(--muted)]">
+                    CO? saved today
+                  </p>
                   <p className="text-2xl font-semibold">12.4 tonnes</p>
                 </div>
               </div>
@@ -118,9 +122,11 @@ export default function HomePage() {
           ["850 Tonnes CO? Saved", "Carbon tracked monthly"],
           ["25 Districts Served", "Island-wide logistics"],
         ].map(([title, subtitle]) => (
-          <Card key={title} className="bg-card">
-            <p className="text-lg font-semibold">{title}</p>
-            <p className="text-xs text-muted">{subtitle}</p>
+          <Card key={title} className="bg-[color:var(--brand)]/10">
+            <p className="text-lg font-semibold text-[color:var(--brand)]">
+              {title}
+            </p>
+            <p className="text-xs text-[color:var(--muted)]">{subtitle}</p>
           </Card>
         ))}
       </section>
@@ -153,9 +159,11 @@ export default function HomePage() {
             },
           ].map((item) => (
             <Card key={item.step} className="space-y-3">
-              <div className="text-sm text-brand">Step {item.step}</div>
+              <div className="text-sm text-[color:var(--brand)]">
+                Step {item.step}
+              </div>
               <h3 className="text-xl font-semibold">{item.title}</h3>
-              <p className="text-sm text-muted">{item.desc}</p>
+              <p className="text-sm text-[color:var(--muted)]">{item.desc}</p>
             </Card>
           ))}
         </div>
@@ -176,7 +184,7 @@ export default function HomePage() {
           ].map((feature) => (
             <Card key={feature} className="h-full">
               <h4 className="text-base font-semibold">{feature}</h4>
-              <p className="mt-2 text-sm text-(--muted)">
+              <p className="mt-2 text-sm text-[color:var(--muted)]">
                 Real-time insights and community incentives that keep waste out
                 of landfills.
               </p>
@@ -197,7 +205,7 @@ export default function HomePage() {
         <Card className="grid gap-6 md:grid-cols-2">
           <div className="space-y-3">
             <h3 className="text-2xl font-semibold">Live community impact</h3>
-            <p className="text-sm text-(--muted)">
+            <p className="text-sm text-[color:var(--muted)]">
               Every pickup contributes to cleaner waterways, reduced landfill
               pressure, and a greener Sri Lanka.
             </p>
@@ -213,9 +221,9 @@ export default function HomePage() {
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3"
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3"
               >
-                <p className="text-xs text-(--muted)">{label}</p>
+                <p className="text-xs text-[color:var(--muted)]">{label}</p>
                 <p className="text-lg font-semibold">{value}</p>
               </div>
             ))}
@@ -252,7 +260,7 @@ export default function HomePage() {
             <h3 className="text-2xl font-semibold">
               Ready to Start Earning from Your Waste?
             </h3>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-[color:var(--muted)]">
               Create a free account and schedule your first pickup today.
             </p>
           </div>
@@ -262,16 +270,21 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <footer id="contact" className="border-t border-(--border) bg-(--card)">
+      <footer
+        id="contact"
+        className="border-t border-[color:var(--border)] bg-[color:var(--card)]"
+      >
         <div className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-12 md:grid-cols-4">
           <div>
             <h4 className="text-lg font-semibold">Trash2Cash</h4>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-[color:var(--muted)]">
               Sri Lanka's circular economy marketplace.
             </p>
           </div>
           <div className="text-sm text-muted">
-            <p className="font-semibold text-foreground">Company</p>
+            <p className="font-semibold text-[color:var(--foreground)]">
+              Company
+            </p>
             <ul className="mt-2 space-y-1">
               <li>About</li>
               <li>Careers</li>
@@ -279,7 +292,9 @@ export default function HomePage() {
             </ul>
           </div>
           <div className="text-sm text-muted">
-            <p className="font-semibold text-foreground">Support</p>
+            <p className="font-semibold text-[color:var(--foreground)]">
+              Support
+            </p>
             <ul className="mt-2 space-y-1">
               <li>Help Center</li>
               <li>Contact</li>
@@ -287,7 +302,9 @@ export default function HomePage() {
             </ul>
           </div>
           <div className="text-sm text-muted">
-            <p className="font-semibold text-foreground">Connect</p>
+            <p className="font-semibold text-[color:var(--foreground)]">
+              Connect
+            </p>
             <ul className="mt-2 space-y-1">
               <li>Facebook</li>
               <li>LinkedIn</li>
@@ -295,8 +312,8 @@ export default function HomePage() {
             </ul>
           </div>
         </div>
-        <div className="border-t border-border py-6 text-center text-xs text-muted">
-          ? 2026 Trash2Cash. All rights reserved.
+        <div className="border-t border-[color:var(--border)] py-6 text-center text-xs text-[color:var(--muted)]">
+          © 2026 Trash2Cash. All rights reserved.
         </div>
       </footer>
     </div>

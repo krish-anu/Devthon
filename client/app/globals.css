@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light;
-  --background: #f9fafb;
+  --background: #eafcf0;
   --foreground: #111827;
   --card: #ffffff;
   --muted: #6b7280;
@@ -16,7 +16,7 @@
   --ring: rgba(34, 197, 94, 0.4);
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   color-scheme: dark;
   --background: #111827;
   --foreground: #f9fafb;
@@ -33,7 +33,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
     --background: #111827;
     --foreground: #f9fafb;
@@ -98,21 +98,56 @@ h5 {
 }
 
 .section-grid {
-  background-image: radial-gradient(circle at 20% 20%, rgba(74, 222, 128, 0.15), transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.18), transparent 45%),
-    radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.06), transparent 40%);
+  background-image:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(74, 222, 128, 0.15),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(56, 189, 248, 0.18),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(255, 255, 255, 0.06),
+      transparent 40%
+    );
 }
 
-:root[data-theme='light'] .section-grid {
-  background-image: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.2), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.12), transparent 45%),
-    radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.16), transparent 45%);
+:root[data-theme="light"] .section-grid {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.2), transparent 45%),
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(56, 189, 248, 0.12),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(16, 185, 129, 0.16),
+      transparent 45%
+    );
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) .section-grid {
-    background-image: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.2), transparent 45%),
-      radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.12), transparent 45%),
-      radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.16), transparent 45%);
+  :root:not([data-theme="dark"]) .section-grid {
+    background-image:
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(34, 197, 94, 0.2),
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 80% 0%,
+        rgba(56, 189, 248, 0.12),
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 50% 80%,
+        rgba(16, 185, 129, 0.16),
+        transparent 45%
+      );
   }
 }
