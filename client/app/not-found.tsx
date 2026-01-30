@@ -1,18 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Recycle } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col bg-linear-to-br from-emerald-400 via-emerald-300 to-green-200">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white">
-            <Recycle className="h-5 w-5" />
-          </div>
-          <span className="text-lg font-bold text-white">Trash2Cash</span>
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+      <Link href="/" className="absolute right-6 top-6 text-sm text-(--brand)">
+        Go Home
+      </Link>
+      <Card className="w-full max-w-md space-y-6 text-center">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
+            Page Not Found
+          </p>
+          <h1 className="text-3xl font-semibold">We can't find that page.</h1>
+          <p className="mt-2 text-sm text-(--muted)">
+            The page you are looking for might have moved or never existed.
+          </p>
         </div>
         <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-700">
           <Link href="/">Go Home</Link>

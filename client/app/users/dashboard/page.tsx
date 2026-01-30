@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
+import { KpiCard } from "@/components/shared/kpi-card";
+import SearchBar from "@/components/SearchBar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +19,6 @@ import {
 import { StatusPill } from "@/components/shared/status-pill";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
-import { DollarSign, Package, Truck, Leaf } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -46,127 +47,103 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm text-(--muted)">Dashboard</p>
+        <h1 className="text-2xl font-semibold">
           Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}!
         </h1>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-sm font-semibold text-white">
-          {user?.fullName?.split(" ").map(n => n[0]).join("").slice(0, 2) ?? "U"}
-        </div>
+      </div>
+      <SearchBar />
+      <div className="grid gap-4 md:grid-cols-4">
+        <KpiCard
+          label="Total Earned"
+          value={`LKR ${metrics.totalEarned.toFixed(0)}`}
+          helper="Lifetime earnings"
+        />
+        <KpiCard
+          label="Total Waste"
+          value={`${metrics.totalWeight.toFixed(1)} kg`}
+          helper="Collected to date"
+        />
+        <KpiCard
+          label="Pending Pickups"
+          value={`${metrics.pending}`}
+          helper="Scheduled"
+        />
+        <KpiCard
+          label="CO? Saved"
+          value={`${metrics.co2} kg`}
+          helper="Estimated"
+        />
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-            <DollarSign className="h-6 w-6 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-xs text-(--muted)">Total Earned</p>
-            <p className="text-xl font-bold text-foreground">LKR {metrics.totalEarned.toLocaleString()}</p>
-            <p className="text-xs text-emerald-500">+12% this month</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-            <Package className="h-6 w-6 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-xs text-(--muted)">Total waste</p>
-            <p className="text-xl font-bold text-foreground">{metrics.totalWeight.toFixed(1)} kg</p>
-            <p className="text-xs text-(--muted)">Across {bookings.length} pickups</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-            <Truck className="h-6 w-6 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-xs text-(--muted)">Pending Pickups</p>
-            <p className="text-xl font-bold text-foreground">{metrics.pending}</p>
-            <p className="text-xs text-(--muted)">Next: Tomorrow</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-            <Leaf className="h-6 w-6 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-xs text-(--muted)">CO₂ Saved</p>
-            <p className="text-xl font-bold text-foreground">{metrics.co2} kg</p>
-            <p className="text-xs text-(--muted)">Environmental Impact</p>
-          </div>
-        </Card>
-      </div>
-
-      {/* CTA Banner */}
-      <Card className="flex flex-col justify-between gap-4 bg-linear-to-r from-emerald-500 to-emerald-600 md:flex-row md:items-center">
-        <div className="text-white">
-          <h3 className="text-xl font-bold">Ready for another pickup?</h3>
-          <p className="text-sm text-emerald-100">
-            Schedule a collection and start earning today
+      <Card className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h3 className="text-xl font-semibold">Ready for another pickup?</h3>
+          <p className="text-sm text-(--muted)">
+            Book your next collection and earn more.
           </p>
         </div>
-        <Button asChild className="bg-white text-emerald-600 hover:bg-emerald-50">
+        <Button asChild>
           <Link href="/users/bookings/new">+ Book New Pickup</Link>
         </Button>
       </Card>
 
-      {/* Recent Bookings Table */}
       <Card>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-foreground">Recent Bookings</h3>
-          <Link href="/users/bookings" className="text-sm font-medium text-emerald-500 hover:underline">
-            View All →
-          </Link>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Recent Bookings</h3>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/users/bookings">View all</Link>
+          </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>Waste Type</TableHead>
-              <TableHead>Weight</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {bookings.slice(0, 5).map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell className="font-medium">
-                  <Link
-                    href={`/users/bookings/${booking.id}`}
-                    className="text-foreground hover:text-emerald-500"
-                  >
-                    {booking.id.slice(0, 8)}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-(--muted)">
-                  {booking.wasteCategory?.name ?? "Unknown"}
-                </TableCell>
-                <TableCell className="text-(--muted)">{booking.actualWeightKg ?? "-"} kg</TableCell>
-                <TableCell className="font-medium text-foreground">
-                  LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                </TableCell>
-                <TableCell>
-                  <StatusPill status={booking.status} />
-                </TableCell>
-                <TableCell className="text-(--muted)">
-                  {new Date(booking.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </TableCell>
-              </TableRow>
-            ))}
-            {!bookings.length && (
+        <div className="mt-4">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-(--muted)">
-                  No bookings yet.
-                </TableCell>
+                <TableHead>Booking ID</TableHead>
+                <TableHead>Waste Type</TableHead>
+                <TableHead>Weight</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {bookings.slice(0, 5).map((booking) => (
+                <TableRow key={booking.id}>
+                  <TableCell>
+                    <Link
+                      href={`/users/bookings/${booking.id}`}
+                      className="text-(--brand)"
+                    >
+                      {booking.id.slice(0, 8)}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    {booking.wasteCategory?.name ?? "Unknown"}
+                  </TableCell>
+                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                  <TableCell>
+                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={booking.status} />
+                  </TableCell>
+                  <TableCell>
+                    {new Date(booking.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!bookings.length && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-(--muted)">
+                    No bookings yet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
     </div>
   );

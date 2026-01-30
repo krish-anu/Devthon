@@ -5,11 +5,19 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+
+
+import { Card } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/auth/auth-provider";
 import { toast } from "@/components/ui/use-toast";
+
 import { AuthLayout } from "@/components/auth/auth-layout";
+
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+
 
 const schema = z.object({
   email: z.string().email(),
@@ -54,6 +62,14 @@ export default function LoginPage() {
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome Back</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Sign in to continue to your dashboard</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+      <ThemeToggle className="fixed right-6 top-6" />
+      <Card className="w-full max-w-md space-y-6">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
+            Turn Your Waste Into Wealth
+          </p>
+          <h1 className="text-2xl font-semibold">Welcome Back</h1>
         </div>
 
         <Button
@@ -75,47 +91,36 @@ export default function LoginPage() {
           </svg>
           Continue with Google
         </Button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200 dark:border-slate-700" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white dark:bg-[#0f172a] px-2 text-slate-500 dark:text-slate-400">or</span>
-          </div>
-        </div>
-
+        <div className="text-xs text-(--muted)">or continue with email</div>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2">
-            <Label className="text-slate-700 dark:text-slate-300">Email Address</Label>
-            <Input 
-              placeholder="you@email.com" 
-              {...register("email")} 
-              className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-            />
+            <Label>Email</Label>
+            <Input placeholder="you@email.com" {...register("email")} />
             {errors.email && (
-              <p className="text-xs text-rose-500">{errors.email.message}</p>
+              <p className="text-xs text-rose-400">{errors.email.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-700 dark:text-slate-300">Password</Label>
+            <Label>Password</Label>
             <Input
               type="password"
               placeholder="????????"
               {...register("password")}
-              className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
             />
             {errors.password && (
-              <p className="text-xs text-rose-500">{errors.password.message}</p>
+              <p className="text-xs text-rose-400">{errors.password.message}</p>
             )}
           </div>
-          <div className="flex justify-end">
-            <button type="button" className="text-sm text-emerald-500 hover:text-emerald-600">
-              Forgot Password?
+          <div className="flex items-center justify-between text-xs text-(--muted)">
+            <button type="button" className="hover:text-foreground">
+              Forgot password?
             </button>
+            <Link href="/signup" className="text-(--brand)">
+              Create account
+            </Link>
           </div>
-          <Button type="submit" className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign In"}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Login"}
           </Button>
         </form>
 

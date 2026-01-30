@@ -50,14 +50,12 @@ export default function SignupPage() {
   };
 
   return (
-    <AuthLayout
-      title="Join the Green Revolution"
-      subtitle="Start earning today by signing up. It only takes 2 minutes!"
-    >
-      <div className="space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create Account</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Fill your details to get started</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+      <ThemeToggle className="fixed right-6 top-6" />
+      <Card className="w-full max-w-md space-y-6">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-brand">Join the Green Revolution</p>
+          <h1 className="text-2xl font-semibold">Create your account</h1>
         </div>
 
         <Button
@@ -75,13 +73,12 @@ export default function SignupPage() {
           </svg>
           Sign up with Google
         </Button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200 dark:border-slate-700" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white dark:bg-[#0f172a] px-2 text-slate-500 dark:text-slate-400">or</span>
+        <div className="text-xs text-muted">or sign up with email</div>
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-2">
+            <Label>Full Name</Label>
+            <Input placeholder="Rajesh Perera" {...register('fullName')} />
+            {errors.fullName && <p className="text-xs text-rose-400">{errors.fullName.message}</p>}
           </div>
         </div>
 
@@ -114,28 +111,29 @@ export default function SignupPage() {
             {errors.phone && <p className="text-xs text-rose-500">{errors.phone.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-700 dark:text-slate-300">Password</Label>
-            <Input 
-              type="password" 
-              placeholder="Create a password" 
-              {...register('password')} 
-              className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-            />
-            {errors.password && <p className="text-xs text-rose-500">{errors.password.message}</p>}
+            <Label>Account Type</Label>
+            <div className="flex gap-2">
+              {['HOUSEHOLD', 'BUSINESS'].map((type) => (
+                <button
+                  type="button"
+                  key={type}
+                  onClick={() => setValue('type', type as 'HOUSEHOLD' | 'BUSINESS')}
+                  className={`rounded-full border px-4 py-2 text-xs ${
+                    watch('type') === type
+                      ? 'border-emerald-400 bg-emerald-400/20 text-emerald-100'
+                          : 'border-border text-muted'
+                  }`}
+                >
+                  {type === 'HOUSEHOLD' ? 'Household' : 'Business'}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <div className="flex items-start gap-3">
-            <Checkbox 
-              checked={termsChecked} 
-              onCheckedChange={(checked) => setValue('terms', Boolean(checked))}
-              className="mt-0.5 border-slate-300 dark:border-slate-600"
-            />
-            <span className="text-sm text-slate-600 dark:text-slate-400">
-              I agree to the{' '}
-              <button type="button" className="text-emerald-500 hover:text-emerald-600">Terms of Service</button>
-              {' '}and{' '}
-              <button type="button" className="text-emerald-500 hover:text-emerald-600">Privacy Policy</button>
-              {errors.terms && <span className="block text-xs text-rose-500 mt-1">{errors.terms.message}</span>}
+              <div className="flex items-start gap-3 text-xs text-muted">
+            <Checkbox checked={termsChecked} onCheckedChange={(checked) => setValue('terms', Boolean(checked))} />
+            <span>
+              I agree to the terms and privacy policy.
+              {errors.terms && <span className="block text-rose-400">{errors.terms.message}</span>}
             </span>
           </div>
 
@@ -143,14 +141,10 @@ export default function SignupPage() {
             {isSubmitting ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
-
-        <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-emerald-500 hover:text-emerald-600">
-            Sign In
-          </Link>
-        </p>
-      </div>
-    </AuthLayout>
+        <div className="text-xs text-muted">
+          Already have an account? <Link href="/login" className="text-brand">Login</Link>
+        </div>
+      </Card>
+    </div>
   );
 }

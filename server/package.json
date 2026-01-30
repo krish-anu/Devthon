@@ -26,6 +26,7 @@
     "logs:watch": "tail -f logs/trash2cash-$(date +%F).log | node scripts/pretty-logs.js -"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -33,17 +34,21 @@
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.0.0",
+    "@nestjs/throttler": "^4.0.0",
     "@prisma/client": "^6.2.1",
     "bcrypt": "^6.0.0",
-    "nest-winston": "^1.10.2",
-    "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^4.7.1",
+    "cache-manager": "^7.2.8",
+    "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "nest-winston": "^1.10.2",
+    "openai": "^6.17.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
