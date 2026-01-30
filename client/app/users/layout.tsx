@@ -1,32 +1,63 @@
-'use client';
+"use client";
 
-import { LayoutGrid, History, Truck, Bell, Settings, LogOut } from 'lucide-react';
-import { RequireAuth } from '@/components/auth/require-auth';
-import { AppShell } from '@/components/layout/app-shell';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/components/auth/auth-provider';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import {
+  LayoutGrid,
+  History,
+  Truck,
+  Bell,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { RequireAuth } from "@/components/auth/require-auth";
+import { AppShell } from "@/components/layout/app-shell";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/auth-provider";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navItems = [
-    { label: 'Dashboard', href: '/users/dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
-    { label: 'Booking History', href: '/users/bookings', icon: <History className="h-4 w-4" /> },
-    { label: 'Pending Pickups', href: '/users/pending-pickups', icon: <Truck className="h-4 w-4" /> },
-    { label: 'Notifications', href: '/users/notifications', icon: <Bell className="h-4 w-4" /> },
-    { label: 'Profile Settings', href: '/users/profile', icon: <Settings className="h-4 w-4" /> },
+    {
+      label: "Dashboard",
+      href: "/users/dashboard",
+      icon: <LayoutGrid className="h-4 w-4" />,
+    },
+    {
+      label: "Booking History",
+      href: "/users/bookings",
+      icon: <History className="h-4 w-4" />,
+    },
+    {
+      label: "Pending Pickups",
+      href: "/users/pending-pickups",
+      icon: <Truck className="h-4 w-4" />,
+    },
+    {
+      label: "Notifications",
+      href: "/users/notifications",
+      icon: <Bell className="h-4 w-4" />,
+    },
+    {
+      label: "Profile Settings",
+      href: "/users/profile",
+      icon: <Settings className="h-4 w-4" />,
+    },
   ];
 
   return (
-    <RequireAuth roles={['USER', 'ADMIN']}>
+    <RequireAuth roles={["USER", "ADMIN"]}>
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
         header={
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">User Portal</p>
-              <h2 className="text-lg font-semibold">Welcome back, {user?.fullName?.split(' ')[0] ?? 'User'}</h2>
+              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">
+                User Portal
+              </p>
+              <h2 className="text-lg font-semibold">
+                Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}
+              </h2>
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />

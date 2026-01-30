@@ -1,47 +1,49 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { PricingItem } from '@/lib/types';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from '@/components/ui/use-toast';
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { PricingItem } from "@/lib/types";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/use-toast";
 
 const weightOptions = [
-  { label: '0-5 kg', min: 0, max: 5 },
-  { label: '5-10 kg', min: 5, max: 10 },
-  { label: '10-20 kg', min: 10, max: 20 },
-  { label: '20-50 kg', min: 20, max: 50 },
-  { label: '50+ kg', min: 50, max: 80 },
+  { label: "0-5 kg", min: 0, max: 5 },
+  { label: "5-10 kg", min: 5, max: 10 },
+  { label: "10-20 kg", min: 10, max: 20 },
+  { label: "20-50 kg", min: 20, max: 50 },
+  { label: "50+ kg", min: 50, max: 80 },
 ];
 
 const timeSlots = [
-  '8:00 AM - 10:00 AM',
-  '10:00 AM - 12:00 PM',
-  '1:00 PM - 3:00 PM',
-  '3:00 PM - 5:00 PM',
-  '6:00 PM - 8:00 PM',
+  "8:00 AM - 10:00 AM",
+  "10:00 AM - 12:00 PM",
+  "1:00 PM - 3:00 PM",
+  "3:00 PM - 5:00 PM",
+  "6:00 PM - 8:00 PM",
 ];
 
 export default function NewBookingPage() {
   const { data } = useQuery({
-    queryKey: ['public-pricing'],
-    queryFn: () => apiFetch<PricingItem[]>('/public/pricing', {}, false),
+    queryKey: ["public-pricing"],
+    queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
   });
 
   const [step, setStep] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState<PricingItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<PricingItem | null>(
+    null,
+  );
   const [weightRange, setWeightRange] = useState(weightOptions[1]);
-  const [addressLine1, setAddressLine1] = useState('');
-  const [city, setCity] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [specialInstructions, setSpecialInstructions] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
+  const [addressLine1, setAddressLine1] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTimeSlot, setScheduledTimeSlot] = useState(timeSlots[1]);
   const [terms, setTerms] = useState(false);
 
@@ -54,17 +56,21 @@ export default function NewBookingPage() {
 
   const handleSubmit = async () => {
     if (!selectedCategory) {
-      toast({ title: 'Select a category', variant: 'warning' });
+      toast({ title: "Select a category", variant: "warning" });
       return;
     }
     if (!terms) {
-      toast({ title: 'Accept terms', description: 'You must accept the terms before confirming.', variant: 'warning' });
+      toast({
+        title: "Accept terms",
+        description: "You must accept the terms before confirming.",
+        variant: "warning",
+      });
       return;
     }
 
     try {
-      await apiFetch('/bookings', {
-        method: 'POST',
+      await apiFetch("/bookings", {
+        method: "POST",
         body: JSON.stringify({
           wasteCategoryId: selectedCategory.wasteCategory.id,
           estimatedWeightRange: weightRange.label,
@@ -78,19 +84,27 @@ export default function NewBookingPage() {
           scheduledTimeSlot,
         }),
       });
-      toast({ title: 'Booking confirmed', description: 'Your pickup is scheduled.', variant: 'success' });
-      window.location.href = '/users/bookings';
+      toast({
+        title: "Booking confirmed",
+        description: "Your pickup is scheduled.",
+        variant: "success",
+      });
+      window.location.href = "/users/bookings";
     } catch (error: any) {
-      toast({ title: 'Booking failed', description: error?.message, variant: 'error' });
+      toast({
+        title: "Booking failed",
+        description: error?.message,
+        variant: "error",
+      });
     }
   };
 
   const steps = [
-    'Select Waste Category',
-    'Estimate Weight',
-    'Pickup Location',
-    'Select Date & Time',
-    'Confirm Booking',
+    "Select Waste Category",
+    "Estimate Weight",
+    "Pickup Location",
+    "Select Date & Time",
+    "Confirm Booking",
   ];
 
   return (
@@ -101,7 +115,9 @@ export default function NewBookingPage() {
             <div key={label} className="flex items-center gap-2">
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
-                  step === index + 1 ? 'bg-emerald-400 text-slate-950' : 'bg-[color:var(--surface-strong)] text-[color:var(--muted)]'
+                  step === index + 1
+                    ? "bg-emerald-400 text-slate-950"
+                    : "bg-[color:var(--surface-strong)] text-[color:var(--muted)]"
                 }`}
               >
                 {index + 1}
@@ -121,13 +137,17 @@ export default function NewBookingPage() {
                 key={item.id}
                 className={`rounded-2xl border px-4 py-4 text-left ${
                   selectedCategory?.id === item.id
-                    ? 'border-emerald-400 bg-emerald-400/10'
-                    : 'border-[color:var(--border)] bg-[color:var(--surface)]'
+                    ? "border-emerald-400 bg-emerald-400/10"
+                    : "border-[color:var(--border)] bg-[color:var(--surface)]"
                 }`}
                 onClick={() => setSelectedCategory(item)}
               >
-                <p className="text-lg font-semibold">{item.wasteCategory.name}</p>
-                <p className="text-xs text-[color:var(--muted)]">LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg</p>
+                <p className="text-lg font-semibold">
+                  {item.wasteCategory.name}
+                </p>
+                <p className="text-xs text-[color:var(--muted)]">
+                  LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg
+                </p>
               </button>
             ))}
           </div>
@@ -143,8 +163,8 @@ export default function NewBookingPage() {
                 key={option.label}
                 className={`rounded-xl border px-4 py-3 text-left ${
                   weightRange.label === option.label
-                    ? 'border-emerald-400 bg-emerald-400/10'
-                    : 'border-[color:var(--border)] bg-[color:var(--surface)]'
+                    ? "border-emerald-400 bg-emerald-400/10"
+                    : "border-[color:var(--border)] bg-[color:var(--surface)]"
                 }`}
                 onClick={() => setWeightRange(option)}
               >
@@ -153,7 +173,8 @@ export default function NewBookingPage() {
             ))}
           </div>
           <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--muted)]">
-            Estimated earnings: LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
+            Estimated earnings: LKR {estimate.min.toFixed(0)} -{" "}
+            {estimate.max.toFixed(0)}
           </div>
         </Card>
       )}
@@ -164,19 +185,31 @@ export default function NewBookingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Street Address</Label>
-              <Input value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} />
+              <Input
+                value={addressLine1}
+                onChange={(event) => setAddressLine1(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>City</Label>
-              <Input value={city} onChange={(event) => setCity(event.target.value)} />
+              <Input
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>ZIP</Label>
-              <Input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} />
+              <Input
+                value={postalCode}
+                onChange={(event) => setPostalCode(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Special Instructions</Label>
-              <Textarea value={specialInstructions} onChange={(event) => setSpecialInstructions(event.target.value)} />
+              <Textarea
+                value={specialInstructions}
+                onChange={(event) => setSpecialInstructions(event.target.value)}
+              />
             </div>
           </div>
           <div className="h-48 rounded-2xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)]">
@@ -189,7 +222,11 @@ export default function NewBookingPage() {
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Select Date & Time</h3>
           <div className="space-y-4">
-            <Input type="date" value={scheduledDate} onChange={(event) => setScheduledDate(event.target.value)} />
+            <Input
+              type="date"
+              value={scheduledDate}
+              onChange={(event) => setScheduledDate(event.target.value)}
+            />
             <div className="grid gap-3 md:grid-cols-3">
               {timeSlots.map((slot) => (
                 <button
@@ -197,8 +234,8 @@ export default function NewBookingPage() {
                   onClick={() => setScheduledTimeSlot(slot)}
                   className={`rounded-xl border px-4 py-3 text-left text-sm ${
                     scheduledTimeSlot === slot
-                      ? 'border-emerald-400 bg-emerald-400/10'
-                      : 'border-[color:var(--border)] bg-[color:var(--surface)]'
+                      ? "border-emerald-400 bg-emerald-400/10"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)]"
                   }`}
                 >
                   {slot}
@@ -215,16 +252,24 @@ export default function NewBookingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
               <p className="text-sm text-[color:var(--muted)]">Category</p>
-              <p className="text-lg font-semibold">{selectedCategory?.wasteCategory.name ?? '--'}</p>
+              <p className="text-lg font-semibold">
+                {selectedCategory?.wasteCategory.name ?? "--"}
+              </p>
             </div>
             <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <p className="text-sm text-[color:var(--muted)]">Estimated Weight</p>
+              <p className="text-sm text-[color:var(--muted)]">
+                Estimated Weight
+              </p>
               <p className="text-lg font-semibold">{weightRange.label}</p>
             </div>
             <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <p className="text-sm text-[color:var(--muted)]">Pickup Address</p>
-              <p className="text-lg font-semibold">{addressLine1 || '--'}</p>
-              <p className="text-sm text-[color:var(--muted)]">{city} {postalCode}</p>
+              <p className="text-sm text-[color:var(--muted)]">
+                Pickup Address
+              </p>
+              <p className="text-lg font-semibold">{addressLine1 || "--"}</p>
+              <p className="text-sm text-[color:var(--muted)]">
+                {city} {postalCode}
+              </p>
             </div>
             <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
               <p className="text-sm text-[color:var(--muted)]">Time Slot</p>
@@ -232,18 +277,26 @@ export default function NewBookingPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-[color:var(--muted)]">
-            <Checkbox checked={terms} onCheckedChange={(checked) => setTerms(Boolean(checked))} />
+            <Checkbox
+              checked={terms}
+              onCheckedChange={(checked) => setTerms(Boolean(checked))}
+            />
             I agree to the pickup terms and quality inspection policy.
           </div>
         </Card>
       )}
 
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => setStep((s) => Math.max(1, s - 1))}>
+        <Button
+          variant="outline"
+          onClick={() => setStep((s) => Math.max(1, s - 1))}
+        >
           Back
         </Button>
         {step < 5 ? (
-          <Button onClick={() => setStep((s) => Math.min(5, s + 1))}>Next</Button>
+          <Button onClick={() => setStep((s) => Math.min(5, s + 1))}>
+            Next
+          </Button>
         ) : (
           <Button onClick={handleSubmit}>Confirm Booking</Button>
         )}
@@ -251,4 +304,3 @@ export default function NewBookingPage() {
     </div>
   );
 }
-
