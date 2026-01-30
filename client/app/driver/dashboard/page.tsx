@@ -67,10 +67,7 @@ export default function DriverDashboardPage() {
               ))}
               {!bookings.length && (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center text-[color:var(--muted)]"
-                  >
+                  <TableCell colSpan={5} className="text-center text-(--muted)">
                     No assigned pickups.
                   </TableCell>
                 </TableRow>

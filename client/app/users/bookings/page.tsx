@@ -78,11 +78,11 @@ export default function BookingHistoryPage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
-        <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
+        <select className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)">
           <option>Last 30 Days</option>
           <option>Last 90 Days</option>
         </select>
-        <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
+        <select className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)">
           <option>All Types</option>
           <option>Plastic</option>
           <option>Metal</option>
@@ -90,7 +90,7 @@ export default function BookingHistoryPage() {
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value)}
-          className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+          className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
         >
           <option value="">All Status</option>
           <option value="COMPLETED">Completed</option>
@@ -138,7 +138,7 @@ export default function BookingHistoryPage() {
                 <TableCell>
                   <a
                     href={`/users/bookings/${booking.id}`}
-                    className="text-[color:var(--brand)]"
+                    className="text-(--brand)"
                   >
                     {booking.id.slice(0, 8)}
                   </a>
@@ -160,17 +160,14 @@ export default function BookingHistoryPage() {
             ))}
             {!bookings.length && (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-[color:var(--muted)]"
-                >
+                <TableCell colSpan={6} className="text-center text-(--muted)">
                   No bookings found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        <div className="mt-4 flex items-center justify-between text-sm text-[color:var(--muted)]">
+        <div className="mt-4 flex items-center justify-between text-sm text-(--muted)">
           <span>Page 1 of 1</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm">

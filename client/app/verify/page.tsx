@@ -44,11 +44,11 @@ export default function VerifyPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
       <ThemeToggle className="fixed right-6 top-6" />
       <Card className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">
+          <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
             Verify Your Identity
           </p>
           <h1 className="text-2xl font-semibold">Enter the 6-digit code</h1>
@@ -59,14 +59,12 @@ export default function VerifyPage() {
               key={index}
               value={digit}
               onChange={(event) => handleChange(index, event.target.value)}
-              className="h-12 w-12 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] text-center text-lg text-[color:var(--foreground)]"
+              className="h-12 w-12 rounded-xl border border-(--border) bg-(--surface-soft) text-center text-lg text-foreground"
               maxLength={1}
             />
           ))}
         </div>
-        <div className="text-xs text-[color:var(--muted)]">
-          Resend code in {seconds}s
-        </div>
+        <div className="text-xs text-(--muted)">Resend code in {seconds}s</div>
         <Button className="w-full" onClick={handleVerify}>
           Verify
         </Button>

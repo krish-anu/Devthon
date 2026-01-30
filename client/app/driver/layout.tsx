@@ -39,7 +39,7 @@ export default function DriverLayout({
         header={
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">
+              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
                 Driver Console
               </p>
               <h2 className="text-lg font-semibold">

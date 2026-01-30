@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { Card } from '@/components/ui/card';
-import { KpiCard } from '@/components/shared/kpi-card';
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { KpiCard } from "@/components/shared/kpi-card";
 import {
   ResponsiveContainer,
   BarChart,
@@ -14,14 +14,14 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from "recharts";
 
-const pieColors = ['#4ade80', '#38bdf8', '#f97316', '#facc15', '#ec4899'];
+const pieColors = ["#4ade80", "#38bdf8", "#f97316", "#facc15", "#ec4899"];
 
 export default function AdminDashboardPage() {
   const { data } = useQuery({
-    queryKey: ['admin-metrics'],
-    queryFn: () => apiFetch<any>('/admin/metrics'),
+    queryKey: ["admin-metrics"],
+    queryFn: () => apiFetch<any>("/admin/metrics"),
   });
 
   const totals = data?.totals ?? {
@@ -34,7 +34,10 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <KpiCard label="Total Revenue" value={`LKR ${totals.totalRevenue.toFixed(0)}`} />
+        <KpiCard
+          label="Total Revenue"
+          value={`LKR ${totals.totalRevenue.toFixed(0)}`}
+        />
         <KpiCard label="Total Users" value={`${totals.totalUsers}`} />
         <KpiCard label="Active Drivers" value={`${totals.activeDrivers}`} />
         <KpiCard label="Pending Pickups" value={`${totals.pendingPickups}`} />
@@ -50,10 +53,10 @@ export default function AdminDashboardPage() {
                 <YAxis stroke="#94a3b8" fontSize={12} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#0b1220',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: "#0b1220",
+                    border: "1px solid rgba(255,255,255,0.1)",
                   }}
-                  labelStyle={{ color: '#e2e8f0' }}
+                  labelStyle={{ color: "#e2e8f0" }}
                 />
                 <Bar dataKey="revenue" fill="#4ade80" radius={[6, 6, 0, 0]} />
               </BarChart>
@@ -72,16 +75,21 @@ export default function AdminDashboardPage() {
                   innerRadius={50}
                   outerRadius={90}
                 >
-                  {(data?.wasteDistribution ?? []).map((_: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                  ))}
+                  {(data?.wasteDistribution ?? []).map(
+                    (_: any, index: number) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={pieColors[index % pieColors.length]}
+                      />
+                    ),
+                  )}
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#0b1220',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: "#0b1220",
+                    border: "1px solid rgba(255,255,255,0.1)",
                   }}
-                  labelStyle={{ color: '#e2e8f0' }}
+                  labelStyle={{ color: "#e2e8f0" }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -93,12 +101,20 @@ export default function AdminDashboardPage() {
         <h3 className="text-lg font-semibold">Recent Activity</h3>
         <div className="mt-4 space-y-3">
           {(data?.recentActivity ?? []).map((activity: any) => (
-            <div key={activity.id} className="flex items-center justify-between rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm">
+            <div
+              key={activity.id}
+              className="flex items-center justify-between rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm"
+            >
               <div>
-                <p className="font-semibold">{activity.user?.fullName ?? 'User'} booked {activity.wasteCategory?.name}</p>
-                <p className="text-xs text-[color:var(--muted)]">{new Date(activity.createdAt).toLocaleString()}</p>
+                <p className="font-semibold">
+                  {activity.user?.fullName ?? "User"} booked{" "}
+                  {activity.wasteCategory?.name}
+                </p>
+                <p className="text-xs text-(--muted)">
+                  {new Date(activity.createdAt).toLocaleString()}
+                </p>
               </div>
-              <span className="text-xs text-[color:var(--muted)]">{activity.status}</span>
+              <span className="text-xs text-(--muted)">{activity.status}</span>
             </div>
           ))}
         </div>
@@ -106,4 +122,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-

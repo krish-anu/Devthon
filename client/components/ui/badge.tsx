@@ -6,12 +6,12 @@ const badgeVariants = cva(
   'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
   {
     variants: {
-      variant: {
+        variant: {
         default: 'bg-emerald-500/15 text-emerald-200',
         warning: 'bg-amber-400/20 text-amber-200',
         danger: 'bg-rose-500/20 text-rose-200',
         info: 'bg-sky-500/20 text-sky-200',
-        outline: 'border border-[color:var(--border)] text-[color:var(--muted)]',
+        outline: 'border border-(--border) text-(--muted)',
       },
     },
     defaultVariants: {

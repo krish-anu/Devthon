@@ -143,7 +143,7 @@ export default function AdminUsersPage() {
         <select 
           value={type}
           onChange={(event) => setType(event.target.value as 'ALL' | 'HOUSEHOLD' | 'BUSINESS')}
-          className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+          className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
         >
           <option value="ALL">All Types</option>
           <option value="HOUSEHOLD">Household</option>
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
                 <TableCell>{user.status}</TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="rounded-full border border-[color:var(--border)] p-2 text-[color:var(--muted)]">
+                    <DropdownMenuTrigger className="rounded-full border border-(--border) p-2 text-(--muted)">
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -255,7 +255,7 @@ export default function AdminUsersPage() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as 'HOUSEHOLD' | 'BUSINESS' })}
-                  className="h-10 w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 text-sm"
+                  className="h-10 w-full rounded-lg border border-(--border) bg-(--surface-soft) px-3 text-sm"
                 >
                   <option value="HOUSEHOLD">HOUSEHOLD</option>
                   <option value="BUSINESS">BUSINESS</option>
@@ -267,7 +267,7 @@ export default function AdminUsersPage() {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'USER' | 'ADMIN' | 'DRIVER' })}
-                  className="h-10 w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 text-sm"
+                  className="h-10 w-full rounded-lg border border-(--border) bg-(--surface-soft) px-3 text-sm"
                 >
                   <option value="USER">USER</option>
                   <option value="ADMIN">ADMIN</option>
@@ -280,7 +280,7 @@ export default function AdminUsersPage() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' })}
-                  className="h-10 w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 text-sm"
+                  className="h-10 w-full rounded-lg border border-(--border) bg-(--surface-soft) px-3 text-sm"
                 >
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="INACTIVE">INACTIVE</option>

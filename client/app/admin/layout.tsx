@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         header={
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">Admin Console</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">Admin Console</p>
               <h2 className="text-lg font-semibold">Welcome, {user?.fullName ?? 'Admin'}</h2>
             </div>
             <div className="flex items-center gap-2">
