@@ -29,6 +29,8 @@ export function Sidebar({
         </span>
         <div className="text-lg font-semibold">Trash2Cash</div>
       </div>
+
+      {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1">
         {items.map((item) => {
           const active = pathname.startsWith(item.href);
