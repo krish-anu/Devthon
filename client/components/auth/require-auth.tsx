@@ -25,14 +25,19 @@ export function RequireAuth({
     if (roles && !roles.includes(user.role)) {
       // Don't force-navigation away while the user is actively on their profile page
       // (e.g. after saving profile updates) — allow staying on `/users/profile` or `/driver/profile`.
-      if (pathname && (pathname.startsWith("/users/profile") || pathname.startsWith("/driver/profile"))) return;
+      if (
+        pathname &&
+        (pathname.startsWith("/users/profile") ||
+          pathname.startsWith("/driver/profile"))
+      )
+        return;
       router.replace(
         user.role === "ADMIN"
           ? "/admin/dashboard"
           : user.role === "DRIVER"
-          ? "/driver/dashboard"
-          : "/users/dashboard",
-      ); 
+            ? "/driver/dashboard"
+            : "/users/dashboard",
+      );
     }
   }, [user, loading, roles, router]);
 
