@@ -23,8 +23,8 @@ export class AdminController {
   }
 
   @Get('users')
-  listUsers(@Query('search') search?: string) {
-    return this.adminService.listUsers(search);
+  listUsers(@Query('search') search?: string, @Query('type') type?: string) {
+    return this.adminService.listUsers(search, type);
   }
 
   @Post('users')

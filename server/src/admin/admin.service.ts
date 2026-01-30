@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma, UserType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
@@ -83,17 +84,37 @@ export class AdminService {
     };
   }
 
-  async listUsers(search?: string) {
+  async listUsers(search?: string, type?: string) {
+    const where: Prisma.UserWhereInput = {};
+    
+    // Validate and normalize type - only accept valid UserType values
+    const typeValue: UserType | null = type === 'HOUSEHOLD' || type === 'BUSINESS' ? (type as UserType) : null;
+    
+    // Validate search - only use if non-empty after trim
+    const hasSearch = search?.trim().length;
+    
+    // Build search filters array if search is valid
+    const searchFilters: Prisma.UserWhereInput[] | null = hasSearch
+      ? [
+          { fullName: { contains: search!.trim(), mode: 'insensitive' as const } },
+          { email: { contains: search!.trim(), mode: 'insensitive' as const } },
+        ]
+      : null;
+    
+    // Combine type and search filters with AND logic
+    if (typeValue && searchFilters) {
+      where.AND = [
+        { type: typeValue },
+        { OR: searchFilters },
+      ];
+    } else if (typeValue) {
+      where.type = typeValue;
+    } else if (searchFilters) {
+      where.OR = searchFilters;
+    }
+    
     const users = await this.prisma.user.findMany({
-      where: search
-        ? {
-            OR: [
-              { fullName: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
-              { phone: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : undefined,
+      where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -131,6 +152,14 @@ export class AdminService {
   }
 
   async deleteUser(id: string) {
+    // Delete related records first (due to foreign key constraints)
+    await this.prisma.notification.deleteMany({ where: { userId: id } });
+    await this.prisma.paymentTransaction.deleteMany({
+      where: { booking: { userId: id } },
+    });
+    await this.prisma.booking.deleteMany({ where: { userId: id } });
+    
+    // Now delete the user
     await this.prisma.user.delete({ where: { id } });
     return { success: true };
   }
@@ -162,22 +191,43 @@ export class AdminService {
   }
 
   async listBookings(query: AdminBookingsQueryDto) {
-    const where: any = {};
-    if (query.status) where.status = query.status;
-    if (query.userId) where.userId = query.userId;
+    const where: Prisma.BookingWhereInput = {};
+    
+    // Filter by status
+    if (query.status) {
+      where.status = query.status;
+    }
+    
+    // Filter by user ID
+    if (query.userId) {
+      where.userId = query.userId;
+    }
+    
+    // Filter by date range
     if (query.from || query.to) {
       where.createdAt = {};
-      if (query.from) where.createdAt.gte = new Date(query.from);
-      if (query.to) where.createdAt.lte = new Date(query.to);
+      if (query.from) {
+        where.createdAt.gte = new Date(query.from);
+      }
+      if (query.to) {
+        // Add 1 day to include the entire "to" day
+        const toDate = new Date(query.to);
+        toDate.setDate(toDate.getDate() + 1);
+        where.createdAt.lt = toDate;
+      }
     }
+    
+    // Filter by search (booking ID or address)
     if (query.search) {
+      const searchTerm = query.search.trim();
       where.OR = [
-        { id: { contains: query.search, mode: 'insensitive' } },
-        { addressLine1: { contains: query.search, mode: 'insensitive' } },
+        { id: { contains: searchTerm, mode: 'insensitive' as const } },
+        { addressLine1: { contains: searchTerm, mode: 'insensitive' as const } },
       ];
     }
+    
     return this.prisma.booking.findMany({
-      where,
+      where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: { createdAt: 'desc' },
       include: { user: true, wasteCategory: true, driver: true },
     });
