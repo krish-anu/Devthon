@@ -1,50 +1,71 @@
-﻿'use client';
+﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bot } from 'lucide-react';
-import ReactMarkdown, { Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { apiFetch } from '@/lib/api';
-import { getPageContext, PageContext } from '@/lib/page-context';
-import { cn } from '@/lib/utils';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Bot } from "lucide-react";
+import ReactMarkdown, { Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { apiFetch } from "@/lib/api";
+import { getPageContext, PageContext } from "@/lib/page-context";
+import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = 't2c-assistant-chat';
+const STORAGE_KEY = "t2c-assistant-chat";
 const MAX_MESSAGES = 20;
-const WELCOME_MESSAGE = "Hi 👋 I'm your Trash2Cash AI assistant. How can I help you?";
+const WELCOME_MESSAGE =
+  "Hi 👋 I'm your Trash2Cash AI assistant. How can I help you?";
 const BLOCKED_PROTOCOLS = new Set([
-  'chrome-extension:',
-  'about:',
-  'blob:',
-  'data:',
-  'mailto:',
-  'tel:',
-  'javascript:',
+  "chrome-extension:",
+  "about:",
+  "blob:",
+  "data:",
+  "mailto:",
+  "tel:",
+  "javascript:",
 ]);
-const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
+const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 
 type ChatMessage = {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   createdAt: number;
 };
 
 const markdownComponents: Components = {
-  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-  ul: ({ children }) => <ul className="mb-2 list-disc pl-5 last:mb-0">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-2 list-decimal pl-5 last:mb-0">{children}</ol>,
-  li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
-  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-  pre: ({ children }) => (
+  p: ({ children }: { children?: React.ReactNode }) => (
+    <p className="mb-2 last:mb-0">{children}</p>
+  ),
+  ul: ({ children }: { children?: React.ReactNode }) => (
+    <ul className="mb-2 list-disc pl-5 last:mb-0">{children}</ul>
+  ),
+  ol: ({ children }: { children?: React.ReactNode }) => (
+    <ol className="mb-2 list-decimal pl-5 last:mb-0">{children}</ol>
+  ),
+  li: ({ children }: { children?: React.ReactNode }) => (
+    <li className="mb-1 last:mb-0">{children}</li>
+  ),
+  strong: ({ children }: { children?: React.ReactNode }) => (
+    <strong className="font-semibold">{children}</strong>
+  ),
+  pre: ({ children }: { children?: React.ReactNode }) => (
     <pre className="mb-2 overflow-x-auto rounded-lg bg-black/5 p-2 text-[0.85em]">
       {children}
     </pre>
   ),
-  code: ({ inline, children }) =>
+  code: ({
+    inline,
+    children,
+  }: {
+    inline?: boolean;
+    children?: React.ReactNode;
+  }) =>
     inline ? (
-      <code className="rounded bg-black/5 px-1 py-0.5 text-[0.85em]">{children}</code>
+      <code className="rounded bg-black/5 px-1 py-0.5 text-[0.85em]">
+        {children}
+      </code>
     ) : (
-      <code className="block whitespace-pre-wrap text-[0.85em]">{children}</code>
+      <code className="block whitespace-pre-wrap text-[0.85em]">
+        {children}
+      </code>
     ),
 };
 
@@ -58,25 +79,25 @@ function BotAvatar({
   return (
     <div
       className={cn(
-        'flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--surface-soft)] text-[color:var(--brand)]',
+        "flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--surface-soft)] text-[color:var(--brand)]",
         className,
       )}
       aria-hidden="true"
     >
-      <Bot className={cn('h-4 w-4', iconClassName)} />
+      <Bot className={cn("h-4 w-4", iconClassName)} />
     </div>
   );
 }
 
 function createId() {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
   return `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 function isRelativeUrl(value: string) {
-  if (value.startsWith('//')) return false;
+  if (value.startsWith("//")) return false;
   return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value);
 }
 
@@ -113,14 +134,14 @@ function getSafePageContext() {
   const safeUrl = context.url ? toSafeRequestUrl(context.url) : null;
   return {
     ...context,
-    url: safeUrl ?? '',
+    url: safeUrl ?? "",
   };
 }
 
 export default function AssistantChatbox() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
   const pageContextRef = useRef<PageContext | null>(null);
@@ -129,7 +150,8 @@ export default function AssistantChatbox() {
   const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+    const stored =
+      typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as ChatMessage[];
@@ -145,8 +167,11 @@ export default function AssistantChatbox() {
 
   useEffect(() => {
     if (!hasHydrated) return;
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES)));
+    if (typeof window === "undefined") return;
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(messages.slice(-MAX_MESSAGES)),
+    );
   }, [messages, hasHydrated]);
 
   useEffect(() => {
@@ -167,14 +192,13 @@ export default function AssistantChatbox() {
   useEffect(() => {
     if (!isOpen || !hasHydrated) return;
     if (messages.length === 0) {
-      setMessages([
-        {
-          id: createId(),
-          role: 'assistant',
-          content: WELCOME_MESSAGE,
-          createdAt: Date.now(),
-        },
-      ]);
+      const welcome: ChatMessage = {
+        id: createId(),
+        role: "assistant",
+        content: WELCOME_MESSAGE,
+        createdAt: Date.now(),
+      };
+      setMessages([welcome]);
     }
   }, [isOpen, messages.length, hasHydrated]);
 
@@ -186,12 +210,12 @@ export default function AssistantChatbox() {
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen]);
 
   const chatHistory = useMemo(() => {
@@ -210,13 +234,13 @@ export default function AssistantChatbox() {
 
     const userMessage: ChatMessage = {
       id: createId(),
-      role: 'user',
+      role: "user",
       content: input.trim(),
       createdAt: Date.now(),
     };
 
     setMessages((prev) => [...prev, userMessage].slice(-MAX_MESSAGES));
-    setInput('');
+    setInput("");
     setIsLoading(true);
 
     const pageContext = getSafePageContext();
@@ -225,13 +249,13 @@ export default function AssistantChatbox() {
     try {
       const historyForRequest = chatHistory.slice(-(MAX_MESSAGES - 1));
       const response = await apiFetch<{ reply: string }>(
-        '/chat',
+        "/chat",
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify({
             messages: [
               ...historyForRequest,
-              { role: 'user', content: userMessage.content },
+              { role: "user", content: userMessage.content },
             ],
             pageContext,
           }),
@@ -241,31 +265,28 @@ export default function AssistantChatbox() {
 
       const assistantMessage: ChatMessage = {
         id: createId(),
-        role: 'assistant',
-        content: response.reply || 'Sorry, I could not generate a reply right now.',
+        role: "assistant",
+        content:
+          response.reply || "Sorry, I could not generate a reply right now.",
         createdAt: Date.now(),
       };
 
       setMessages((prev) => [...prev, assistantMessage].slice(-MAX_MESSAGES));
     } catch (error: any) {
       const rawMessage =
-        typeof error?.message === 'string'
+        typeof error?.message === "string"
           ? error.message
-          : 'Sorry, something went wrong while contacting the assistant.';
-      const friendlyMessage = rawMessage.includes('Cannot POST /api/chat')
-        ? 'Chat service is unavailable. Please ensure the server is running with the latest code.'
+          : "Sorry, something went wrong while contacting the assistant.";
+      const friendlyMessage = rawMessage.includes("Cannot POST /api/chat")
+        ? "Chat service is unavailable. Please ensure the server is running with the latest code."
         : rawMessage;
-      setMessages((prev) =>
-        [
-          ...prev,
-          {
-            id: createId(),
-            role: 'assistant',
-            content: friendlyMessage,
-            createdAt: Date.now(),
-          },
-        ].slice(-MAX_MESSAGES),
-      );
+      const errMsg: ChatMessage = {
+        id: createId(),
+        role: "assistant",
+        content: friendlyMessage,
+        createdAt: Date.now(),
+      };
+      setMessages((prev) => [...prev, errMsg].slice(-MAX_MESSAGES));
     } finally {
       setIsLoading(false);
     }
@@ -275,10 +296,10 @@ export default function AssistantChatbox() {
     <div className="fixed bottom-5 left-5 z-50" data-assistant-chatbox>
       <div
         className={cn(
-          'pointer-events-none fixed bottom-20 left-5 w-[320px] origin-bottom-left rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:w-[360px]',
+          "pointer-events-none fixed bottom-20 left-5 w-[320px] origin-bottom-left rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:w-[360px]",
           isOpen
-            ? 'pointer-events-auto translate-y-0 scale-100 opacity-100'
-            : 'translate-y-2 scale-95 opacity-0',
+            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+            : "translate-y-2 scale-95 opacity-0",
         )}
         id="assistant-chat-panel"
         role="dialog"
@@ -291,7 +312,9 @@ export default function AssistantChatbox() {
             <BotAvatar className="h-9 w-9" iconClassName="h-4 w-4" />
             <div>
               <p className="text-sm font-semibold">Trash2Cash AI</p>
-              <p className="text-xs text-[color:var(--muted)]">Site-aware help</p>
+              <p className="text-xs text-[color:var(--muted)]">
+                Site-aware help
+              </p>
             </div>
           </div>
           <button
@@ -313,21 +336,26 @@ export default function AssistantChatbox() {
               <div
                 key={message.id}
                 className={cn(
-                  'flex items-start gap-2',
-                  message.role === 'user' ? 'justify-end' : 'justify-start',
+                  "flex items-start gap-2",
+                  message.role === "user" ? "justify-end" : "justify-start",
                 )}
               >
-                {message.role === 'assistant' && <BotAvatar className="mt-0.5" />}
+                {message.role === "assistant" && (
+                  <BotAvatar className="mt-0.5" />
+                )}
                 <div
                   className={cn(
-                    'max-w-[75%] rounded-2xl px-3 py-2 leading-relaxed shadow-sm break-words',
-                    message.role === 'user'
-                      ? 'bg-[color:var(--brand)] text-white'
-                      : 'bg-[color:var(--surface-soft)] text-[color:var(--foreground)]',
+                    "max-w-[75%] rounded-2xl px-3 py-2 leading-relaxed shadow-sm break-words",
+                    message.role === "user"
+                      ? "bg-[color:var(--brand)] text-white"
+                      : "bg-[color:var(--surface-soft)] text-[color:var(--foreground)]",
                   )}
                 >
-                  {message.role === 'assistant' ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {message.role === "assistant" ? (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={markdownComponents}
+                    >
                       {message.content}
                     </ReactMarkdown>
                   ) : (
@@ -352,7 +380,7 @@ export default function AssistantChatbox() {
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
+                  if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
                     sendMessage();
                   }
@@ -384,7 +412,7 @@ export default function AssistantChatbox() {
         className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-sm font-semibold text-white shadow-lg transition hover:bg-[color:var(--brand-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
         aria-expanded={isOpen}
         aria-controls="assistant-chat-panel"
-        aria-label={isOpen ? 'Close assistant chat' : 'Open assistant chat'}
+        aria-label={isOpen ? "Close assistant chat" : "Open assistant chat"}
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <Bot className="h-5 w-5" aria-hidden="true" />
