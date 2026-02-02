@@ -13,6 +13,7 @@ Public Endpoints (no auth)
 - `GET /api/` — Health / hello (root)
 - `GET /api/public/pricing` — Get public pricing information
 - `POST /api/public/launch-notify` — Register an email for launch notifications (body: `{ email: string }`)
+- `POST /api/chat` — Site-aware assistant chat (body: `{ messages: [{ role, content }], pageContext }`)
 
 Auth Endpoints
 
@@ -61,6 +62,7 @@ How to use
 - Start the server: `cd server && npm run start:dev`
 - Start the client: `cd client && npm run dev`
 - Base API URL used by the client is configured in `client/lib/api.ts` (`NEXT_PUBLIC_API_URL`). Default: `http://localhost:4000/api`.
+- Set `GEMINI_API_KEY` in `server/.env` to enable the assistant chat endpoint. Optional: `GEMINI_MODEL` (default: `gemini-1.5-flash`).
 
 If you'd like, I can expand each DTO/shape and example request/response payloads.
 

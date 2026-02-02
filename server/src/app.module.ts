@@ -24,6 +24,7 @@ import { SearchModule } from './search/search.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { TransactionLogger } from './common/logger/transaction-logger.service';
 import { LoggingModule } from './common/logger/logger.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { LoggingModule } from './common/logger/logger.module';
     GeminiModule,
     AdminModule,
     LoggingModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [
