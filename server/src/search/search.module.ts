@@ -1,12 +1,6 @@
+// Search module removed: AI-powered search disabled.
 import { Module } from '@nestjs/common';
-import { SearchService } from './search.service';
-import { SearchController } from './search.controller';
-import { GeminiModule } from '../gemini/gemini.module';
 
-@Module({
-  imports: [GeminiModule],
-  providers: [SearchService],
-  controllers: [SearchController],
-})
+@Module({})
 export class SearchModule {}
   

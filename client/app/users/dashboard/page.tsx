@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
 import { KpiCard } from "@/components/shared/kpi-card";
-import SearchBar from "@/components/SearchBar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +52,6 @@ export default function DashboardPage() {
           Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}!
         </h1>
       </div>
-      <SearchBar />
       <div className="grid gap-4 md:grid-cols-4">
         <KpiCard
           label="Total Earned"

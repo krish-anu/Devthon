@@ -1,12 +1,5 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { SearchService } from './search.service';
+// Search controller removed: AI-powered search endpoints disabled.
+import { Controller } from '@nestjs/common';
 
 @Controller('search')
-export class SearchController {
-  constructor(private readonly searchService: SearchService) {}
-
-  @Post('suggestions')
-  async suggest(@Body('query') query: string) {
-    return this.searchService.getSuggestions(query);
-  }
-}
+export class SearchController {}

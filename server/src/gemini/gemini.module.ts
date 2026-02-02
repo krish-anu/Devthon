@@ -1,10 +1,6 @@
+// Gemini module removed: AI search functionality disabled.
+// Original implementation deleted to remove AI integrations.
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { GeminiService } from './gemini.service';
 
-@Module({
-  imports: [ConfigModule],
-  providers: [GeminiService],
-  exports: [GeminiService],
-})
+@Module({})
 export class GeminiModule {}

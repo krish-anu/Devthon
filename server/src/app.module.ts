@@ -20,8 +20,7 @@ import { PublicModule } from './public/public.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AdminModule } from './admin/admin.module';
-import { SearchModule } from './search/search.module';
-import { GeminiModule } from './gemini/gemini.module';
+// Search and Gemini modules removed (AI/search functionality)
 import { TransactionLogger } from './common/logger/transaction-logger.service';
 import { LoggingModule } from './common/logger/logger.module';
 
@@ -79,8 +78,8 @@ import { LoggingModule } from './common/logger/logger.module';
     PublicModule,
     BookingsModule,
     NotificationsModule,
-    SearchModule,
-    GeminiModule,
+    // SearchModule,
+    // GeminiModule,
     AdminModule,
     LoggingModule,
   ],
