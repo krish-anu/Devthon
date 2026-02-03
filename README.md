@@ -1,8 +1,55 @@
 # Devthon
 
-API Reference (server base: `/api`)
+Full-stack waste management application with NestJS backend, Next.js frontend, and PostgreSQL database.
 
-Notes
+## 🚀 Quick Start
+
+### Option 1: Docker (Recommended)
+
+Start the entire application with a single command:
+
+```bash
+docker compose up --build
+```
+
+This will start:
+- PostgreSQL database on port 5432
+- NestJS backend on port 4000
+- Next.js frontend on port 3000
+
+**Access the application:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:4000/api
+- API Docs: http://localhost:4000/api/docs
+
+For detailed Docker setup instructions, see [`DOCKER_SETUP.md`](DOCKER_SETUP.md).
+
+### Option 2: Manual Setup
+
+**Prerequisites:**
+- Node.js 20+
+- PostgreSQL 16+
+
+**Backend:**
+```bash
+cd server
+npm install
+npx prisma migrate dev
+npm run start:dev
+```
+
+**Frontend:**
+```bash
+cd client
+npm install
+npm run dev
+```
+
+---
+
+## 📚 API Reference (server base: `/api`)
+
+### Notes
 
 - All server routes are prefixed with `/api` (see `server/src/main.ts`).
 - Protected endpoints require a Bearer JWT in the `Authorization` header: `Authorization: Bearer <accessToken>`.
@@ -57,12 +104,28 @@ Admin Endpoints (Authenticated + Role ADMIN)
 - `GET /api/admin/pricing` — List pricing
 - `PATCH /api/admin/pricing` — Update pricing (body: `AdminUpdatePricingDto`)
 
-How to use
+## 🛠️ Configuration
 
-- Start the server: `cd server && npm run start:dev`
-- Start the client: `cd client && npm run dev`
-- Base API URL used by the client is configured in `client/lib/api.ts` (`NEXT_PUBLIC_API_URL`). Default: `http://localhost:4000/api`.
-- Set `GEMINI_API_KEY` in `server/.env` to enable the assistant chat endpoint. Optional: `GEMINI_MODEL` (default: `gemini-1.5-flash`).
+### Environment Variables
+
+**Backend** (`server/.env`):
+- `DATABASE_URL` — PostgreSQL connection string
+- `PORT` — Server port (default: 4000)
+- `JWT_ACCESS_SECRET` — JWT access token secret
+- `JWT_REFRESH_SECRET` — JWT refresh token secret
+- `CORS_ORIGIN` — Allowed CORS origins
+- `GEMINI_API_KEY` — Google Gemini API key (optional, for assistant chat)
+
+**Frontend** (`client`):
+- `NEXT_PUBLIC_API_URL` — Backend API URL (configured in `client/lib/api.ts`, default: `http://localhost:4000/api`)
+
+### Docker Environment
+
+When using Docker, environment variables are configured in [`docker-compose.yml`](docker-compose.yml). The setup automatically:
+- Creates and configures PostgreSQL database
+- Runs Prisma migrations
+- Generates Prisma Client
+- Enables hot reload for both frontend and backend
 
 If you'd like, I can expand each DTO/shape and example request/response payloads.
 
