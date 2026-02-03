@@ -1,17 +1,126 @@
-version: '3.9'
-services:
-  db:
-    image: postgres:16
-    container_name: trash2cash-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: trash2cash
-      POSTGRES_PASSWORD: trash2cash
-      POSTGRES_DB: trash2cash
-    ports:
-      - '5432:5432'
-    volumes:
-      - trash2cash-data:/var/lib/postgresql/data
+# ============================================
+# Docker Compose Configuration
+# Full-Stack Application: PostgreSQL + NestJS + Next.js
+# ============================================
 
+version: '3.9'
+
+services:
+  # ==========================================
+  # PostgreSQL Database Service (OPTIONAL - Local Development)
+  # ==========================================
+  # Uncomment this service if you want to use a local database
+  # instead of the external Supabase database
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: trash2cash-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: trash2cash
+  #     POSTGRES_PASSWORD: trash2cash_dev_password
+  #     POSTGRES_DB: trash2cash
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - trash2cash-network
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -U trash2cash']
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # ==========================================
+  # NestJS Backend Service
+  # ==========================================
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: trash2cash-backend
+    restart: unless-stopped
+    ports:
+      # Expose backend on host port 4000
+      - '4000:4000'
+    environment:
+      # Database connection (using external Supabase database)
+      DATABASE_URL: postgresql://postgres.edlszchwwczuqyssacfb:Trash2Cash_D@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+      DIRECT_URL: postgresql://postgres.edlszchwwczuqyssacfb:Trash2Cash_D@aws-1-ap-south-1.pooler.supabase.com:5432/postgres
+      
+      # Application settings
+      PORT: 4000
+      NODE_ENV: development
+      
+      # JWT secrets (change these in production!)
+      JWT_ACCESS_SECRET: dev_access_secret_change_in_production
+      JWT_REFRESH_SECRET: dev_refresh_secret_change_in_production
+      JWT_ACCESS_EXPIRES: 15m
+      JWT_REFRESH_EXPIRES: 7d
+      
+      # CORS - allow frontend to communicate with backend
+      CORS_ORIGIN: http://localhost:3000
+      
+      # External API keys (add your actual keys here)
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyC0PrEsMvd_6hoIBA3w4mNjfeW7tT_FD0w}
+      REDIS_URL: ${REDIS_URL:-redis://default:2k249aijDWkhkJ7u3ccjwLKQxEU4hAkH@redis-10658.c212.ap-south-1-1.ec2.cloud.redislabs.com:10658}
+    volumes:
+      # Mount source code for hot reload in development
+      - ./server/src:/app/src
+      - ./server/prisma:/app/prisma
+      # Persist logs
+      - ./server/logs:/app/logs
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+    networks:
+      - trash2cash-network
+    # Skip migrations since database is already set up
+    # If you need to run migrations, use: docker compose exec backend npx prisma migrate deploy
+    command: sh -c "npm run start:dev"
+
+  # ==========================================
+  # Next.js Frontend Service
+  # ==========================================
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: trash2cash-frontend
+    restart: unless-stopped
+    ports:
+      # Expose frontend on host port 3000
+      - '3000:3000'
+    environment:
+      # Backend API URL for client-side requests (from browser)
+      # Must use localhost since browser can't resolve Docker service names
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+      
+      NODE_ENV: development
+    volumes:
+      # Mount source code for hot reload in development
+      - ./client/app:/app/app
+      - ./client/components:/app/components
+      - ./client/lib:/app/lib
+      - ./client/hooks:/app/hooks
+      - ./client/public:/app/public
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - trash2cash-network
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  trash2cash-network:
+    driver: bridge
+
+# ==========================================
+# Volumes
+# ==========================================
 volumes:
-  trash2cash-data:
+  postgres_data:
+    driver: local
