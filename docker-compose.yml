@@ -3,7 +3,7 @@
 # Full-Stack Application: PostgreSQL + NestJS + Next.js
 # ============================================
 
-version: '3.9'
+version: "3.9"
 
 services:
   # ==========================================
@@ -42,25 +42,25 @@ services:
     restart: unless-stopped
     ports:
       # Expose backend on host port 4000
-      - '4000:4000'
+      - "4000:4000"
     environment:
       # Database connection (using external Supabase database)
       DATABASE_URL: postgresql://postgres.edlszchwwczuqyssacfb:Trash2Cash_D@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
       DIRECT_URL: postgresql://postgres.edlszchwwczuqyssacfb:Trash2Cash_D@aws-1-ap-south-1.pooler.supabase.com:5432/postgres
-      
+
       # Application settings
       PORT: 4000
       NODE_ENV: development
-      
+
       # JWT secrets (change these in production!)
       JWT_ACCESS_SECRET: dev_access_secret_change_in_production
       JWT_REFRESH_SECRET: dev_refresh_secret_change_in_production
       JWT_ACCESS_EXPIRES: 15m
       JWT_REFRESH_EXPIRES: 7d
-      
+
       # CORS - allow frontend to communicate with backend
       CORS_ORIGIN: http://localhost:3000
-      
+
       # External API keys (add your actual keys here)
       GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyC0PrEsMvd_6hoIBA3w4mNjfeW7tT_FD0w}
       REDIS_URL: ${REDIS_URL:-redis://default:2k249aijDWkhkJ7u3ccjwLKQxEU4hAkH@redis-10658.c212.ap-south-1-1.ec2.cloud.redislabs.com:10658}
@@ -70,8 +70,7 @@ services:
       - ./server/prisma:/app/prisma
       # Persist logs
       - ./server/logs:/app/logs
-      # Prevent node_modules from being overwritten
-      - /app/node_modules
+      # Persist node_modules from the image (do not mount host path here)
     networks:
       - trash2cash-network
     # Skip migrations since database is already set up
@@ -89,12 +88,13 @@ services:
     restart: unless-stopped
     ports:
       # Expose frontend on host port 3000
-      - '3000:3000'
+      - "3000:3000"
     environment:
       # Backend API URL for client-side requests (from browser)
       # Must use localhost since browser can't resolve Docker service names
       NEXT_PUBLIC_API_URL: http://localhost:4000/api
-      
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: kHPfE46d0OpH1PoSBxRg6ywn5WZ2rkkA 
+
       NODE_ENV: development
     volumes:
       # Mount source code for hot reload in development
@@ -103,9 +103,9 @@ services:
       - ./client/lib:/app/lib
       - ./client/hooks:/app/hooks
       - ./client/public:/app/public
-      # Prevent node_modules from being overwritten
-      - /app/node_modules
-      - /app/.next
+      # Persist node_modules and build output from the image
+      - .next:/app/.next
+      - node_modules:/app/node_modules
     depends_on:
       - backend
     networks:
@@ -123,4 +123,6 @@ networks:
 # ==========================================
 volumes:
   postgres_data:
+    driver: local
+  node_modules:
     driver: local
