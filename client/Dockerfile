@@ -12,7 +12,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (including dev dependencies for development)
-RUN npm ci
+# Use legacy-peer-deps to avoid peer dependency resolution failures in CI/build
+RUN npm ci --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
