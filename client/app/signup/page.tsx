@@ -13,12 +13,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/components/auth/auth-provider";
 import { toast } from "@/components/ui/use-toast";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const schema = z.object({
-  fullName: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().min(7),
-  password: z.string().min(6),
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(7, "Phone number must be at least 7 digits"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain uppercase, lowercase, and a number"
+    ),
   type: z.enum(["HOUSEHOLD", "BUSINESS"]),
   terms: z.boolean().refine((v) => v === true, {
     message: "You must accept the terms.",
@@ -34,8 +41,36 @@ export default function SignupPage() {
       defaultValues: { type: "HOUSEHOLD", terms: false },
     });
   const { errors, isSubmitting } = formState;
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, googleLogin } = useAuth();
   const termsChecked = watch("terms");
+
+  const handleGoogleSignup = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const user = await googleLogin(tokenResponse.access_token);
+        toast({
+          title: "Welcome!",
+          description: "Signed up with Google successfully.",
+          variant: "success",
+        });
+        window.location.href =
+          user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard";
+      } catch (error: any) {
+        toast({
+          title: "Google sign-up failed",
+          description: error?.message ?? "Please try again.",
+          variant: "error",
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Google sign-up failed",
+        description: "Please try again.",
+        variant: "error",
+      });
+    },
+  });
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -90,13 +125,7 @@ export default function SignupPage() {
             <Button
               variant="outline"
               className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-              onClick={() =>
-                toast({
-                  title: "Google sign-up",
-                  description: "OAuth not configured in demo.",
-                  variant: "info",
-                })
-              }
+              onClick={() => handleGoogleSignup()}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
