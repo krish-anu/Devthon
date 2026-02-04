@@ -16,10 +16,16 @@ import { AuthLayout } from "@/components/auth/auth-layout";
 import { useGoogleLogin } from "@react-oauth/google";
 
 const schema = z.object({
-  fullName: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().min(7),
-  password: z.string().min(6),
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(7, "Phone number must be at least 7 digits"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain uppercase, lowercase, and a number"
+    ),
   type: z.enum(["HOUSEHOLD", "BUSINESS"]),
   terms: z.boolean().refine((v) => v === true, {
     message: "You must accept the terms.",

@@ -68,6 +68,10 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    // Block login for users without password (e.g., Google-only users)
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Please sign in with Google');
+    }
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) {
       throw new UnauthorizedException('Invalid credentials');
