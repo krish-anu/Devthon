@@ -106,6 +106,36 @@ export class AuthService {
     return { success: true };
   }
 
+  async googleLogin(token: string) {
+    // Verify the token with Google
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+    if (!response.ok) {
+      throw new UnauthorizedException('Invalid Google token');
+    }
+    const googleUser = await response.json();
+    if (!googleUser.email) {
+      throw new UnauthorizedException('Invalid Google token');
+    }
+
+    // Find or create user
+    let user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+    });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          fullName: googleUser.name || 'Google User',
+          email: googleUser.email,
+          phone: '',
+          passwordHash: '', // No password for Google users
+          type: 'HOUSEHOLD', // Default type
+        },
+      });
+    }
+    const tokens = await this.issueTokens(user);
+    return { user: this.sanitizeUser(user), ...tokens };
+  }
+
   private getRequiredConfig(key: string) {
     const value = this.configService.get<string>(key);
     if (!value) {

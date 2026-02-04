@@ -24,6 +24,7 @@ interface AuthContextValue {
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  googleLogin: (token: string) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -106,8 +107,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
+  const googleLogin = async (token: string) => {
+    const data = await authApi.googleLogin({ token });
+    setAuth(data);
+    setUser(data.user);
+    return data.user;
+  };
+
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refreshProfile }),
+    () => ({ user, loading, login, register, logout, refreshProfile, googleLogin }),
     [user, loading],
   );
 

@@ -16,6 +16,7 @@ import { toast } from "@/components/ui/use-toast";
 import { AuthLayout } from "@/components/auth/auth-layout";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useGoogleLogin } from '@react-oauth/google';
 
 const schema = z.object({
   email: z.string().email(),
@@ -25,12 +26,40 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const user = await googleLogin(tokenResponse.access_token);
+        toast({
+          title: "Welcome!",
+          description: "Signed in with Google successfully.",
+          variant: "success",
+        });
+        window.location.href =
+          user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard";
+      } catch (error: any) {
+        toast({
+          title: "Google sign-in failed",
+          description: error?.message ?? "Please try again.",
+          variant: "error",
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Google sign-in failed",
+        description: "Please try again.",
+        variant: "error",
+      });
+    },
+  });
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -78,13 +107,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-              onClick={() =>
-                toast({
-                  title: "Google sign-in",
-                  description: "OAuth not configured in demo.",
-                  variant: "info",
-                })
-              }
+              onClick={() => handleGoogleLogin()}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
