@@ -7,6 +7,8 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -19,27 +21,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <RequireAuth roles={['ADMIN']}>
-      <AppShell
-        sidebar={<Sidebar title="Admin Portal" items={navItems} />}
-        header={
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">Admin Console</p>
-              <h2 className="text-lg font-semibold">Welcome, {user?.fullName ?? 'Admin'}</h2>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+      <RequireAuth roles={['ADMIN']}>
+        <AppShell
+          sidebar={<Sidebar title="Admin Portal" items={navItems} />}
+          header={
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">Admin Console</p>
+                <h2 className="text-lg font-semibold">Welcome, {user?.fullName ?? 'Admin'}</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Button variant="outline" size="sm" onClick={() => logout()}>
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={() => logout()}>
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        }
-      >
-        {children}
-      </AppShell>
-    </RequireAuth>
+          }
+        >
+          {children}
+        </AppShell>
+      </RequireAuth>
+    </GoogleOAuthProvider>
+
   );
 }

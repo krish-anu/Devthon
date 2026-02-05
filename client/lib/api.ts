@@ -106,4 +106,9 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }, false),
+  googleLogin: (payload: { token: string }) =>
+    apiFetch<AuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, false),
 };

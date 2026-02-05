@@ -1,40 +1,59 @@
-# ============================================
-# Environment Variables
-# ============================================
-# Never commit .env files containing sensitive data
-.env
+# Repository-wide .gitignore
+# See https://help.github.com/articles/ignoring-files/ for more information
 
-# ============================================
-# Node.js
-# ============================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Node dependencies
+/node_modules/
 
-# ============================================
+# Build output
+/dist/
+/build/
+/.next/
+/out/
+
+# Production
+/coverage/
+/report/
+
 # Logs
-# ============================================
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
-# ============================================
-# OS Files
-# ============================================
+# OS files
 .DS_Store
-Thumbs.db
 
-# ============================================
-# IDE
-# ============================================
-.vscode/
+# Env files (opt-in to commit if needed)
+.env
+.env.*
+
+# IDEs and editors
 .idea/
-*.swp
-*.swo
-*~
+.vscode/
 
-# ============================================
+# Temporary files
+.tmp/
+.temp/
+
+# Lock / cache
+.cache/
+.parcel-cache/
+.pnp/
+.pnp.*
+
+# Certificate files
+*.pem
+
+# Prisma local DB (if present)
+*.db
+
 # Docker
-# ============================================
-# Keep docker-compose.yml but ignore any local overrides
-docker-compose.override.yml
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts
