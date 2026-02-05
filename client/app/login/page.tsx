@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,7 @@ import { toast } from "@/components/ui/use-toast";
 import { AuthLayout } from "@/components/auth/auth-layout";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useGoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from "@react-oauth/google";
 
 const schema = z.object({
   email: z.string().email(),
@@ -27,13 +28,22 @@ type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const { login, googleLogin } = useAuth();
+  const router = useRouter();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
+  const redirectUri =
+    typeof window !== "undefined"
+      ? (process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ??
+        `${window.location.origin}/login`)
+      : undefined;
+
   const handleGoogleLogin = useGoogleLogin({
+    ux_mode: "redirect",
+    redirect_uri: redirectUri,
     onSuccess: async (tokenResponse) => {
       try {
         const user = await googleLogin(tokenResponse.access_token);
@@ -42,12 +52,14 @@ export default function LoginPage() {
           description: "Signed in with Google successfully.",
           variant: "success",
         });
-        window.location.href =
-          user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard";
-      } catch (error: any) {
+        router.replace(
+          user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard",
+        );
+      } catch (error: unknown) {
         toast({
           title: "Google sign-in failed",
-          description: error?.message ?? "Please try again.",
+          description:
+            error instanceof Error ? error.message : "Please try again.",
           variant: "error",
         });
       }
@@ -69,12 +81,16 @@ export default function LoginPage() {
         description: "Redirecting to your dashboard.",
         variant: "success",
       });
-      window.location.href =
-        user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard";
-    } catch (error: any) {
+      router.replace(
+        user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard",
+      );
+    } catch (error: unknown) {
       toast({
         title: "Login failed",
-        description: error?.message ?? "Please check your credentials.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your credentials.",
         variant: "error",
       });
     }
@@ -173,7 +189,7 @@ export default function LoginPage() {
             </form>
 
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
                 className="font-medium text-emerald-500 hover:text-emerald-600"
