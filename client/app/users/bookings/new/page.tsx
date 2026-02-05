@@ -137,7 +137,7 @@ export default function NewBookingPage() {
                 key={item.id}
                 className={`rounded-2xl border px-4 py-4 text-left ${
                   selectedCategory?.id === item.id
-                    ? "border-emerald-400 bg-emerald-400/10"
+                    ? "border-(--brand) bg-(--brand)/10"
                     : "border-(--border) bg-(--surface)"
                 }`}
                 onClick={() => setSelectedCategory(item)}
