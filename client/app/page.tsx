@@ -31,14 +31,14 @@ export default function HomePage() {
     : fallbackPricing;
 
   return (
-    <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)]">
-      <div className="section-grid">
-        <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="w-full bg-(--card)">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
           <div className="flex items-center gap-3 text-lg font-semibold">
-            <div className="h-10 w-10 rounded-2xl bg-emerald-500/20"></div>
+            <div className="h-10 w-10 rounded-2xl bg-(--brand)/20"></div>
             Trash2Cash
           </div>
-          <nav className="hidden items-center gap-6 text-sm text-[color:var(--muted)] md:flex">
+          <nav className="hidden items-center gap-6 text-sm text-(--muted) md:flex">
             <a href="#how" className="hover:text-foreground">
               How it works
             </a>
@@ -61,11 +61,13 @@ export default function HomePage() {
               <Link href="/signup">Get Started</Link>
             </Button>
           </div>
-        </header>
+        </div>
+      </header>
 
+      <div className="section-grid">
         <section className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10 px-6 pb-20 pt-10 md:flex-row md:items-center">
           <div className="flex-1 space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
+            <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
               Sri Lanka's #1 Waste Marketplace
             </div>
             <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
@@ -86,25 +88,25 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex-1">
-            <Card className="space-y-6 border-[color:var(--brand)] bg-[color:var(--card)]">
-              <div className="text-sm uppercase tracking-[0.3em] text-[color:var(--brand)]">
+            <Card className="space-y-6 border-(--brand) bg-(--card)">
+              <div className="text-sm uppercase tracking-[0.3em] text-(--brand)">
                 Live Impact
               </div>
               <div className="grid gap-4">
-                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
-                  <p className="text-xs text-[color:var(--muted)]">
+                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                  <p className="text-xs text-(--muted)">
                     Active pickups this week
                   </p>
                   <p className="text-2xl font-semibold">126</p>
                 </div>
-                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
-                  <p className="text-xs text-[color:var(--muted)]">
+                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                  <p className="text-xs text-(--muted)">
                     Average payout per booking
                   </p>
                   <p className="text-2xl font-semibold">LKR 1,420</p>
                 </div>
-                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3">
-                  <p className="text-xs text-[color:var(--muted)]">
+                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                  <p className="text-xs text-(--muted)">
                     CO? saved today
                   </p>
                   <p className="text-2xl font-semibold">12.4 tonnes</p>
@@ -122,11 +124,11 @@ export default function HomePage() {
           ["850 Tonnes CO? Saved", "Carbon tracked monthly"],
           ["25 Districts Served", "Island-wide logistics"],
         ].map(([title, subtitle]) => (
-          <Card key={title} className="bg-[color:var(--brand)]/10">
-            <p className="text-lg font-semibold text-[color:var(--brand)]">
+          <Card key={title} className="bg-(--brand)/10">
+            <p className="text-lg font-semibold text-(--brand)">
               {title}
             </p>
-            <p className="text-xs text-[color:var(--muted)]">{subtitle}</p>
+            <p className="text-xs text-(--muted)">{subtitle}</p>
           </Card>
         ))}
       </section>
@@ -159,11 +161,11 @@ export default function HomePage() {
             },
           ].map((item) => (
             <Card key={item.step} className="space-y-3">
-              <div className="text-sm text-[color:var(--brand)]">
+              <div className="text-sm text-(--brand)">
                 Step {item.step}
               </div>
               <h3 className="text-xl font-semibold">{item.title}</h3>
-              <p className="text-sm text-[color:var(--muted)]">{item.desc}</p>
+              <p className="text-sm text-(--muted)">{item.desc}</p>
             </Card>
           ))}
         </div>
@@ -184,7 +186,7 @@ export default function HomePage() {
           ].map((feature) => (
             <Card key={feature} className="h-full">
               <h4 className="text-base font-semibold">{feature}</h4>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">
+              <p className="mt-2 text-sm text-(--muted)">
                 Real-time insights and community incentives that keep waste out
                 of landfills.
               </p>
@@ -205,7 +207,7 @@ export default function HomePage() {
         <Card className="grid gap-6 md:grid-cols-2">
           <div className="space-y-3">
             <h3 className="text-2xl font-semibold">Live community impact</h3>
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-(--muted)">
               Every pickup contributes to cleaner waterways, reduced landfill
               pressure, and a greener Sri Lanka.
             </p>
@@ -221,9 +223,9 @@ export default function HomePage() {
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3"
+                className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3"
               >
-                <p className="text-xs text-[color:var(--muted)]">{label}</p>
+                <p className="text-xs text-(--muted)">{label}</p>
                 <p className="text-lg font-semibold">{value}</p>
               </div>
             ))}
@@ -260,7 +262,7 @@ export default function HomePage() {
             <h3 className="text-2xl font-semibold">
               Ready to Start Earning from Your Waste?
             </h3>
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-(--muted)">
               Create a free account and schedule your first pickup today.
             </p>
           </div>
@@ -272,17 +274,17 @@ export default function HomePage() {
 
       <footer
         id="contact"
-        className="border-t border-[color:var(--border)] bg-[color:var(--card)]"
+        className="border-t border-(--border) bg-(--card)"
       >
         <div className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-12 md:grid-cols-4">
           <div>
             <h4 className="text-lg font-semibold">Trash2Cash</h4>
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-(--muted)">
               Sri Lanka's circular economy marketplace.
             </p>
           </div>
           <div className="text-sm text-muted">
-            <p className="font-semibold text-[color:var(--foreground)]">
+            <p className="font-semibold text-foreground">
               Company
             </p>
             <ul className="mt-2 space-y-1">
@@ -292,7 +294,7 @@ export default function HomePage() {
             </ul>
           </div>
           <div className="text-sm text-muted">
-            <p className="font-semibold text-[color:var(--foreground)]">
+            <p className="font-semibold text-foreground">
               Support
             </p>
             <ul className="mt-2 space-y-1">
@@ -302,7 +304,7 @@ export default function HomePage() {
             </ul>
           </div>
           <div className="text-sm text-muted">
-            <p className="font-semibold text-[color:var(--foreground)]">
+            <p className="font-semibold text-foreground">
               Connect
             </p>
             <ul className="mt-2 space-y-1">
@@ -312,7 +314,7 @@ export default function HomePage() {
             </ul>
           </div>
         </div>
-        <div className="border-t border-[color:var(--border)] py-6 text-center text-xs text-[color:var(--muted)]">
+        <div className="border-t border-(--border) py-6 text-center text-xs text-(--muted)">
           © 2026 Trash2Cash. All rights reserved.
         </div>
       </footer>

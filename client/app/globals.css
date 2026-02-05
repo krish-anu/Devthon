@@ -6,9 +6,10 @@
   --foreground: #111827;
   --card: #ffffff;
   --muted: #6b7280;
-  --brand: #22c55e;
-  --brand-strong: #16a34a;
-  --accent: #22c55e;
+  --brand: #4BDC00; /* updated primary */
+  --brand-rgb: 75 220 0;
+  --brand-strong: #36a400;
+  --accent: #4BDC00;
   --border: #e5e7eb;
   --surface: #f3f4f6;
   --surface-strong: #e5e7eb;
@@ -18,51 +19,51 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #111827;
-  --foreground: #f9fafb;
-  --card: #1f2937;
+  --background: #000000; /* pure black */
+  --foreground: #ffffff; /* pure white */
+  --card: #000000; /* header/card black */
   --muted: #9ca3af;
   --brand: #4ade80;
   --brand-strong: #22c55e;
   --accent: #4ade80;
-  --border: #374151;
-  --surface: #1f2937;
-  --surface-strong: #374151;
-  --surface-soft: #1f2937;
+  --border: #1f1f1f;
+  --surface: #0b0b0b;
+  --surface-strong: #171717;
+  --surface-soft: #0b0b0b;
   --ring: rgba(74, 222, 128, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --background: #111827;
-    --foreground: #f9fafb;
-    --card: #1f2937;
+    --background: #000000; /* pure black */
+    --foreground: #ffffff; /* pure white */
+    --card: #000000; /* header/card black */
     --muted: #9ca3af;
     --brand: #4ade80;
     --brand-strong: #22c55e;
     --accent: #4ade80;
-    --border: #374151;
-    --surface: #1f2937;
-    --surface-strong: #374151;
-    --surface-soft: #1f2937;
+    --border: #1f1f1f;
+    --surface: #0b0b0b;
+    --surface-strong: #171717;
+    --surface-soft: #0b0b0b;
     --ring: rgba(74, 222, 128, 0.4);
   }
 }
 
 .dark {
   color-scheme: dark;
-  --background: #111827;
-  --foreground: #f9fafb;
-  --card: #1f2937;
+  --background: #000000; /* pure black */
+  --foreground: #ffffff; /* pure white */
+  --card: #000000; /* header/card black */
   --muted: #9ca3af;
   --brand: #4ade80;
   --brand-strong: #22c55e;
   --accent: #4ade80;
-  --border: #374151;
-  --surface: #1f2937;
-  --surface-strong: #374151;
-  --surface-soft: #1f2937;
+  --border: #1f1f1f;
+  --surface: #0b0b0b;
+  --surface-strong: #171717;
+  --surface-soft: #0b0b0b;
   --ring: rgba(74, 222, 128, 0.4);
 }
 
@@ -92,7 +93,7 @@ h5 {
 }
 
 .gradient-text {
-  background: linear-gradient(120deg, #4ade80, #38bdf8);
+  background: linear-gradient(120deg, var(--brand), #38bdf8);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -101,7 +102,7 @@ h5 {
   background-image:
     radial-gradient(
       circle at 20% 20%,
-      rgba(74, 222, 128, 0.15),
+      rgb(var(--brand-rgb) / 0.15),
       transparent 40%
     ),
     radial-gradient(
@@ -118,7 +119,11 @@ h5 {
 
 :root[data-theme="light"] .section-grid {
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.2), transparent 45%),
+    radial-gradient(
+      circle at 20% 20%,
+      rgb(var(--brand-rgb) / 0.2),
+      transparent 45%
+    ),
     radial-gradient(
       circle at 80% 0%,
       rgba(56, 189, 248, 0.12),

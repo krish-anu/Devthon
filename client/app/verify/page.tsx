@@ -99,7 +99,7 @@ export default function VerifyPage() {
           <button 
             type="button"
             onClick={handleResend}
-            className={`font-medium ${seconds > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-emerald-500 hover:text-emerald-600'}`}
+            className={`font-medium ${seconds > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-(--brand) hover:text-(--brand-strong)'}`}
             disabled={seconds > 0}
           >
             Resend

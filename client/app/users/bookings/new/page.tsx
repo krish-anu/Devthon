@@ -116,7 +116,7 @@ export default function NewBookingPage() {
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
                   step === index + 1
-                    ? "bg-emerald-400 text-slate-950"
+                    ? "bg-(--brand) text-slate-950"
                     : "bg-(--surface-strong) text-(--muted)"
                 }`}
               >
@@ -163,7 +163,7 @@ export default function NewBookingPage() {
                 key={option.label}
                 className={`rounded-xl border px-4 py-3 text-left ${
                   weightRange.label === option.label
-                    ? "border-emerald-400 bg-emerald-400/10"
+                    ? "border-(--brand) bg-(--brand)/10"
                     : "border-(--border) bg-(--surface)"
                 }`}
                 onClick={() => setWeightRange(option)}
@@ -234,7 +234,7 @@ export default function NewBookingPage() {
                   onClick={() => setScheduledTimeSlot(slot)}
                   className={`rounded-xl border px-4 py-3 text-left text-sm ${
                     scheduledTimeSlot === slot
-                      ? "border-emerald-400 bg-emerald-400/10"
+                      ? "border-(--brand) bg-(--brand)/10"
                       : "border-(--border) bg-(--surface)"
                   }`}
                 >

@@ -183,7 +183,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-xl font-semibold">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--brand)/20 text-xl font-semibold">
           {user?.fullName?.[0] ?? "U"}
         </div>
         <div>
