@@ -106,7 +106,7 @@ export default function LoginPage() {
           <ThemeToggle className="fixed right-6 top-6" />
           <Card className="w-full max-w-md space-y-6">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--brand)]">
+              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
                 Turn Your Waste Into Wealth
               </p>
               <h1 className="text-2xl font-semibold">Welcome Back</h1>
@@ -137,7 +137,7 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </Button>
-            <div className="text-xs text-[var(--muted)]">
+            <div className="text-xs text-(--muted)">
               or continue with email
             </div>
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -163,11 +163,11 @@ export default function LoginPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center justify-between text-xs text-[var(--muted)]">
+              <div className="flex items-center justify-between text-xs text-(--muted)">
                 <button type="button" className="hover:text-foreground">
                   Forgot password?
                 </button>
-                <Link href="/signup" className="text-[var(--brand)]">
+                <Link href="/signup" className="text-(--brand)">
                   Create account
                 </Link>
               </div>
