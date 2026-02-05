@@ -1,5 +1,20 @@
 # 🚀 Docker Quick Start
 
+## Prerequisites
+
+Before starting, you need to set up your environment variables:
+
+```bash
+# Copy the example .env file
+cp .env.example .env
+
+# Edit .env with your actual credentials (if needed)
+# The file already contains the current values, but you should review them
+nano .env  # or use your preferred editor
+```
+
+**⚠️ IMPORTANT:** Never commit the `.env` file to version control. It contains sensitive credentials.
+
 ## One-Command Setup
 
 ```bash
