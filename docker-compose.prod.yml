@@ -1,0 +1,54 @@
+# ============================================
+# Docker Compose Configuration (Production)
+# Uses prebuilt images from Docker Hub
+# Repo: vigneshnidhar/trash2cash
+# ============================================
+
+version: "3.9"
+
+services:
+  # ==========================================
+  # NestJS Backend Service
+  # ==========================================
+  backend:
+    image: vigneshnidhar/trash2cash:backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+
+      PORT: ${PORT:-4000}
+      NODE_ENV: ${NODE_ENV:-production}
+
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
+
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    networks:
+      - trash2cash-network
+
+  # ==========================================
+  # Next.js Frontend Service
+  # ==========================================
+  frontend:
+    image: vigneshnidhar/trash2cash:frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      NODE_ENV: ${NODE_ENV:-production}
+    depends_on:
+      - backend
+    networks:
+      - trash2cash-network
+
+networks:
+  trash2cash-network:
+    driver: bridge
