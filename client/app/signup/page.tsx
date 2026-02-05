@@ -147,7 +147,7 @@ export default function SignupPage() {
               </svg>
               Sign up with Google
             </Button>
-            <div className="text-xs text-[color:var(--muted)]">or sign up with email</div>
+            <div className="text-xs text-(--muted)">or sign up with email</div>
 
             <form
               className="space-y-4"
@@ -230,8 +230,8 @@ export default function SignupPage() {
                       }
                       className={`rounded-full border px-4 py-2 text-xs ${
                         watch("type") === type
-                          ? "border-emerald-400 bg-emerald-400/20 text-emerald-100"
-                          : "border-[color:var(--border)] text-[color:var(--muted)]"
+                          ? "border-(--brand) bg-(--brand)/20 text-(--brand-strong)"
+                          : "border-(--border) text-(--muted)"
                       }`}
                     >
                       {type === "HOUSEHOLD" ? "Household" : "Business"}
@@ -239,7 +239,7 @@ export default function SignupPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-start gap-3 text-xs text-[color:var(--muted)]">
+              <div className="flex items-start gap-3 text-xs text-(--muted)">
                 <Checkbox
                   checked={termsChecked}
                   onCheckedChange={(checked) =>
@@ -258,7 +258,7 @@ export default function SignupPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white"
+                className="w-full h-11 bg-(--brand) hover:bg-(--brand-strong) text-white"
                 disabled={isSubmitting}
                 onClick={() => {
                   // eslint-disable-next-line no-console
@@ -268,9 +268,9 @@ export default function SignupPage() {
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
-            <div className="text-xs text-[color:var(--muted)]">
+            <div className="text-xs text-(--muted)">
               Already have an account?{" "}
-              <Link href="/login" className="text-[var(--brand)]">
+              <Link href="/login" className="text-(--brand)">
                 Login
               </Link>
             </div>
