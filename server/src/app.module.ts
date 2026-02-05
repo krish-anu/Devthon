@@ -27,7 +27,7 @@ import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // Cache: prefer Redis if REDIS_URL provided, otherwise in-memory cache
+    // Cache: in-memory cache configuration
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [],

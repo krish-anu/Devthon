@@ -5,8 +5,10 @@
 ### 1. Root Directory Files
 
 #### [`docker-compose.yml`](docker-compose.yml)
+
 **Purpose:** Main Docker Compose configuration file  
 **Contains:**
+
 - PostgreSQL database service configuration
 - NestJS backend service configuration
 - Next.js frontend service configuration
@@ -15,6 +17,7 @@
 - Port mappings and health checks
 
 **Key Features:**
+
 - Automatic database initialization
 - Automatic Prisma migrations on backend startup
 - Hot reload for both frontend and backend
@@ -24,12 +27,14 @@
 ---
 
 #### [`.env.example`](.env.example)
+
 **Purpose:** Template for environment variables  
 **Contains:**
+
 - GEMINI_API_KEY placeholder
-- REDIS_URL placeholder
 
 **Usage:**
+
 ```bash
 cp .env.example .env
 # Edit .env with your actual API keys
@@ -38,8 +43,10 @@ cp .env.example .env
 ---
 
 #### [`docker-dev.sh`](docker-dev.sh)
+
 **Purpose:** Helper script for managing Docker services  
 **Contains:**
+
 - Start/stop commands
 - Log viewing
 - Database operations (migrate, seed, reset)
@@ -47,6 +54,7 @@ cp .env.example .env
 - Cleanup utilities
 
 **Usage:**
+
 ```bash
 chmod +x docker-dev.sh
 ./docker-dev.sh help
@@ -57,14 +65,17 @@ chmod +x docker-dev.sh
 ### 2. Backend Files (server/)
 
 #### [`server/Dockerfile`](server/Dockerfile)
+
 **Purpose:** Docker configuration for NestJS backend  
 **Contains:**
+
 - Node.js 20 Alpine base image
 - Dependency installation
 - Prisma Client generation
 - Development server startup command
 
 **Build Process:**
+
 1. Install OpenSSL for Prisma
 2. Copy package files
 3. Install dependencies
@@ -76,8 +87,10 @@ chmod +x docker-dev.sh
 ---
 
 #### [`server/.dockerignore`](server/.dockerignore)
+
 **Purpose:** Exclude files from Docker build context  
 **Excludes:**
+
 - node_modules
 - dist/build directories
 - .env files
@@ -88,8 +101,10 @@ chmod +x docker-dev.sh
 ---
 
 #### [`server/.env.docker.example`](server/.env.docker.example)
+
 **Purpose:** Template for backend environment variables in Docker  
 **Contains:**
+
 - DATABASE_URL with Docker service name
 - JWT secrets
 - CORS configuration
@@ -100,13 +115,16 @@ chmod +x docker-dev.sh
 ### 3. Frontend Files (client/)
 
 #### [`client/Dockerfile`](client/Dockerfile)
+
 **Purpose:** Docker configuration for Next.js frontend  
 **Contains:**
+
 - Node.js 20 Alpine base image
 - Dependency installation
 - Development server startup command
 
 **Build Process:**
+
 1. Copy package files
 2. Install dependencies
 3. Copy source code
@@ -115,8 +133,10 @@ chmod +x docker-dev.sh
 ---
 
 #### [`client/.dockerignore`](client/.dockerignore)
+
 **Purpose:** Exclude files from Docker build context  
 **Excludes:**
+
 - node_modules
 - .next/out directories
 - .env files
@@ -128,8 +148,10 @@ chmod +x docker-dev.sh
 ### 4. Documentation Files
 
 #### [`DOCKER_SETUP.md`](DOCKER_SETUP.md)
+
 **Purpose:** Comprehensive Docker setup guide  
 **Contains:**
+
 - Project structure overview
 - Quick start instructions
 - Detailed service descriptions
@@ -143,8 +165,10 @@ chmod +x docker-dev.sh
 ---
 
 #### [`DOCKER_QUICK_START.md`](DOCKER_QUICK_START.md)
+
 **Purpose:** Quick reference for common Docker operations  
 **Contains:**
+
 - One-command setup
 - Essential commands
 - Access URLs
@@ -154,8 +178,10 @@ chmod +x docker-dev.sh
 ---
 
 #### [`ARCHITECTURE.md`](ARCHITECTURE.md)
+
 **Purpose:** Visual system architecture documentation  
 **Contains:**
+
 - System overview diagram
 - Service communication flows
 - Container details
@@ -168,8 +194,10 @@ chmod +x docker-dev.sh
 ---
 
 #### [`README.md`](README.md) (Updated)
+
 **Purpose:** Main project documentation  
 **Updates:**
+
 - Added Docker quick start section
 - Added configuration section
 - Links to Docker documentation
@@ -211,10 +239,10 @@ Devthon/
 
 ### Services
 
-| Service | Container Name | Port | Image/Build |
-|---------|---------------|------|-------------|
-| Database | trash2cash-db | 5432 | postgres:16-alpine |
-| Backend | trash2cash-backend | 4000 | Built from ./server |
+| Service  | Container Name      | Port | Image/Build         |
+| -------- | ------------------- | ---- | ------------------- |
+| Database | trash2cash-db       | 5432 | postgres:16-alpine  |
+| Backend  | trash2cash-backend  | 4000 | Built from ./server |
 | Frontend | trash2cash-frontend | 3000 | Built from ./client |
 
 ### Networks
@@ -233,6 +261,7 @@ Devthon/
 ### Environment Variables
 
 **Backend:**
+
 - `DATABASE_URL`: PostgreSQL connection (uses service name `db`)
 - `PORT`: 4000
 - `NODE_ENV`: development
@@ -240,9 +269,9 @@ Devthon/
 - `JWT_REFRESH_SECRET`: JWT refresh token secret
 - `CORS_ORIGIN`: http://localhost:3000
 - `GEMINI_API_KEY`: (optional) Google Gemini API key
-- `REDIS_URL`: (optional) Redis connection URL
 
 **Frontend:**
+
 - `NEXT_PUBLIC_API_URL`: http://backend:4000/api (server-side)
 - `NEXT_PUBLIC_CLIENT_API_URL`: http://localhost:4000/api (client-side)
 - `NODE_ENV`: development
@@ -250,6 +279,7 @@ Devthon/
 ## Usage Workflow
 
 ### Initial Setup
+
 ```bash
 # 1. Navigate to project
 cd /home/nidharshan/Documents/Projects/Devthon
@@ -263,6 +293,7 @@ docker compose up --build
 ```
 
 ### Daily Development
+
 ```bash
 # Start services
 ./docker-dev.sh start-bg
@@ -281,6 +312,7 @@ docker compose up --build
 ```
 
 ### Database Operations
+
 ```bash
 # Create migration
 ./docker-dev.sh migrate migration_name
@@ -305,17 +337,17 @@ docker compose up --build
 ✅ **Health Checks**: Database health monitoring  
 ✅ **Helper Script**: Convenient management commands  
 ✅ **Comprehensive Docs**: Multiple documentation files  
-✅ **Development Optimized**: Fast iteration cycle  
+✅ **Development Optimized**: Fast iteration cycle
 
 ## Access Points
 
-| What | URL | Credentials |
-|------|-----|-------------|
-| Frontend | http://localhost:3000 | - |
-| Backend API | http://localhost:4000/api | JWT token |
-| API Docs | http://localhost:4000/api/docs | - |
-| Database | localhost:5432 | trash2cash / trash2cash_dev_password |
-| Prisma Studio | http://localhost:5555 | (when running) |
+| What          | URL                            | Credentials                          |
+| ------------- | ------------------------------ | ------------------------------------ |
+| Frontend      | http://localhost:3000          | -                                    |
+| Backend API   | http://localhost:4000/api      | JWT token                            |
+| API Docs      | http://localhost:4000/api/docs | -                                    |
+| Database      | localhost:5432                 | trash2cash / trash2cash_dev_password |
+| Prisma Studio | http://localhost:5555          | (when running)                       |
 
 ## Best Practices Implemented
 
@@ -335,6 +367,7 @@ docker compose up --build
 ⚠️ **This setup is for DEVELOPMENT only!**
 
 For production, you should:
+
 - [ ] Use multi-stage builds to reduce image size
 - [ ] Change all secrets to strong, random values
 - [ ] Use Docker secrets for sensitive data
@@ -348,13 +381,13 @@ For production, you should:
 
 ## Troubleshooting Quick Reference
 
-| Issue | Solution |
-|-------|----------|
-| Port in use | `sudo lsof -i :PORT` then kill process |
-| Database won't start | `docker compose logs db` |
-| Backend won't connect | Wait for DB health check, then restart |
-| Hot reload not working | `docker compose restart [service]` |
-| Clean start needed | `docker compose down -v && docker compose up --build` |
+| Issue                  | Solution                                              |
+| ---------------------- | ----------------------------------------------------- |
+| Port in use            | `sudo lsof -i :PORT` then kill process                |
+| Database won't start   | `docker compose logs db`                              |
+| Backend won't connect  | Wait for DB health check, then restart                |
+| Hot reload not working | `docker compose restart [service]`                    |
+| Clean start needed     | `docker compose down -v && docker compose up --build` |
 
 ## Additional Resources
 

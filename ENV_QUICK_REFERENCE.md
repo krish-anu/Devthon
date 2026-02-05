@@ -21,12 +21,12 @@ docker compose down && docker compose up --build
 
 ## File Locations
 
-| File | Purpose | Tracked by Git? |
-|------|---------|-----------------|
-| `.env` | Your actual credentials | ❌ NO (ignored) |
-| `.env.example` | Template/reference | ✅ YES |
-| `docker-compose.yml` | Uses variables from `.env` | ✅ YES |
-| `.gitignore` | Ignores `.env` | ✅ YES |
+| File                 | Purpose                    | Tracked by Git? |
+| -------------------- | -------------------------- | --------------- |
+| `.env`               | Your actual credentials    | ❌ NO (ignored) |
+| `.env.example`       | Template/reference         | ✅ YES          |
+| `docker-compose.yml` | Uses variables from `.env` | ✅ YES          |
+| `.gitignore`         | Ignores `.env`             | ✅ YES          |
 
 ## Environment Variables Reference
 
@@ -43,7 +43,7 @@ JWT_REFRESH_SECRET=your_secret_here
 
 # External APIs
 GEMINI_API_KEY=your_key_here
-REDIS_URL=redis://user:pass@host:port
+
 ```
 
 ### Optional Variables (Have defaults)
@@ -65,12 +65,14 @@ NEXT_PUBLIC_API_URL=http://localhost:4000/api  # Default: http://localhost:4000/
 ## Common Issues & Solutions
 
 ### Issue: Docker Compose can't find variables
+
 ```bash
 # Solution: Ensure .env is in the same directory as docker-compose.yml
 ls -la .env docker-compose.yml
 ```
 
 ### Issue: Changes to .env not taking effect
+
 ```bash
 # Solution: Restart containers
 docker compose down
@@ -78,6 +80,7 @@ docker compose up --build
 ```
 
 ### Issue: Variables showing as empty
+
 ```bash
 # Solution: Check .env file syntax (no spaces around =)
 # ✅ Correct:
@@ -88,6 +91,7 @@ DATABASE_URL = postgresql://...
 ```
 
 ### Issue: .env file showing in git status
+
 ```bash
 # Solution: Ensure .gitignore includes .env
 echo ".env" >> .gitignore
@@ -116,6 +120,7 @@ for i in {1..3}; do openssl rand -base64 32; done
 ## Environment-Specific Setup
 
 ### Development
+
 ```bash
 # Use .env for local development
 cp .env.example .env
@@ -123,6 +128,7 @@ cp .env.example .env
 ```
 
 ### Production
+
 ```bash
 # Use your hosting platform's environment variable management
 # Examples:

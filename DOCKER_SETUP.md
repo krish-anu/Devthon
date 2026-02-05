@@ -36,7 +36,7 @@ cd /home/nidharshan/Documents/Projects/Devthon
 
 ### 2. Set Up Environment Variables (Optional)
 
-If you need to use external services like Gemini AI or Redis:
+If you need to use external services like Gemini AI:
 
 ```bash
 # Copy the example file
@@ -57,6 +57,7 @@ docker compose up --build -d
 ```
 
 This single command will:
+
 - ✅ Start PostgreSQL database
 - ✅ Build and start NestJS backend
 - ✅ Run Prisma migrations automatically
@@ -74,6 +75,7 @@ This single command will:
 ## 🛠️ Docker Services
 
 ### PostgreSQL Database (`db`)
+
 - **Image**: postgres:16-alpine
 - **Port**: 5432
 - **Credentials**:
@@ -83,6 +85,7 @@ This single command will:
 - **Data Persistence**: Volume `postgres_data`
 
 ### NestJS Backend (`backend`)
+
 - **Port**: 4000
 - **Features**:
   - Hot reload enabled (watches `src/` directory)
@@ -92,6 +95,7 @@ This single command will:
   - Swagger API documentation
 
 ### Next.js Frontend (`frontend`)
+
 - **Port**: 3000
 - **Features**:
   - Hot reload enabled
@@ -101,6 +105,7 @@ This single command will:
 ## 📝 Common Commands
 
 ### Start Services
+
 ```bash
 # Start all services
 docker compose up
@@ -113,6 +118,7 @@ docker compose up --build
 ```
 
 ### Stop Services
+
 ```bash
 # Stop all services
 docker compose down
@@ -122,6 +128,7 @@ docker compose down -v
 ```
 
 ### View Logs
+
 ```bash
 # View all logs
 docker compose logs
@@ -136,6 +143,7 @@ docker compose logs db
 ```
 
 ### Execute Commands in Containers
+
 ```bash
 # Access backend shell
 docker compose exec backend sh
@@ -153,6 +161,7 @@ docker compose exec backend npx prisma db seed
 ```
 
 ### Restart Services
+
 ```bash
 # Restart all services
 docker compose restart
@@ -162,6 +171,7 @@ docker compose restart backend
 ```
 
 ### View Running Containers
+
 ```bash
 docker compose ps
 ```
@@ -173,6 +183,7 @@ docker compose ps
 The Docker setup includes volume mounts for hot reload:
 
 **Backend** (`server/src` and `server/prisma`):
+
 - Changes to TypeScript files automatically trigger NestJS reload
 - Changes to Prisma schema require manual migration:
   ```bash
@@ -180,6 +191,7 @@ The Docker setup includes volume mounts for hot reload:
   ```
 
 **Frontend** (`client/app`, `client/components`, etc.):
+
 - Changes automatically trigger Next.js hot reload
 - No manual restart needed
 
@@ -222,22 +234,21 @@ All services are connected via the `trash2cash-network` bridge network:
 
 Set in [`docker-compose.yml`](docker-compose.yml):
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://trash2cash:...@db:5432/trash2cash` |
-| `DIRECT_URL` | Direct database connection | Same as DATABASE_URL |
-| `PORT` | Backend server port | `4000` |
-| `NODE_ENV` | Environment mode | `development` |
-| `JWT_ACCESS_SECRET` | JWT access token secret | `dev_access_secret_change_in_production` |
-| `JWT_REFRESH_SECRET` | JWT refresh token secret | `dev_refresh_secret_change_in_production` |
-| `CORS_ORIGIN` | Allowed CORS origins | `http://localhost:3000` |
-| `GEMINI_API_KEY` | Google Gemini API key | (optional) |
-| `REDIS_URL` | Redis connection URL | (optional) |
+| Variable             | Description                  | Default                                          |
+| -------------------- | ---------------------------- | ------------------------------------------------ |
+| `DATABASE_URL`       | PostgreSQL connection string | `postgresql://trash2cash:...@db:5432/trash2cash` |
+| `DIRECT_URL`         | Direct database connection   | Same as DATABASE_URL                             |
+| `PORT`               | Backend server port          | `4000`                                           |
+| `NODE_ENV`           | Environment mode             | `development`                                    |
+| `JWT_ACCESS_SECRET`  | JWT access token secret      | `dev_access_secret_change_in_production`         |
+| `JWT_REFRESH_SECRET` | JWT refresh token secret     | `dev_refresh_secret_change_in_production`        |
+| `CORS_ORIGIN`        | Allowed CORS origins         | `http://localhost:3000`                          |
+| `GEMINI_API_KEY`     | Google Gemini API key        | (optional)                                       |
 
 ### Frontend Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
+| Variable              | Description                   | Default                     |
+| --------------------- | ----------------------------- | --------------------------- |
 | `NEXT_PUBLIC_API_URL` | Backend API URL (client-side) | `http://localhost:4000/api` |
 
 ## 🐛 Troubleshooting
