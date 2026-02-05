@@ -25,7 +25,7 @@ export function KpiCard({
           <span className="text-sm text-[color:var(--muted)]">{helper}</span>
         )}
       </div>
-      <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-400/10" />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-(--brand)/10" />
     </Card>
   );
 }
