@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { PricingItem } from "@/lib/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Leaf, MapPin, Recycle, Users, CheckCircle, Calendar, Truck, Wallet } from "lucide-react";
 
 const fallbackPricing = [
   { name: "Plastic (PET)", min: 45, max: 70 },
@@ -35,7 +36,13 @@ export default function HomePage() {
       <header className="w-full bg-(--card)">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
           <div className="flex items-center gap-3 text-lg font-semibold">
-            <div className="h-10 w-10 rounded-2xl bg-(--brand)/20"></div>
+            <div className="h-10 w-10 overflow-hidden rounded-2xl bg-(--brand)/20">
+              <img
+                src="/recycle%20logo.png"
+                alt="Trash2Cash logo"
+                className="h-full w-full object-cover"
+              />
+            </div>
             Trash2Cash
           </div>
           <nav className="hidden items-center gap-6 text-sm text-(--muted) md:flex">
@@ -82,55 +89,67 @@ export default function HomePage() {
               <Button size="lg" asChild>
                 <Link href="/signup">Book a Pickup ?</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-[#4BDC00] text-[#4BDC00]"
+                asChild
+              >
                 <a href="#pricing">Check Prices</a>
               </Button>
             </div>
           </div>
           <div className="flex-1">
-            <Card className="space-y-6 border-(--brand) bg-(--card)">
-              <div className="text-sm uppercase tracking-[0.3em] text-(--brand)">
-                Live Impact
-              </div>
-              <div className="grid gap-4">
-                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
-                  <p className="text-xs text-(--muted)">
-                    Active pickups this week
-                  </p>
-                  <p className="text-2xl font-semibold">126</p>
-                </div>
-                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
-                  <p className="text-xs text-(--muted)">
-                    Average payout per booking
-                  </p>
-                  <p className="text-2xl font-semibold">LKR 1,420</p>
-                </div>
-                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
-                  <p className="text-xs text-(--muted)">
-                    CO? saved today
-                  </p>
-                  <p className="text-2xl font-semibold">12.4 tonnes</p>
-                </div>
-              </div>
-            </Card>
+            <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg">
+              <img
+                src="/recycling-bins.png"
+                alt="Colorful recycling bins for waste segregation"
+                className="h-auto w-full object-cover"
+              />
+            </div>
           </div>
         </section>
       </div>
 
-      <section className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-4 px-6 pb-16 md:grid-cols-4">
-        {[
-          ["500+ Tonnes Collected", "Across Sri Lanka"],
-          ["12,000+ Active Users", "Households & SMEs"],
-          ["850 Tonnes CO? Saved", "Carbon tracked monthly"],
-          ["25 Districts Served", "Island-wide logistics"],
-        ].map(([title, subtitle]) => (
-          <Card key={title} className="bg-(--brand)/10">
-            <p className="text-lg font-semibold text-(--brand)">
-              {title}
-            </p>
-            <p className="text-xs text-(--muted)">{subtitle}</p>
-          </Card>
-        ))}
+      <section className="mx-auto w-full max-w-6xl px-6 pb-16">
+        <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[
+              {
+                icon: <Recycle className="h-5 w-5" />,
+                value: "500+",
+                label: "Tonnes Collected",
+              },
+              {
+                icon: <Users className="h-5 w-5" />,
+                value: "12,000+",
+                label: "Active Users",
+              },
+              {
+                icon: <Leaf className="h-5 w-5" />,
+                value: "850",
+                label: "Tonnes CO₂ Saved",
+              },
+              {
+                icon: <MapPin className="h-5 w-5" />,
+                value: "25",
+                label: "Districts Served",
+              },
+            ].map((stat) => (
+              <Card key={stat.label} className="bg-(--brand)/10 text-center shadow-md">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                    {stat.icon}
+                  </div>
+                  <div className="text-lg font-bold text-(--brand)">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-(--muted)">{stat.label}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section
@@ -148,54 +167,88 @@ export default function HomePage() {
               step: "1",
               title: "Book a Pickup",
               desc: "Select waste type, estimate weight, and schedule your pickup window.",
+              icon: <Calendar className="h-6 w-6" />,
             },
             {
               step: "2",
               title: "We Collect & Sort",
               desc: "Our verified recyclers collect, weigh, and sort responsibly.",
+              icon: <Truck className="h-6 w-6" />,
             },
             {
               step: "3",
               title: "Get Paid Instantly",
               desc: "Receive money instantly to your mobile wallet or bank account.",
+              icon: <Wallet className="h-6 w-6" />,
             },
           ].map((item) => (
-            <Card key={item.step} className="space-y-3">
-              <div className="text-sm text-(--brand)">
-                Step {item.step}
+            <Card 
+              key={item.step} 
+              className="bg-(--brand)/10 shadow-md"
+            >
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                  {item.icon}
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-(--brand)">
+                  Step {item.step}
+                </div>
+                <h3 className="text-xl font-semibold text-foreground">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-(--muted)">{item.desc}</p>
               </div>
-              <h3 className="text-xl font-semibold">{item.title}</h3>
-              <p className="text-sm text-(--muted)">{item.desc}</p>
             </Card>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16">
-        <SectionHeading
-          eyebrow="Features"
-          title="A marketplace built for every Sri Lankan household"
-          description="From transparent pricing to carbon tracking, Trash2Cash keeps the cycle circular."
-        />
-        <div className="grid gap-6 md:grid-cols-4">
-          {[
-            "Community Driven",
-            "Carbon Tracking",
-            "Transparent Pricing",
-            "Verified Recyclers",
-          ].map((feature) => (
-            <Card key={feature} className="h-full">
-              <h4 className="text-base font-semibold">{feature}</h4>
-              <p className="mt-2 text-sm text-(--muted)">
-                Real-time insights and community incentives that keep waste out
-                of landfills.
-              </p>
-            </Card>
-          ))}
+      <section className="w-full bg-background py-16">
+        <div className="mx-auto w-full max-w-6xl space-y-8 px-6">
+          <div className="space-y-4">
+            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-(--brand)">
+              Features
+            </span>
+            <h2 className="text-4xl font-bold text-foreground md:text-5xl">
+              A marketplace built for every<br />Sri Lankan household
+            </h2>
+            <p className="text-lg text-(--muted)">
+              From transparent pricing to carbon tracking, Trash2Cash keeps the cycle circular.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "Verified Recyclers",
+                desc: "We partner only with certified recycling facilities that meet environmental standards.",
+              },
+              {
+                title: "Transparent Pricing",
+                desc: "Real-time pricing updates based on market rates. Final price confirmed after inspection.",
+              },
+              {
+                title: "Carbon Tracking",
+                desc: "Track your personal contribution to reducing CO₂ emissions with every collection.",
+              },
+              {
+                title: "Community Driven",
+                desc: "Building a sustainable future together with local communities across Sri Lanka.",
+              },
+            ].map((item) => (
+                <Card key={item.title} className="bg-(--brand)/10 text-center shadow-md">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-base font-semibold text-(--brand)">{item.title}</h4>
+                    <p className="text-xs text-(--muted)">{item.desc}</p>
+                  </div>
+                </Card>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section
+      {/* <section
         id="impact"
         className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
       >
@@ -231,7 +284,7 @@ export default function HomePage() {
             ))}
           </div>
         </Card>
-      </section>
+      </section> */}
 
       <section
         id="pricing"
@@ -244,13 +297,15 @@ export default function HomePage() {
         />
         <div className="grid gap-6 md:grid-cols-4">
           {pricingCards.map((item) => (
-            <Card key={item.name} className="space-y-4">
-              <h4 className="text-lg font-semibold">{item.name}</h4>
-              <div className="text-sm text-muted">Min: LKR {item.min} / kg</div>
-              <div className="text-sm text-muted">Max: LKR {item.max} / kg</div>
-              <p className="text-xs text-muted">
-                Final prices determined after quality inspection.
-              </p>
+            <Card key={item.name} className="bg-(--brand)/10 text-center shadow-md">
+              <div className="flex flex-col items-center gap-2">
+                <h4 className="text-base font-semibold text-(--brand)">{item.name}</h4>
+                <div className="text-sm text-(--muted)">Min: LKR {item.min} / kg</div>
+                <div className="text-sm text-(--muted)">Max: LKR {item.max} / kg</div>
+                <p className="text-xs text-(--muted)">
+                  Final prices determined after quality inspection.
+                </p>
+              </div>
             </Card>
           ))}
         </div>
@@ -272,50 +327,57 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <footer
-        id="contact"
-        className="border-t border-(--border) bg-(--card)"
-      >
-        <div className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-12 md:grid-cols-4">
-          <div>
-            <h4 className="text-lg font-semibold">Trash2Cash</h4>
-            <p className="text-sm text-(--muted)">
-              Sri Lanka's circular economy marketplace.
+      <footer id="contact" className="bg-(--card) text-foreground border-t border-(--border)">
+        <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 overflow-hidden rounded-lg bg-transparent">
+                <img
+                  src="/recycle%20logo.png"
+                  alt="Trash2Cash logo"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <h4 className="text-xl font-bold text-foreground">Trash2Cash</h4>
+            </div>
+            <p className="text-sm leading-relaxed text-(--muted)">
+              Sri Lanka's leading digital waste aggregation and recycling marketplace.
             </p>
           </div>
-          <div className="text-sm text-muted">
-            <p className="font-semibold text-foreground">
-              Company
-            </p>
-            <ul className="mt-2 space-y-1">
-              <li>About</li>
-              <li>Careers</li>
-              <li>Press</li>
+
+          <div className="text-sm">
+            <p className="mb-3 font-semibold text-foreground">Company</p>
+            <ul className="space-y-2 text-(--muted)">
+              <li><a href="#" className="hover:text-foreground transition-colors">About Us</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Partners</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
             </ul>
           </div>
-          <div className="text-sm text-muted">
-            <p className="font-semibold text-foreground">
-              Support
-            </p>
-            <ul className="mt-2 space-y-1">
-              <li>Help Center</li>
-              <li>Contact</li>
-              <li>Privacy</li>
+
+          <div className="text-sm">
+            <p className="mb-3 font-semibold text-foreground">Support</p>
+            <ul className="space-y-2 text-(--muted)">
+              <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Contact Us</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">FAQs</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
             </ul>
           </div>
-          <div className="text-sm text-muted">
-            <p className="font-semibold text-foreground">
-              Connect
-            </p>
-            <ul className="mt-2 space-y-1">
-              <li>Facebook</li>
-              <li>LinkedIn</li>
-              <li>Instagram</li>
+
+          <div className="text-sm">
+            <p className="mb-3 font-semibold text-foreground">Connect</p>
+            <ul className="space-y-2 text-(--muted)">
+              <li><a href="#" className="hover:text-foreground transition-colors">Facebook</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Twitter</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Instagram</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">LinkedIn</a></li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-(--border) py-6 text-center text-xs text-(--muted)">
-          © 2026 Trash2Cash. All rights reserved.
+
+        <div className="border-t border-(--border) py-6 text-center text-sm text-(--muted)">
+          © 2026 Trash2Cash. All rights reserved. Making Sri Lanka greener, one pickup at a time.
         </div>
       </footer>
     </div>
