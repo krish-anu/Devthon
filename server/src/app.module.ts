@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
 import { ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheInterceptor } from '@nestjs/cache-manager';
@@ -34,22 +33,10 @@ import { ChatModule } from './chat/chat.module';
       imports: [],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService): Promise<any> => {
-        const redisUrl = configService.get<string>('REDIS_URL');
         const ttlEnv = configService.get<string>('CACHE_TTL');
-        const ttl = ttlEnv ? parseInt(ttlEnv, 10) : 600;
-        if (redisUrl) {
-          try {
-            const store = await redisStore({ url: redisUrl });
-            return { store, ttl };
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.warn(
-              'Redis cache store init failed, falling back to memory',
-              e,
-            );
-          }
-        }
-        return { ttl: 60 * 60 * 24 };
+        // Default to a day for in-memory cache when not specified
+        const ttl = ttlEnv ? parseInt(ttlEnv, 10) : 60 * 60 * 24;
+        return { ttl };
       },
     }),
     // Provide throttlers as an array to match ThrottlerGuard expectations
