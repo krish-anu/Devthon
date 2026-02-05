@@ -35,15 +35,7 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  const redirectUri =
-    typeof window !== "undefined"
-      ? (process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ??
-        `${window.location.origin}/login`)
-      : undefined;
-
   const handleGoogleLogin = useGoogleLogin({
-    ux_mode: "redirect",
-    redirect_uri: redirectUri,
     onSuccess: async (tokenResponse) => {
       try {
         const user = await googleLogin(tokenResponse.access_token);
