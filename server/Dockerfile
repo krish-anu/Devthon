@@ -26,7 +26,7 @@ RUN npx prisma generate
 RUN npx prisma migrate
 
 # Seed the database (runs `prisma db seed` which uses `ts-node prisma/seed.ts`)
-RUN npx prisma db seed || echo "Prisma seed failed (continuing build)"
+# RUN npx prisma db seed || echo "Prisma seed failed (continuing build)"
 
 # Copy the rest of the application code
 COPY . .
