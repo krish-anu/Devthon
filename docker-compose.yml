@@ -20,13 +20,13 @@ services:
       POSTGRES_PASSWORD: trash2cash_dev_password
       POSTGRES_DB: trash2cash
     ports:
-      - '5433:5432'
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - trash2cash-network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U trash2cash']
+      test: ["CMD-SHELL", "pg_isready -U trash2cash"]
       interval: 10s
       timeout: 5s
       retries: 5
