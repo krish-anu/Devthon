@@ -46,7 +46,9 @@ services:
       - "4000:4000"
     environment:
       # Database connection (using external Supabase database)
-      DATABASE_URL: ${DATABASE_URL}
+      # Accept common variants; prefer explicit DATABASE_URL, fall back to Databaseurl
+      DATABASE_URL: ${DATABASE_URL:-${Databaseurl}}
+      Databaseurl: ${Databaseurl}
       DIRECT_URL: ${DIRECT_URL}
 
       # Application settings
@@ -73,9 +75,9 @@ services:
       # Persist node_modules from the image (do not mount host path here)
     networks:
       - trash2cash-network
-    # Skip migrations since database is already set up
-    # If you need to run migrations, use: docker compose exec backend npx prisma migrate deploy
-    command: sh -c "npm run start:dev"
+    # Run migrations and seed at container start so Supabase receives the seeded data,
+    # then start the dev server. This uses the DATABASE_URL (or Databaseurl) env var.
+    command: sh -c "npx prisma migrate deploy --preview-feature || true && npx prisma db seed || true && npm run start:dev"
 
   # ==========================================
   # Next.js Frontend Service

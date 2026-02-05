@@ -5,8 +5,8 @@
 # Use Node.js 20 Alpine for smaller image size
 FROM node:20-alpine
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL, CA certificates and runtime deps needed by Prisma
+RUN apk add --no-cache openssl ca-certificates libc6-compat curl bash && update-ca-certificates || true
 
 # Set working directory
 WORKDIR /app
@@ -24,6 +24,9 @@ RUN npx prisma generate
 
 # Apply database migrations
 RUN npx prisma migrate
+
+# Seed the database (runs `prisma db seed` which uses `ts-node prisma/seed.ts`)
+RUN npx prisma db seed || echo "Prisma seed failed (continuing build)"
 
 # Copy the rest of the application code
 COPY . .
