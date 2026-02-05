@@ -36,13 +36,7 @@ export default function HomePage() {
       <header className="w-full bg-(--card)">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
           <div className="flex items-center gap-3 text-lg font-semibold">
-            <div className="h-10 w-10 overflow-hidden rounded-2xl bg-(--brand)/20">
-              <img
-                src="/recycle%20logo.png"
-                alt="Trash2Cash logo"
-                className="h-full w-full object-cover"
-              />
-            </div>
+            <div className="h-10 w-10 rounded-2xl bg-(--brand)/20"></div>
             Trash2Cash
           </div>
           <nav className="hidden items-center gap-6 text-sm text-(--muted) md:flex">
@@ -75,7 +69,7 @@ export default function HomePage() {
         <section className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10 px-6 pb-20 pt-10 md:flex-row md:items-center">
           <div className="flex-1 space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
-              Sri Lanka's #1 Waste Marketplace
+              Sri Lanka&apos;s #1 Waste Marketplace
             </div>
             <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
               Turn Your Waste into Cash
@@ -87,7 +81,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" asChild>
-                <Link href="/signup">Book a Pickup ?</Link>
+                <Link href="/signup">Book a Pickup</Link>
               </Button>
               <Button
                 size="lg"
@@ -100,13 +94,25 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex-1">
-            <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg">
-              <img
-                src="/recycling-bins.png"
-                alt="Colorful recycling bins for waste segregation"
-                className="h-auto w-full object-cover"
-              />
-            </div>
+            <Card className="space-y-6 border-(--brand) bg-(--card)">
+              <div className="text-sm uppercase tracking-[0.3em] text-(--brand)">
+                Live Impact
+              </div>
+              <div className="grid gap-4">
+                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                  <p className="text-xs text-(--muted)">Active pickups this week</p>
+                  <p className="text-2xl font-semibold">126</p>
+                </div>
+                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                  <p className="text-xs text-(--muted)">Average payout per booking</p>
+                  <p className="text-2xl font-semibold">LKR 1,420</p>
+                </div>
+                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                  <p className="text-xs text-(--muted)">CO₂ saved today</p>
+                  <p className="text-2xl font-semibold">12.4 tonnes</p>
+                </div>
+              </div>
+            </Card>
           </div>
         </section>
       </div>
@@ -182,8 +188,8 @@ export default function HomePage() {
               icon: <Wallet className="h-6 w-6" />,
             },
           ].map((item) => (
-            <Card 
-              key={item.step} 
+            <Card
+              key={item.step}
               className="bg-(--brand)/10 shadow-md"
             >
               <div className="flex flex-col items-center gap-3 text-center">
@@ -234,57 +240,19 @@ export default function HomePage() {
                 desc: "Building a sustainable future together with local communities across Sri Lanka.",
               },
             ].map((item) => (
-                <Card key={item.title} className="bg-(--brand)/10 text-center shadow-md">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
-                      <CheckCircle className="h-5 w-5" />
-                    </div>
-                    <h4 className="text-base font-semibold text-(--brand)">{item.title}</h4>
-                    <p className="text-xs text-(--muted)">{item.desc}</p>
+              <Card key={item.title} className="bg-(--brand)/10 text-center shadow-md">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                    <CheckCircle className="h-5 w-5" />
                   </div>
-                </Card>
+                  <h4 className="text-base font-semibold text-(--brand)">{item.title}</h4>
+                  <p className="text-xs text-(--muted)">{item.desc}</p>
+                </div>
+              </Card>
             ))}
           </div>
         </div>
       </section>
-
-      {/* <section
-        id="impact"
-        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
-      >
-        <SectionHeading
-          eyebrow="Environmental Impact"
-          title="Making a real difference, one pickup at a time"
-          description="Track your carbon savings, diversion rates, and community rankings as you earn."
-        />
-        <Card className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-3">
-            <h3 className="text-2xl font-semibold">Live community impact</h3>
-            <p className="text-sm text-(--muted)">
-              Every pickup contributes to cleaner waterways, reduced landfill
-              pressure, and a greener Sri Lanka.
-            </p>
-            <Button variant="secondary" asChild>
-              <Link href="/signup">Join the Green Revolution</Link>
-            </Button>
-          </div>
-          <div className="grid gap-3">
-            {[
-              ["CO? saved this month", "72.4 tonnes"],
-              ["Waste diverted from landfills", "128 tonnes"],
-              ["Active recycler partners", "240"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3"
-              >
-                <p className="text-xs text-(--muted)">{label}</p>
-                <p className="text-lg font-semibold">{value}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </section> */}
 
       <section
         id="pricing"
@@ -331,17 +299,13 @@ export default function HomePage() {
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 overflow-hidden rounded-lg bg-transparent">
-                <img
-                  src="/recycle%20logo.png"
-                  alt="Trash2Cash logo"
-                  className="h-full w-full object-cover"
-                />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--brand)">
+                <Recycle className="h-6 w-6 text-white" />
               </div>
               <h4 className="text-xl font-bold text-foreground">Trash2Cash</h4>
             </div>
             <p className="text-sm leading-relaxed text-(--muted)">
-              Sri Lanka's leading digital waste aggregation and recycling marketplace.
+              Sri Lanka&apos;s leading digital waste aggregation and recycling marketplace.
             </p>
           </div>
 

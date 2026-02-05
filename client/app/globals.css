@@ -10,6 +10,10 @@
   --brand-rgb: 75 220 0;
   --brand-strong: #36a400;
   --accent: #4BDC00;
+  --brand: #4BDC00; /* updated primary */
+  --brand-rgb: 75 220 0;
+  --brand-strong: #36a400;
+  --accent: #4BDC00;
   --border: #e5e7eb;
   --surface: #f3f4f6;
   --surface-strong: #e5e7eb;
@@ -22,11 +26,13 @@
   --background: #000000; /* pure black */
   --foreground: #ffffff; /* pure white */
   --card: #000000; /* header/card black */
+  --background: #000000; /* pure black */
+  --foreground: #ffffff; /* pure white */
+  --card: #000000; /* header/card black */
   --muted: #9ca3af;
-  --brand: #4BDC00; /* match light mode primary */
-  --brand-rgb: 75 220 0;
-  --brand-strong: #36a400;
-  --accent: #4BDC00;
+  --brand: #4ade80;
+  --brand-strong: #22c55e;
+  --accent: #4ade80;
   --border: #1f1f1f;
   --surface: #0b0b0b;
   --surface-strong: #171717;
@@ -40,11 +46,13 @@
     --background: #000000; /* pure black */
     --foreground: #ffffff; /* pure white */
     --card: #000000; /* header/card black */
+    --background: #000000; /* pure black */
+    --foreground: #ffffff; /* pure white */
+    --card: #000000; /* header/card black */
     --muted: #9ca3af;
-    --brand: #4BDC00; /* match light mode */
-    --brand-rgb: 75 220 0;
-    --brand-strong: #36a400;
-    --accent: #4BDC00;
+    --brand: #4ade80;
+    --brand-strong: #22c55e;
+    --accent: #4ade80;
     --border: #1f1f1f;
     --surface: #0b0b0b;
     --surface-strong: #171717;
@@ -58,11 +66,13 @@
   --background: #000000; /* pure black */
   --foreground: #ffffff; /* pure white */
   --card: #000000; /* header/card black */
+  --background: #000000; /* pure black */
+  --foreground: #ffffff; /* pure white */
+  --card: #000000; /* header/card black */
   --muted: #9ca3af;
-  --brand: #4BDC00; /* match light mode */
-  --brand-rgb: 75 220 0;
-  --brand-strong: #36a400;
-  --accent: #4BDC00;
+  --brand: #4ade80;
+  --brand-strong: #22c55e;
+  --accent: #4ade80;
   --border: #1f1f1f;
   --surface: #0b0b0b;
   --surface-strong: #171717;
@@ -97,6 +107,7 @@ h5 {
 
 .gradient-text {
   background: linear-gradient(120deg, var(--brand), #38bdf8);
+  background: linear-gradient(120deg, var(--brand), #38bdf8);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -105,6 +116,7 @@ h5 {
   background-image:
     radial-gradient(
       circle at 20% 20%,
+      rgb(var(--brand-rgb) / 0.15),
       rgb(var(--brand-rgb) / 0.15),
       transparent 40%
     ),
@@ -122,6 +134,11 @@ h5 {
 
 :root[data-theme="light"] .section-grid {
   background-image:
+    radial-gradient(
+      circle at 20% 20%,
+      rgb(var(--brand-rgb) / 0.2),
+      transparent 45%
+    ),
     radial-gradient(
       circle at 20% 20%,
       rgb(var(--brand-rgb) / 0.2),
