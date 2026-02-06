@@ -62,7 +62,7 @@ npx prisma migrate deploy
 - (Optional) Seed the database and open Prisma Studio:
 
 ```bash
-npm run seed
+npm run seed 
 npm run prisma:studio
 ```
 
