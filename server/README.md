@@ -64,7 +64,7 @@ npx prisma migrate deploy
 ```bash
 npm run seed 
 npm run prisma:studio
-```
+``` 
 
 Notes:
 
