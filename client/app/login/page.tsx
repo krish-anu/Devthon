@@ -107,7 +107,7 @@ export default function LoginPage() {
           <Card className="w-full max-w-md space-y-6">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
-                Your Waste Into Wealth
+               Turn Your Waste Into Wealth
               </p>
               <h1 className="text-2xl font-semibold">Welcome Back</h1>
             </div>
