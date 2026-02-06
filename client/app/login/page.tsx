@@ -6,16 +6,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-
 import { Card } from "@/components/ui/card";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/auth/auth-provider";
 import { toast } from "@/components/ui/use-toast";
-
 import { AuthLayout } from "@/components/auth/auth-layout";
-
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useGoogleLogin } from "@react-oauth/google";
 
@@ -94,14 +90,6 @@ export default function LoginPage() {
       subtitle="Join thousands of users earning money by recycling their waste responsibly."
     >
       <div className="space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Welcome Back
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Sign in to continue to your dashboard
-          </p>
-        </div>
         <div className="flex items-center justify-center w-full h-full bg-background px-6 py-6 lg:py-12">
           <ThemeToggle className="fixed right-6 top-6" />
           <Card className="w-full max-w-md space-y-6">
@@ -137,9 +125,6 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </Button>
-            <div className="text-xs text-(--muted)">
-              or continue with email
-            </div>
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-2">
                 <Label>Email</Label>
@@ -154,7 +139,7 @@ export default function LoginPage() {
                 <Label>Password</Label>
                 <Input
                   type="password"
-                  placeholder="????????"
+                  placeholder="**************"
                   {...register("password")}
                 />
                 {errors.password && (
@@ -181,12 +166,12 @@ export default function LoginPage() {
             </form>
 
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an account?{"   "}
               <Link
-                href="/signup"
-                className="font-medium text-(--brand) hover:text-(--brand-strong)"
+              href="/signup"
+              className="font-medium text-(--brand) hover:text-(--brand-strong) ml-2"
               >
-                Sign Up
+              Sign Up
               </Link>
             </p>
           </Card>

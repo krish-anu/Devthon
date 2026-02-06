@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Recycle } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -90,7 +89,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     <div className="flex min-h-screen">
       {/* Left Panel - Green Gradient */}
       <div className="relative hidden lg:flex lg:w-[45%] flex-col justify-between overflow-hidden bg-gradient-to-b from-(--brand) to-(--brand-strong) p-10 text-white">
-        <div className="pointer-events-none absolute inset-0 auth-bg-container">
+        <div className="pointer-events-none absolute inset-0 auth-bg-container" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#f5f5f5' }}>
           {images.map((src, i) => (
             <img
               key={src}
@@ -100,47 +99,42 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               className={`h-full w-full object-cover auth-bg-image ${i === index ? 'active' : ''} ${loaded[i] ? 'loaded' : ''}`}
             />
           ))}
-          <div className="absolute inset-0 auth-bg-overlay" />
+          <div className="absolute inset-0 auth-bg-overlay z-22" />
         </div>
-        <div className="relative z-20 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 overflow-hidden">
-            <img src="/recycle%20logo.png" alt="Trash2Cash" className="h-6 w-6 object-contain" />
+        <div className="relative z-25 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
+            <img src="/recycle%20logo.png" alt="Trash2Cash" className="h-8 w-8 object-contain" />
           </div>
-          <span className="text-xl font-semibold text-[color:var(--auth-text)]">Trash2Cash</span>
+          <span className="text-xl font-bold text-[color:var(--brand)]">Trash2Cash</span>
         </div>
         
-        <div className="relative z-20 space-y-4">
-          <h1 className="text-4xl font-bold leading-tight text-[color:var(--auth-text)]">{title}</h1>
-          <p className="text-[color:var(--auth-text)] opacity-80 text-sm max-w-xs">{subtitle}</p>
+        <div className="relative z-500 space-y-4">
+          <h1 className="text-4xl font-bold leading-tight text-white">{title}</h1>
+          <p className="text-white/80 text-sm max-w-xs">{subtitle}</p>
         </div>
         
-        <div className="relative z-20 text-[color:var(--auth-text)] opacity-60 text-xs">
+        <div className="relative z-500 text-white/60 text-xs">
           © 2026 Trash2Cash. All rights reserved.
         </div>
       </div>
 
       {/* Right Panel - Form Area */}
-      <div className="flex flex-1 flex-col bg-white dark:bg-[#0f172a]">
         <div className="flex justify-between items-center p-6 lg:hidden">
-          <div className="flex items-center gap-2 text-[color:var(--auth-text)]">
+          <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--brand)/10 overflow-hidden">
               <img src="/recycle%20logo.png" alt="Trash2Cash" className="h-5 w-5 object-contain" />
             </div>
             <span className="font-semibold text-[color:var(--auth-text)]">Trash2Cash</span>
           </div>
-          <ThemeToggle />
         </div>
         
-        <div className="hidden lg:flex justify-end p-6">
-          <ThemeToggle />
-        </div>
+
         
         <div className="flex flex-1 items-center justify-center px-6 py-8 lg:py-0">
           <div className="w-full max-w-md">
             {children}
           </div>
         </div>
-      </div>
     </div>
   );
 }
