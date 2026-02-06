@@ -15,6 +15,8 @@ services:
     image: postgres:16-alpine
     container_name: trash2cash-db
     restart: unless-stopped
+    profiles:
+      - local-db
     environment:
       POSTGRES_USER: trash2cash
       POSTGRES_PASSWORD: trash2cash_dev_password
@@ -47,8 +49,7 @@ services:
     environment:
       # Database connection (using external Supabase database)
       # Accept common variants; prefer explicit DATABASE_URL, fall back to Databaseurl
-      DATABASE_URL: ${DATABASE_URL:-${Databaseurl}}
-      Databaseurl: ${Databaseurl}
+      DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
 
       # Application settings
@@ -70,6 +71,10 @@ services:
       # Text.lk SMS Gateway
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
+
+      # Supabase (optional – enables Auth sync & DB mirroring)
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
     volumes:
       # Mount source code for hot reload in development
       - ./server/src:/app/src

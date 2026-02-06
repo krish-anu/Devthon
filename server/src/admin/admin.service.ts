@@ -61,7 +61,8 @@ export class AdminService {
     });
     const categories = await this.prisma.wasteCategory.findMany();
     const wasteDistribution = bookingsByCategory.map((item) => ({
-      name: categories.find((c) => c.id === item.wasteCategoryId)?.name ?? 'Other',
+      name:
+        categories.find((c) => c.id === item.wasteCategoryId)?.name ?? 'Other',
       value: item._count.wasteCategoryId,
     }));
 
@@ -80,39 +81,45 @@ export class AdminService {
       },
       revenueByDay,
       wasteDistribution,
-      recentActivity,
+      recentActivity: recentActivity.map((booking) => ({
+        ...booking,
+        user: this.sanitizeUser(booking.user),
+      })),
     };
   }
 
   async listUsers(search?: string, type?: string) {
     const where: Prisma.UserWhereInput = {};
-    
+
     // Validate and normalize type - only accept valid UserType values
-    const typeValue: UserType | null = type === 'HOUSEHOLD' || type === 'BUSINESS' ? (type as UserType) : null;
-    
+    const typeValue: UserType | null =
+      type === 'HOUSEHOLD' || type === 'BUSINESS' ? (type as UserType) : null;
+
     // Validate search - only use if non-empty after trim
     const hasSearch = search?.trim().length;
-    
+
     // Build search filters array if search is valid
     const searchFilters: Prisma.UserWhereInput[] | null = hasSearch
       ? [
-          { fullName: { contains: search!.trim(), mode: 'insensitive' as const } },
+          {
+            fullName: {
+              contains: search!.trim(),
+              mode: 'insensitive' as const,
+            },
+          },
           { email: { contains: search!.trim(), mode: 'insensitive' as const } },
         ]
       : null;
-    
+
     // Combine type and search filters with AND logic
     if (typeValue && searchFilters) {
-      where.AND = [
-        { type: typeValue },
-        { OR: searchFilters },
-      ];
+      where.AND = [{ type: typeValue }, { OR: searchFilters }];
     } else if (typeValue) {
       where.type = typeValue;
     } else if (searchFilters) {
       where.OR = searchFilters;
     }
-    
+
     const users = await this.prisma.user.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: { createdAt: 'desc' },
@@ -158,7 +165,7 @@ export class AdminService {
       where: { booking: { userId: id } },
     });
     await this.prisma.booking.deleteMany({ where: { userId: id } });
-    
+
     // Now delete the user
     await this.prisma.user.delete({ where: { id } });
     return { success: true };
@@ -192,17 +199,17 @@ export class AdminService {
 
   async listBookings(query: AdminBookingsQueryDto) {
     const where: Prisma.BookingWhereInput = {};
-    
+
     // Filter by status
     if (query.status) {
       where.status = query.status;
     }
-    
+
     // Filter by user ID
     if (query.userId) {
       where.userId = query.userId;
     }
-    
+
     // Filter by date range
     if (query.from || query.to) {
       where.createdAt = {};
@@ -216,21 +223,28 @@ export class AdminService {
         where.createdAt.lt = toDate;
       }
     }
-    
+
     // Filter by search (booking ID or address)
     if (query.search) {
       const searchTerm = query.search.trim();
       where.OR = [
         { id: { contains: searchTerm, mode: 'insensitive' as const } },
-        { addressLine1: { contains: searchTerm, mode: 'insensitive' as const } },
+        {
+          addressLine1: { contains: searchTerm, mode: 'insensitive' as const },
+        },
       ];
     }
-    
-    return this.prisma.booking.findMany({
+
+    const bookings = await this.prisma.booking.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: { createdAt: 'desc' },
       include: { user: true, wasteCategory: true, driver: true },
     });
+
+    return bookings.map((booking) => ({
+      ...booking,
+      user: this.sanitizeUser(booking.user),
+    }));
   }
 
   async updatePricing(dto: AdminUpdatePricingDto) {

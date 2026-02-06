@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
@@ -53,7 +55,10 @@ export class AdminController {
   }
 
   @Delete('users/:id')
-  deleteUser(@Param('id') id: string) {
+  deleteUser(@Param('id') id: string, @Req() req: any) {
+    if (id === req.user.sub) {
+      throw new ForbiddenException('Cannot delete your own admin account');
+    }
     return this.adminService.deleteUser(id);
   }
 

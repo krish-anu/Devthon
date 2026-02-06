@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -14,6 +15,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 export class BookingsService {
   constructor(
     private prisma: PrismaService,
+    private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
   ) {}
 
@@ -135,6 +137,23 @@ export class BookingsService {
               booking.estimatedMaxAmount,
             ],
           });
+
+          // Sync booking to Supabase DB
+          await this.supabaseService.upsertRow('bookings', {
+            id: booking.id,
+            userId: booking.userId,
+            wasteCategoryId: booking.wasteCategoryId,
+            estimatedWeightRange: booking.estimatedWeightRange,
+            estimatedMinAmount: booking.estimatedMinAmount,
+            estimatedMaxAmount: booking.estimatedMaxAmount,
+            addressLine1: booking.addressLine1,
+            city: booking.city,
+            postalCode: booking.postalCode,
+            scheduledDate: booking.scheduledDate,
+            scheduledTimeSlot: booking.scheduledTimeSlot,
+            status: booking.status,
+          });
+
           return booking;
         }),
       );
@@ -165,6 +184,13 @@ export class BookingsService {
         userId,
         bookingId: id,
       });
+
+      // Sync status change to Supabase DB
+      await this.supabaseService.upsertRow('bookings', {
+        id: updated.id,
+        status: updated.status,
+      });
+
       return updated;
     } catch (err) {
       this.transactionLogger.logError('booking.cancel.failure', err as Error, {

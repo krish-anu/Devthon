@@ -1,8 +1,10 @@
-﻿import { Body, Controller, Logger, Post, Req } from '@nestjs/common';
+﻿import { Body, Controller, Logger, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ChatService } from './chat.service';
 import { ChatRequestDto } from './dto/chat.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);

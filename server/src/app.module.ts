@@ -23,6 +23,7 @@ import { AdminModule } from './admin/admin.module';
 import { TransactionLogger } from './common/logger/transaction-logger.service';
 import { LoggingModule } from './common/logger/logger.module';
 import { ChatModule } from './chat/chat.module';
+import { SupabaseModule } from './common/supabase/supabase.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { ChatModule } from './chat/chat.module';
         }),
       ],
     }),
+    SupabaseModule,
     PrismaModule,
     AuthModule,
     UsersModule,

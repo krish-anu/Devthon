@@ -1,7 +1,13 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../common/supabase/supabase.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -10,10 +16,13 @@ import type { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private supabaseService: SupabaseService,
   ) {}
 
   private sanitizeUser(user: User) {
@@ -48,15 +57,35 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        fullName: dto.fullName,
-        email: dto.email,
-        phone: dto.phone,
-        passwordHash,
-        type: dto.type,
-      },
-    });
+
+    // Try to create Supabase Auth user first to get a consistent ID
+    const supabaseAuthId = await this.supabaseService.createAuthUser(
+      dto.email,
+      dto.password,
+      { fullName: dto.fullName, phone: dto.phone, type: dto.type },
+    );
+
+    const userData: any = {
+      fullName: dto.fullName,
+      email: dto.email,
+      phone: dto.phone,
+      passwordHash,
+      type: dto.type,
+    };
+
+    // If Supabase Auth returned an ID, use it as the Prisma User ID
+    if (supabaseAuthId) {
+      userData.id = supabaseAuthId;
+      this.logger.log(
+        `Using Supabase Auth ID ${supabaseAuthId} for new user ${dto.email}`,
+      );
+    }
+
+    const user = await this.prisma.user.create({ data: userData });
+
+    // Sync user row to Supabase DB (if configured)
+    await this.syncUserToSupabase(user);
+
     const tokens = await this.issueTokens(user);
     return { user: this.sanitizeUser(user), ...tokens };
   }
@@ -112,7 +141,9 @@ export class AuthService {
 
   async googleLogin(token: string) {
     // Verify the token with Google
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+    const response = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?access_token=${token}`,
+    );
     if (!response.ok) {
       throw new UnauthorizedException('Invalid Google token');
     }
@@ -126,15 +157,33 @@ export class AuthService {
       where: { email: googleUser.email },
     });
     if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          fullName: googleUser.name || 'Google User',
-          email: googleUser.email,
-          phone: '',
-          passwordHash: '', // No password for Google users
-          type: 'HOUSEHOLD', // Default type
-        },
-      });
+      // Try to create Supabase Auth user for Google users too
+      const supabaseAuthId = await this.supabaseService.createAuthUser(
+        googleUser.email,
+        // Generate a random password for Supabase Auth (Google users won't use it)
+        Math.random().toString(36).slice(-16) + 'A1!',
+        { fullName: googleUser.name || 'Google User', provider: 'google' },
+      );
+
+      const userData: any = {
+        fullName: googleUser.name || 'Google User',
+        email: googleUser.email,
+        phone: '',
+        passwordHash: '', // No password for Google users
+        type: 'HOUSEHOLD' as const, // Default type
+      };
+
+      if (supabaseAuthId) {
+        userData.id = supabaseAuthId;
+        this.logger.log(
+          `Using Supabase Auth ID ${supabaseAuthId} for Google user ${googleUser.email}`,
+        );
+      }
+
+      user = await this.prisma.user.create({ data: userData });
+
+      // Sync to Supabase DB
+      await this.syncUserToSupabase(user);
     }
     const tokens = await this.issueTokens(user);
     return { user: this.sanitizeUser(user), ...tokens };
@@ -151,5 +200,22 @@ export class AuthService {
   private getExpires(key: string, fallback: StringValue) {
     const value = this.configService.get<string>(key) ?? fallback;
     return value as StringValue;
+  }
+
+  /**
+   * Sync a user record to Supabase DB (if configured).
+   * This keeps the Supabase `users` table in sync with Prisma.
+   */
+  private async syncUserToSupabase(user: User): Promise<void> {
+    await this.supabaseService.upsertRow('users', {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      type: user.type,
+      status: user.status,
+      address: user.address,
+    });
   }
 }
