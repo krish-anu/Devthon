@@ -168,10 +168,10 @@ export default function LoginPage() {
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               Don&apos;t have an account?{"   "}
               <Link
-                href="/signup"
-                className="font-medium text-(--brand) hover:text-(--brand-strong)"
+              href="/signup"
+              className="font-medium text-(--brand) hover:text-(--brand-strong) ml-2"
               >
-                Sign Up
+              Sign Up
               </Link>
             </p>
           </Card>

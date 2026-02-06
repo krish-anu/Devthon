@@ -104,19 +104,11 @@ export default function SignupPage() {
       subtitle="Join thousands of users earning money by recycling their waste responsibly."
     >
       <div className="space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Create your account
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Sign up to get started
-          </p>
-        </div>
         <div className="flex items-center justify-center w-full h-full bg-background px-6 py-6 lg:py-12">
           <ThemeToggle className="fixed right-6 top-6" />
           <Card className="w-full max-w-md space-y-6">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-brand">
+              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
                 Join the Green Revolution
               </p>
               <h1 className="text-2xl font-semibold">Create your account</h1>
@@ -147,8 +139,6 @@ export default function SignupPage() {
               </svg>
               Sign up with Google
             </Button>
-            <div className="text-xs text-(--muted)">or sign up with email</div>
-
             <form
               className="space-y-4"
               onSubmit={handleSubmit(onSubmit)}
@@ -158,13 +148,10 @@ export default function SignupPage() {
               }}
             >
               <div className="space-y-2">
-                <Label className="text-slate-700 dark:text-slate-300">
-                  Full Name
-                </Label>
+                <Label>Full Name</Label>
                 <Input
-                  placeholder="Rajesh Perera"
+                  placeholder="Full Name"
                   {...register("fullName")}
-                  className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
                 {errors.fullName && (
                   <p className="text-xs text-rose-500">
@@ -173,13 +160,10 @@ export default function SignupPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 dark:text-slate-300">
-                  Email Address
-                </Label>
+                <Label>Email Address</Label>
                 <Input
                   placeholder="you@email.com"
                   {...register("email")}
-                  className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
                 {errors.email && (
                   <p className="text-xs text-rose-500">
@@ -188,13 +172,10 @@ export default function SignupPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 dark:text-slate-300">
-                  Phone Number
-                </Label>
+                <Label>Phone Number</Label>
                 <Input
                   placeholder="+94 77 123 4567"
                   {...register("phone")}
-                  className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
                 {errors.phone && (
                   <p className="text-xs text-rose-500">
@@ -203,14 +184,11 @@ export default function SignupPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 dark:text-slate-300">
-                  Password
-                </Label>
+                <Label>Password</Label>
                 <Input
                   type="password"
                   placeholder="Choose a strong password"
                   {...register("password")}
-                  className="h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
                 {errors.password && (
                   <p className="text-xs text-rose-500">
@@ -268,12 +246,15 @@ export default function SignupPage() {
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
-            <div className="text-xs text-(--muted)">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               Already have an account?{"   "}
-              <Link href="/login" className="text-(--brand)">
+              <Link
+                href="/login"
+                className="font-medium text-(--brand) hover:text-(--brand-strong) ml-2"
+              >
                 Login
               </Link>
-            </div>
+            </p>
           </Card>
         </div>
       </div>
