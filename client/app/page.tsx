@@ -32,11 +32,17 @@ export default function HomePage() {
     : fallbackPricing;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground section-grid">
       <header className="w-full bg-(--card)">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
           <div className="flex items-center gap-3 text-lg font-semibold">
-            <div className="h-10 w-10 rounded-2xl bg-(--brand)/20"></div>
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
+              <img
+                src="/recycle%20logo.png"
+                alt="Trash2Cash logo"
+                className="h-8 w-8 object-contain"
+              />
+            </div>
             Trash2Cash
           </div>
           <nav className="hidden items-center gap-6 text-sm text-(--muted) md:flex">
@@ -65,7 +71,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="section-grid">
+      <div className="">
         <section className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10 px-6 pb-20 pt-10 md:flex-row md:items-center">
           <div className="flex-1 space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
@@ -83,41 +89,24 @@ export default function HomePage() {
               <Button size="lg" asChild>
                 <Link href="/signup">Book a Pickup</Link>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-[#4BDC00] text-[#4BDC00]"
-                asChild
-              >
+              <Button size="lg" variant="outline" asChild>
                 <a href="#pricing">Check Prices</a>
               </Button>
             </div>
           </div>
           <div className="flex-1">
-            <Card className="space-y-6 border-(--brand) bg-(--card)">
-              <div className="text-sm uppercase tracking-[0.3em] text-(--brand)">
-                Live Impact
-              </div>
-              <div className="grid gap-4">
-                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
-                  <p className="text-xs text-(--muted)">Active pickups this week</p>
-                  <p className="text-2xl font-semibold">126</p>
-                </div>
-                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
-                  <p className="text-xs text-(--muted)">Average payout per booking</p>
-                  <p className="text-2xl font-semibold">LKR 1,420</p>
-                </div>
-                <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
-                  <p className="text-xs text-(--muted)">CO₂ saved today</p>
-                  <p className="text-2xl font-semibold">12.4 tonnes</p>
-                </div>
-              </div>
-            </Card>
+            <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg aspect-[16/9]">
+              <img
+                src="/recycling-bins.png"
+                alt="Colorful recycling bins for waste segregation"
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
         </section>
       </div>
 
-      <section className="mx-auto w-full max-w-6xl px-6 pb-16">
+      <section className="mx-auto w-full max-w-6xl px-6 pb-16 ">
         <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-4">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
@@ -207,7 +196,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="w-full bg-background py-16">
+      <section className="w-full bg-transparent py-16">
         <div className="mx-auto w-full max-w-6xl space-y-8 px-6">
           <div className="space-y-4">
             <span className="text-xs font-semibold uppercase tracking-[0.35em] text-(--brand)">
@@ -299,8 +288,12 @@ export default function HomePage() {
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--brand)">
-                <Recycle className="h-6 w-6 text-white" />
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
+                <img
+                  src="/recycle%20logo.png"
+                  alt="Trash2Cash logo"
+                  className="h-8 w-8 object-contain"
+                />
               </div>
               <h4 className="text-xl font-bold text-foreground">Trash2Cash</h4>
             </div>

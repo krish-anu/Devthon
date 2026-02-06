@@ -2,23 +2,19 @@
 
 :root {
   color-scheme: light;
-  --background: #eafcf0;
+  --background: #d3ebaf;
   --foreground: #111827;
-  --card: #ffffff;
+  --card: #f0fdf4;
   --muted: #6b7280;
-  --brand: #4BDC00; /* updated primary */
-  --brand-rgb: 75 220 0;
-  --brand-strong: #36a400;
-  --accent: #4BDC00;
-  --brand: #4BDC00; /* updated primary */
-  --brand-rgb: 75 220 0;
-  --brand-strong: #36a400;
-  --accent: #4BDC00;
-  --border: #e5e7eb;
-  --surface: #f3f4f6;
-  --surface-strong: #e5e7eb;
-  --surface-soft: #f9fafb;
-  --ring: rgba(34, 197, 94, 0.4);
+  --brand: #507B2D; /* light-mode primary: rgb(118,217,77) */
+  --brand-rgb: 118 217 77;
+  --brand-strong: #3d5e22;
+  --accent: #507B2D;
+  --border: #c6e7d0;
+  --surface: #e8f5ee;
+  --surface-strong: #d1e7d8;
+  --surface-soft: #f0fdf4;
+  --ring: rgba(118, 217, 77, 0.4);
 }
 
 :root[data-theme="dark"] {
@@ -30,14 +26,15 @@
   --foreground: #ffffff; /* pure white */
   --card: #000000; /* header/card black */
   --muted: #9ca3af;
-  --brand: #4ade80;
-  --brand-strong: #22c55e;
-  --accent: #4ade80;
+  --brand: #4BDC00;
+  --brand-rgb: 75 220 0;
+  --brand-strong: #36a400;
+  --accent: #4BDC00;
   --border: #1f1f1f;
   --surface: #0b0b0b;
   --surface-strong: #171717;
   --surface-soft: #0b0b0b;
-  --ring: rgba(74, 222, 128, 0.4);
+  --ring: rgba(75, 220, 0, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -50,14 +47,15 @@
     --foreground: #ffffff; /* pure white */
     --card: #000000; /* header/card black */
     --muted: #9ca3af;
-    --brand: #4ade80;
-    --brand-strong: #22c55e;
-    --accent: #4ade80;
+    --brand: #4BDC00;
+    --brand-rgb: 75 220 0;
+    --brand-strong: #36a400;
+    --accent: #4BDC00;
     --border: #1f1f1f;
     --surface: #0b0b0b;
     --surface-strong: #171717;
     --surface-soft: #0b0b0b;
-    --ring: rgba(74, 222, 128, 0.4);
+    --ring: rgba(75, 220, 0, 0.4);
   }
 }
 
@@ -70,14 +68,15 @@
   --foreground: #ffffff; /* pure white */
   --card: #000000; /* header/card black */
   --muted: #9ca3af;
-  --brand: #4ade80;
-  --brand-strong: #22c55e;
-  --accent: #4ade80;
+  --brand: #4BDC00;
+  --brand-rgb: 75 220 0;
+  --brand-strong: #36a400;
+  --accent: #4BDC00;
   --border: #1f1f1f;
   --surface: #0b0b0b;
   --surface-strong: #171717;
   --surface-soft: #0b0b0b;
-  --ring: rgba(74, 222, 128, 0.4);
+  --ring: rgba(75, 220, 0, 0.4);
 }
 
 @theme inline {
@@ -175,4 +174,29 @@ h5 {
         transparent 45%
       );
   }
+}
+
+/* ── Light-mode card shadow + bevel / emboss ── */
+:root:not([data-theme="dark"]) [data-card] {
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.9) inset,   /* top inner highlight  */
+    0 -1px 0 0 rgba(0,0,0,0.04) inset,        /* bottom inner shadow  */
+    0 4px 14px rgba(0,60,20,0.08),             /* soft outer drop      */
+    0 1.5px 3px rgba(0,60,20,0.06);            /* tight contact shadow */
+  border-color: rgba(0,90,30,0.10);
+}
+
+:root[data-theme="light"] [data-card] {
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 0 rgba(0,0,0,0.04) inset,
+    0 4px 14px rgba(0,60,20,0.08),
+    0 1.5px 3px rgba(0,60,20,0.06);
+  border-color: rgba(0,90,30,0.10);
+}
+
+/* Remove the emboss in dark mode so it stays flat-black */
+:root[data-theme="dark"] [data-card],
+.dark [data-card] {
+  box-shadow: none;
 }
