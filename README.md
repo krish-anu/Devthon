@@ -3,6 +3,7 @@
 Full-stack waste management application built with NestJS (backend), Next.js (frontend), and PostgreSQL.
 
 ## Quick Start (Docker - recommended)
+
 Full-stack waste management application built with NestJS (backend), Next.js (frontend), and PostgreSQL.
 
 ## Quick Start (Docker - recommended)
@@ -13,6 +14,7 @@ Full-stack waste management application built with NestJS (backend), Next.js (fr
 cp .env.example .env
 # Edit .env with required values (see Environment section)
 ```
+
 ```bash
 cp .env.example .env
 # Edit .env with required values (see Environment section)
@@ -47,7 +49,7 @@ Access:
 
 To restart after changing `.env`:
 
-```bash
+````bash
 docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.dev.yml up --build
 
 ## Production (Docker)
@@ -58,14 +60,15 @@ Start production:
 
 ```bash
 docker compose -f docker-compose.prod.yml up
-```
+````
 
 Stop production:
 
 ```bash
 docker compose -f docker-compose.prod.yml down
 ```
-```
+
+````
 
 ## Manual (local) development
 
@@ -83,7 +86,7 @@ cd server
 npm install
 npx prisma migrate dev
 npm run start:dev
-```
+````
 
 Frontend:
 
