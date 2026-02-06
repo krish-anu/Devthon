@@ -1,0 +1,49 @@
+# ============================================
+# NestJS Backend — Production Dockerfile
+# Multi-stage build for minimal image size
+# ============================================
+
+# ── Stage 1: Install deps & build ──
+FROM node:20-alpine AS builder
+
+RUN apk add --no-cache openssl ca-certificates libc6-compat
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY prisma ./prisma/
+
+RUN npm ci --legacy-peer-deps
+
+# Generate Prisma client
+RUN npx prisma generate
+
+COPY . .
+
+# Build NestJS → /app/dist
+RUN npm run build
+
+# ── Stage 2: Production image ──
+FROM node:20-alpine AS runner
+
+RUN apk add --no-cache openssl ca-certificates libc6-compat curl bash \
+    && update-ca-certificates || true
+
+WORKDIR /app
+
+# Copy only production artefacts
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+
+# Create logs directory
+RUN mkdir -p logs
+
+ENV NODE_ENV=production
+ENV PORT=4000
+
+EXPOSE 4000
+
+# Run migrations at startup, then start the production server
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

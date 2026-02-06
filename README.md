@@ -52,7 +52,7 @@ docker compose -f docker-compose.dev.yml down && docker compose -f docker-compos
 
 ## Production (Docker)
 
-Production uses prebuilt images from Docker Hub (`vigneshnidhar/trash2cash`).
+Production uses prebuilt images from Docker Hub (`anusan2003/trash2cash`).
 
 Start production:
 
