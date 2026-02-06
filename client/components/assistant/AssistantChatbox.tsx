@@ -148,6 +148,7 @@ export default function AssistantChatbox() {
   const listRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const stored =
@@ -163,6 +164,22 @@ export default function AssistantChatbox() {
       }
     }
     setHasHydrated(true);
+  }, []);
+
+  // Clear stored chat history when the page is being refreshed or unloaded
+  // This ensures a fresh assistant session after a hard refresh
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleBeforeUnload = () => {
+      localStorage.removeItem(STORAGE_KEY);
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    // Some browsers fire pagehide instead of beforeunload in certain cases
+    window.addEventListener("pagehide", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handleBeforeUnload);
+    };
   }, []);
 
   useEffect(() => {
@@ -216,6 +233,20 @@ export default function AssistantChatbox() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!containerRef.current) return;
+      // If the clicked element is not inside the container, close the chat
+      if (!containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
   }, [isOpen]);
 
   const chatHistory = useMemo(() => {
@@ -293,7 +324,7 @@ export default function AssistantChatbox() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-500" data-assistant-chatbox>
+    <div ref={containerRef} className="fixed bottom-5 right-5 z-500" data-assistant-chatbox>
       <div
         className={cn(
           "pointer-events-none fixed bottom-20 right-5 w-[320px] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:w-[360px]",
