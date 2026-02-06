@@ -107,12 +107,12 @@ export default function LoginPage() {
           <Card className="w-full max-w-md space-y-6">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
-                Turn Your Waste Into Wealth
+                Your Waste Into Wealth
               </p>
               <h1 className="text-2xl font-semibold">Welcome Back</h1>
             </div>
 
-            <Button
+            <Button 
               variant="outline"
               className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
               onClick={() => handleGoogleLogin()}
