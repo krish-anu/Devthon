@@ -7,23 +7,23 @@ export default function NotFound() {
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
       <Link
         href="/"
-        className="absolute right-6 top-6 text-sm text-[color:var(--brand)]"
+        className="absolute right-6 top-6 text-sm text-(--brand)"
       >
         Go Home
       </Link>
       <Card className="w-full max-w-md space-y-6 text-center">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--brand)]">
+          <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
             Page Not Found
           </p>
           <h1 className="text-3xl font-semibold">We can't find that page.</h1>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
+          <p className="mt-2 text-sm text-(--muted)">
             The page you are looking for might have moved or never existed.
           </p>
         </div>
         <Button
           asChild
-          className="bg-emerald-600 text-white hover:bg-emerald-700"
+          className="bg-(--brand-strong) text-white hover:bg-(--brand)"
         >
           <Link href="/">Go Home</Link>
         </Button>
@@ -38,7 +38,7 @@ export default function NotFound() {
             <p className="mt-2 text-xl font-semibold text-foreground">
               Page Not Found
             </p>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
+            <p className="mt-2 text-sm text-(--muted)">
               The page you&apos;re looking for doesn&apos;t exist or has been
               moved.
               <br />
@@ -48,14 +48,14 @@ export default function NotFound() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button
               asChild
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
+              className="bg-(--brand) text-white hover:bg-(--brand-strong)"
             >
               <Link href="/">← Back to Home</Link>
             </Button>
             <Button
               variant="outline"
               asChild
-              className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+              className="border-(--brand) text-(--brand-strong) hover:bg-(--brand)/10"
             >
               <Link href="/under-construction">Contact Support</Link>
             </Button>

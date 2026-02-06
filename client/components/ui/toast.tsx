@@ -14,7 +14,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitive.Viewport
     ref={ref}
     className={cn(
-      'fixed z-[100] flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-sm',
+      'fixed z-100 flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-sm',
       className,
     )}
     {...props}
@@ -23,12 +23,12 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitive.Viewport.displayName;
 
 const toastVariants = {
-  default: 'border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--foreground)]',
-  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
+  default: 'border-(--border) bg-(--card) text-foreground',
+  success: 'border-(--brand)/30 bg-(--brand)/10 text-(--brand-strong)',
   error: 'border-rose-500/30 bg-rose-500/10 text-rose-100',
   warning: 'border-amber-400/30 bg-amber-400/10 text-amber-100',
   info: 'border-sky-400/30 bg-sky-400/10 text-sky-100',
-  loading: 'border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)]',
+  loading: 'border-(--border) bg-(--surface) text-(--muted)',
 };
 
 const Toast = React.forwardRef<
@@ -67,7 +67,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-[color:var(--muted)]', className)}
+    className={cn('text-sm text-(--muted)', className)}
     {...props}
   />
 ));
@@ -80,7 +80,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitive.Action
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--foreground)] hover:bg-[color:var(--surface)]',
+      'inline-flex items-center justify-center rounded-full border border-(--border) px-3 py-1 text-xs font-semibold text-foreground hover:bg-(--surface)',
       className,
     )}
     {...props}
@@ -94,7 +94,7 @@ const ToastClose = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Close
     ref={ref}
-    className={cn('text-[color:var(--muted)] transition hover:text-[color:var(--foreground)]', className)}
+    className={cn('text-(--muted) transition hover:text-foreground', className)}
     toast-close=""
     {...props}
   >

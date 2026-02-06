@@ -173,7 +173,7 @@ export default function LoginPage() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-11"
+                className="w-full bg-(--brand) hover:bg-(--brand-strong) text-white h-11"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
@@ -184,7 +184,7 @@ export default function LoginPage() {
               Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
-                className="font-medium text-emerald-500 hover:text-emerald-600"
+                className="font-medium text-(--brand) hover:text-(--brand-strong)"
               >
                 Sign Up
               </Link>

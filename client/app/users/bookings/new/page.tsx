@@ -120,7 +120,7 @@ export default function NewBookingPage() {
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
                   step === index + 1
-                    ? "bg-emerald-400 text-slate-950"
+                    ? "bg-(--brand) text-slate-950"
                     : "bg-(--surface-strong) text-(--muted)"
                 }`}
               >
@@ -139,9 +139,9 @@ export default function NewBookingPage() {
             {(data ?? []).map((item) => (
               <button
                 key={item.id}
-                className={`rounded-2xl border px-4 py-4 text-left flex items-start gap-3 ${
-                  selectedItems.find((s) => s.id === item.id)
-                    ? "border-emerald-400 bg-emerald-400/10"
+                className={`rounded-2xl border px-4 py-4 text-left ${
+                  selectedCategory?.id === item.id
+                    ? "border-(--brand) bg-(--brand)/10"
                     : "border-(--border) bg-(--surface)"
                 }`}
                 onClick={() => {
@@ -179,44 +179,25 @@ export default function NewBookingPage() {
 
       {step === 2 && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Enter Quantities (kg)</h3>
-          <div className="space-y-3">
-            {selectedItems.length === 0 && (
-              <p className="text-sm text-(--muted)">No categories selected.</p>
-            )}
-            {selectedItems.map((s, idx) => (
-              <div key={s.id} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">
-                    {s.item.wasteCategory.name}
-                  </p>
-                  <p className="text-xs text-(--muted)">
-                    Price: LKR {s.item.minPriceLkrPerKg} -{" "}
-                    {s.item.maxPriceLkrPerKg} / kg
-                  </p>
-                </div>
-                <div className="w-36">
-                  <Input
-                    type="number"
-                    min={0}
-                    value={s.quantity}
-                    onChange={(e) => {
-                      const q = Math.max(0, Number(e.target.value || 0));
-                      setSelectedItems((prev) =>
-                        prev.map((p, i) =>
-                          i === idx ? { ...p, quantity: q } : p,
-                        ),
-                      );
-                    }}
-                  />
-                </div>
-              </div>
+          <h3 className="text-lg font-semibold">Estimate Weight</h3>
+          <div className="grid gap-3 md:grid-cols-3">
+            {weightOptions.map((option) => (
+              <button
+                key={option.label}
+                className={`rounded-xl border px-4 py-3 text-left ${
+                  weightRange.label === option.label
+                    ? "border-(--brand) bg-(--brand)/10"
+                    : "border-(--border) bg-(--surface)"
+                }`}
+                onClick={() => setWeightRange(option)}
+              >
+                <p className="text-sm font-semibold">{option.label}</p>
+              </button>
             ))}
-
-            <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--muted)">
-              Estimated earnings: LKR {estimate.min.toFixed(0)} -{" "}
-              {estimate.max.toFixed(0)}
-            </div>
+          </div>
+          <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--muted)">
+            Estimated earnings: LKR {estimate.min.toFixed(0)} -{" "}
+            {estimate.max.toFixed(0)}
           </div>
         </Card>
       )}
@@ -276,7 +257,7 @@ export default function NewBookingPage() {
                   onClick={() => setScheduledTimeSlot(slot)}
                   className={`rounded-xl border px-4 py-3 text-left text-sm ${
                     scheduledTimeSlot === slot
-                      ? "border-emerald-400 bg-emerald-400/10"
+                      ? "border-(--brand) bg-(--brand)/10"
                       : "border-(--border) bg-(--surface)"
                   }`}
                 >

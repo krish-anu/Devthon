@@ -8,12 +8,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-emerald-500 text-white hover:bg-emerald-600",
+        default: "bg-(--brand) text-white hover:bg-(--brand-strong)",
         secondary:
           "bg-[color:var(--surface-strong)] text-[color:var(--foreground)] hover:bg-[color:var(--surface)]",
         outline:
-          "border border-[color:var(--border)] text-[color:var(--foreground)] hover:bg-[color:var(--surface)]",
-        ghost: "text-[color:var(--foreground)] hover:bg-[color:var(--surface)]",
+          "border border-[color:var(--brand)] text-[color:var(--brand)] hover:bg-[color:var(--brand)]/10",
+        ghost: "text-[color:var(--brand)] hover:bg-[color:var(--brand)]/10",
         danger: "bg-rose-500 text-white hover:bg-rose-600",
         muted:
           "bg-[color:var(--surface-strong)] text-[color:var(--muted)] hover:text-[color:var(--foreground)]",

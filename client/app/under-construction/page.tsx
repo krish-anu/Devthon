@@ -1,4 +1,4 @@
-'use client';
+  'use client';
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
@@ -26,11 +26,11 @@ export default function UnderConstructionPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-linear-to-br from-emerald-400 via-emerald-300 to-green-200">
+    <div className="flex min-h-screen flex-col bg-linear-to-br from-(--brand) via-(--brand)/80 to-(--brand)/20">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--brand) text-white">
             <Recycle className="h-5 w-5" />
           </div>
           <span className="text-lg font-bold text-white">Trash2Cash</span>
@@ -54,10 +54,10 @@ export default function UnderConstructionPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-foreground">Completion Progress</span>
-              <span className="font-semibold text-emerald-500">70%</span>
+              <span className="font-semibold text-(--brand)">70%</span>
             </div>
             <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
-              <div className="h-full w-[70%] rounded-full bg-linear-to-r from-emerald-400 to-emerald-500 transition-all" />
+              <div className="h-full w-[70%] rounded-full bg-linear-to-r from-(--brand)/80 to-(--brand) transition-all" />
             </div>
           </div>
 
@@ -71,7 +71,7 @@ export default function UnderConstructionPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 className="flex-1"
               />
-              <Button onClick={handleNotify} className="bg-emerald-500 text-white hover:bg-emerald-600">
+              <Button onClick={handleNotify} className="bg-(--brand) text-white hover:bg-(--brand-strong)">
                 Get Started
               </Button>
             </div>
