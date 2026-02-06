@@ -176,6 +176,35 @@ h5 {
   }
 }
 
+.auth-bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 3s ease-in-out, transform 3s ease-in-out;
+  will-change: opacity, transform;
+  z-index: 0;
+}
+
+.auth-bg-image.loaded {
+  /* ensure image is visible when active only after loaded */
+}
+
+.auth-bg-image.active {
+  opacity: 1;
+  transform: scale(1);
+  z-index: 1;
+  transition-timing-function: cubic-bezier(.2,.9,.3,1);
+}
+
+/* Slightly fade the overlay so images are visible */
+.auth-bg-image + .overlay-fade {
+  pointer-events: none;
+}
+
 /* ── Light-mode card shadow + bevel / emboss ── */
 :root:not([data-theme="dark"]) [data-card] {
   box-shadow:

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { Recycle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -10,10 +11,97 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [index, setIndex] = useState(0);
+
+  const lightImages = useMemo(
+    () => [
+      '/bg/light/img2.png',
+      '/bg/light/img3.png',
+      '/bg/light/img4.png',
+      '/bg/light/img5.png',
+      '/bg/light/img6.png',
+    ],
+    [],
+  );
+
+  const darkImages = useMemo(
+    () => [
+      '/bg/dark/dimg1.png',
+      '/bg/dark/dimg2.png',
+      '/bg/dark/dimg3.png',
+      '/bg/dark/dimg4.png',
+    ],
+    [],
+  );
+
+  const images = theme === 'dark' ? darkImages : lightImages;
+
+  // Track loaded images to avoid flicker when swapping
+  const [loaded, setLoaded] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    const getTheme = () =>
+      document.documentElement.getAttribute('data-theme') === 'dark'
+        ? 'dark'
+        : 'light';
+
+    const apply = () => setTheme(getTheme());
+    apply();
+
+    const observer = new MutationObserver(apply);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Preload all images for the active theme
+  useEffect(() => {
+    const nextLoaded: Record<number, boolean> = {};
+    images.forEach((src, i) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        nextLoaded[i] = true;
+        setLoaded((prev) => ({ ...prev, [i]: true }));
+      };
+      img.onerror = () => {
+        // mark as loaded to prevent blocking
+        nextLoaded[i] = true;
+        setLoaded((prev) => ({ ...prev, [i]: true }));
+      };
+    });
+    // reset index so animation starts at 0
+    setIndex(0);
+  }, [theme, images]);
+
+  useEffect(() => {
+    if (!images.length) return;
+    const id = window.setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 4500);
+    return () => window.clearInterval(id);
+  }, [images.length, theme]);
+
   return (
     <div className="flex min-h-screen">
       {/* Left Panel - Green Gradient */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-gradient-to-b from-(--brand) to-(--brand-strong) p-10 text-white">
+      <div className="relative hidden lg:flex lg:w-[45%] flex-col justify-between overflow-hidden bg-gradient-to-b from-(--brand) to-(--brand-strong) p-10 text-white">
+        <div className="pointer-events-none absolute inset-0">
+          {images.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt=""
+              aria-hidden="true"
+              className={`h-full w-full object-cover auth-bg-image ${i === index ? 'active' : ''} ${loaded[i] ? 'loaded' : ''}`}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/35" />
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
             <Recycle className="h-6 w-6" />
