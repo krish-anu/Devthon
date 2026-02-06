@@ -35,9 +35,9 @@ export default function NewBookingPage() {
   });
 
   const [step, setStep] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState<PricingItem | null>(
-    null,
-  );
+  const [selectedItems, setSelectedItems] = useState<
+    { id: string; item: PricingItem; quantity: number }[]
+  >([]);
   const [weightRange, setWeightRange] = useState(weightOptions[1]);
   const [addressLine1, setAddressLine1] = useState("");
   const [city, setCity] = useState("");
@@ -48,14 +48,18 @@ export default function NewBookingPage() {
   const [terms, setTerms] = useState(false);
 
   const estimate = useMemo(() => {
-    if (!selectedCategory) return { min: 0, max: 0 };
-    const min = selectedCategory.minPriceLkrPerKg * weightRange.min;
-    const max = selectedCategory.maxPriceLkrPerKg * weightRange.max;
+    if (selectedItems.length === 0) return { min: 0, max: 0 };
+    let min = 0;
+    let max = 0;
+    for (const s of selectedItems) {
+      min += s.item.minPriceLkrPerKg * s.quantity;
+      max += s.item.maxPriceLkrPerKg * s.quantity;
+    }
     return { min, max };
-  }, [selectedCategory, weightRange]);
+  }, [selectedItems]);
 
   const handleSubmit = async () => {
-    if (!selectedCategory) {
+    if (selectedItems.length === 0) {
       toast({ title: "Select a category", variant: "warning" });
       return;
     }
@@ -72,10 +76,10 @@ export default function NewBookingPage() {
       await apiFetch("/bookings", {
         method: "POST",
         body: JSON.stringify({
-          wasteCategoryId: selectedCategory.wasteCategory.id,
-          estimatedWeightRange: weightRange.label,
-          estimatedMinAmount: estimate.min,
-          estimatedMaxAmount: estimate.max,
+          items: selectedItems.map((s) => ({
+            wasteCategoryId: s.item.wasteCategory.id,
+            quantityKg: s.quantity,
+          })),
           addressLine1,
           city,
           postalCode,
@@ -100,8 +104,8 @@ export default function NewBookingPage() {
   };
 
   const steps = [
-    "Select Waste Category",
-    "Estimate Weight",
+    "Select Waste Categories",
+    "Enter Quantities",
     "Pickup Location",
     "Select Date & Time",
     "Confirm Booking",
@@ -130,24 +134,43 @@ export default function NewBookingPage() {
 
       {step === 1 && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Select Waste Category</h3>
+          <h3 className="text-lg font-semibold">Select Waste Categories</h3>
           <div className="grid gap-4 md:grid-cols-3">
             {(data ?? []).map((item) => (
               <button
                 key={item.id}
-                className={`rounded-2xl border px-4 py-4 text-left ${
-                  selectedCategory?.id === item.id
+                className={`rounded-2xl border px-4 py-4 text-left flex items-start gap-3 ${
+                  selectedItems.find((s) => s.id === item.id)
                     ? "border-emerald-400 bg-emerald-400/10"
                     : "border-(--border) bg-(--surface)"
                 }`}
-                onClick={() => setSelectedCategory(item)}
+                onClick={() => {
+                  const exists = selectedItems.find((s) => s.id === item.id);
+                  if (exists) {
+                    setSelectedItems((prev) =>
+                      prev.filter((p) => p.id !== item.id),
+                    );
+                  } else {
+                    setSelectedItems((prev) => [
+                      ...prev,
+                      { id: item.id, item, quantity: 1 },
+                    ]);
+                  }
+                }}
               >
-                <p className="text-lg font-semibold">
-                  {item.wasteCategory.name}
-                </p>
-                <p className="text-xs text-(--muted)">
-                  LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg
-                </p>
+                <div className="flex-1 text-left">
+                  <p className="text-lg font-semibold">
+                    {item.wasteCategory.name}
+                  </p>
+                  <p className="text-xs text-(--muted)">
+                    LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg
+                  </p>
+                </div>
+                <div className="text-sm text-(--muted)">
+                  {selectedItems.find((s) => s.id === item.id)
+                    ? "Selected"
+                    : "Tap to add"}
+                </div>
               </button>
             ))}
           </div>
@@ -156,25 +179,44 @@ export default function NewBookingPage() {
 
       {step === 2 && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Estimate Weight</h3>
-          <div className="grid gap-3 md:grid-cols-3">
-            {weightOptions.map((option) => (
-              <button
-                key={option.label}
-                className={`rounded-xl border px-4 py-3 text-left ${
-                  weightRange.label === option.label
-                    ? "border-emerald-400 bg-emerald-400/10"
-                    : "border-(--border) bg-(--surface)"
-                }`}
-                onClick={() => setWeightRange(option)}
-              >
-                <p className="text-sm font-semibold">{option.label}</p>
-              </button>
+          <h3 className="text-lg font-semibold">Enter Quantities (kg)</h3>
+          <div className="space-y-3">
+            {selectedItems.length === 0 && (
+              <p className="text-sm text-(--muted)">No categories selected.</p>
+            )}
+            {selectedItems.map((s, idx) => (
+              <div key={s.id} className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">
+                    {s.item.wasteCategory.name}
+                  </p>
+                  <p className="text-xs text-(--muted)">
+                    Price: LKR {s.item.minPriceLkrPerKg} -{" "}
+                    {s.item.maxPriceLkrPerKg} / kg
+                  </p>
+                </div>
+                <div className="w-36">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={s.quantity}
+                    onChange={(e) => {
+                      const q = Math.max(0, Number(e.target.value || 0));
+                      setSelectedItems((prev) =>
+                        prev.map((p, i) =>
+                          i === idx ? { ...p, quantity: q } : p,
+                        ),
+                      );
+                    }}
+                  />
+                </div>
+              </div>
             ))}
-          </div>
-          <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--muted)">
-            Estimated earnings: LKR {estimate.min.toFixed(0)} -{" "}
-            {estimate.max.toFixed(0)}
+
+            <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--muted)">
+              Estimated earnings: LKR {estimate.min.toFixed(0)} -{" "}
+              {estimate.max.toFixed(0)}
+            </div>
           </div>
         </Card>
       )}
@@ -251,14 +293,31 @@ export default function NewBookingPage() {
           <h3 className="text-lg font-semibold">Confirm Booking</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Category</p>
-              <p className="text-lg font-semibold">
-                {selectedCategory?.wasteCategory.name ?? "--"}
-              </p>
+              <p className="text-sm text-(--muted)">Categories</p>
+              <div className="space-y-2">
+                {selectedItems.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {s.item.wasteCategory.name}
+                      </p>
+                      <p className="text-xs text-(--muted)">
+                        Qty: {s.quantity} kg
+                      </p>
+                    </div>
+                    <div className="text-sm text-(--muted)">
+                      LKR {(s.item.minPriceLkrPerKg * s.quantity).toFixed(0)} -{" "}
+                      {(s.item.maxPriceLkrPerKg * s.quantity).toFixed(0)}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Estimated Weight</p>
-              <p className="text-lg font-semibold">{weightRange.label}</p>
+              <p className="text-sm text-(--muted)">Estimated Total</p>
+              <p className="text-lg font-semibold">
+                LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
+              </p>
             </div>
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
               <p className="text-sm text-(--muted)">Pickup Address</p>

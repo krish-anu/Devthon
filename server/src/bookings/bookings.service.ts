@@ -98,29 +98,47 @@ export class BookingsService {
       dto,
     });
     try {
-      const booking = await this.prisma.booking.create({
-        data: {
-          userId,
-          wasteCategoryId: dto.wasteCategoryId,
-          estimatedWeightRange: dto.estimatedWeightRange,
-          estimatedMinAmount: dto.estimatedMinAmount,
-          estimatedMaxAmount: dto.estimatedMaxAmount,
-          addressLine1: dto.addressLine1,
-          city: dto.city,
-          postalCode: dto.postalCode,
-          specialInstructions: dto.specialInstructions,
-          scheduledDate: new Date(dto.scheduledDate),
-          scheduledTimeSlot: dto.scheduledTimeSlot,
-          status: BookingStatus.SCHEDULED,
-        },
-      });
-      this.transactionLogger.logTransaction('booking.create.success', {
-        bookingId: booking.id,
-        userId,
-        scheduledDate: booking.scheduledDate?.toISOString(),
-        amountRange: [booking.estimatedMinAmount, booking.estimatedMaxAmount],
-      });
-      return booking;
+      // Create one booking per selected item (category + quantity)
+      const created = await Promise.all(
+        dto.items.map(async (it) => {
+          const pricing = await this.prisma.pricing.findUnique({
+            where: { wasteCategoryId: it.wasteCategoryId },
+          });
+          const minPerKg = pricing?.minPriceLkrPerKg ?? 0;
+          const maxPerKg = pricing?.maxPriceLkrPerKg ?? 0;
+          const estimatedMinAmount = minPerKg * it.quantityKg;
+          const estimatedMaxAmount = maxPerKg * it.quantityKg;
+          const estimatedWeightRange = `${it.quantityKg} kg`;
+
+          const booking = await this.prisma.booking.create({
+            data: {
+              userId,
+              wasteCategoryId: it.wasteCategoryId,
+              estimatedWeightRange,
+              estimatedMinAmount,
+              estimatedMaxAmount,
+              addressLine1: dto.addressLine1,
+              city: dto.city,
+              postalCode: dto.postalCode,
+              specialInstructions: dto.specialInstructions,
+              scheduledDate: new Date(dto.scheduledDate),
+              scheduledTimeSlot: dto.scheduledTimeSlot,
+              status: BookingStatus.SCHEDULED,
+            },
+          });
+          this.transactionLogger.logTransaction('booking.create.success', {
+            bookingId: booking.id,
+            userId,
+            scheduledDate: booking.scheduledDate?.toISOString(),
+            amountRange: [
+              booking.estimatedMinAmount,
+              booking.estimatedMaxAmount,
+            ],
+          });
+          return booking;
+        }),
+      );
+      return created;
     } catch (err) {
       this.transactionLogger.logError('booking.create.failure', err as Error, {
         userId,

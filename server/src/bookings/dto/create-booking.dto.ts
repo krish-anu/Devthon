@@ -1,21 +1,29 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateBookingDto {
+export class BookingItemDto {
   @IsUUID()
   wasteCategoryId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  estimatedWeightRange: string;
-
   @IsNumber()
   @Type(() => Number)
-  estimatedMinAmount: number;
+  quantityKg: number;
+}
 
-  @IsNumber()
-  @Type(() => Number)
-  estimatedMaxAmount: number;
+export class CreateBookingDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BookingItemDto)
+  items: BookingItemDto[];
 
   @IsString()
   addressLine1: string;
