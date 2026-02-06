@@ -15,6 +15,8 @@
   --surface-strong: #d1e7d8;
   --surface-soft: #f0fdf4;
   --ring: rgba(118, 217, 77, 0.4);
+  --auth-text: #0f172a; /* text color for auth header in light mode */
+  --auth-image-transition-duration: 20s;
 }
 
 :root[data-theme="dark"] {
@@ -56,6 +58,7 @@
     --surface-strong: #171717;
     --surface-soft: #0b0b0b;
     --ring: rgba(75, 220, 0, 0.4);
+    --auth-text: #ffffff; /* auth header text in dark mode */
   }
 }
 
@@ -183,8 +186,8 @@ h5 {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transform: scale(1.02);
-  transition: opacity 3s ease-in-out, transform 3s ease-in-out;
+  transform: scale(1.05);
+  transition: opacity var(--auth-image-transition-duration) ease-in-out, transform var(--auth-image-transition-duration) ease-in-out;
   will-change: opacity, transform;
   z-index: 0;
 }
@@ -203,6 +206,36 @@ h5 {
 /* Slightly fade the overlay so images are visible */
 .auth-bg-image + .overlay-fade {
   pointer-events: none;
+}
+
+/* Dark shade gradient overlay on top of auth images and beneath text */
+.auth-bg-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50; /* well above images (z-index:1) but below textual content (z-20 in layout) */
+  /* stronger gradient in light mode so images get visibly darker under the text */
+  background: linear-gradient(
+    180deg,
+    rgba(15,23,42,0.06) 6%,   /* very subtle at top */
+    rgba(15,23,42,0.35) 35%,  /* mid fade */
+    rgba(15,23,42,0.7) 100%   /* strong at bottom */
+  );
+  transition: background-color 200ms ease;
+  mix-blend-mode: multiply; /* darken image colors more naturally */
+}
+
+/* Slightly stronger overlay in dark mode so text stays readable */
+:root[data-theme="dark"] .auth-bg-overlay,
+.dark .auth-bg-overlay {
+  z-index: 60;
+  background: linear-gradient(
+    180deg,
+    rgba(2,6,23,0.06) 6%,    /* near-transparent at top to preserve subtle highlights */
+    rgba(2,6,23,0.5) 35%,    /* stronger mid-tone */
+    rgba(2,6,23,0.9) 100%    /* almost-solid at bottom for max contrast */
+  );
+  mix-blend-mode: normal; /* better contrast on dark backgrounds */
 }
 
 /* ── Light-mode card shadow + bevel / emboss ── */
