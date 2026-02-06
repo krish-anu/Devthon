@@ -11,10 +11,10 @@ cp .env.example .env
 # Edit .env with required values (see Environment section)
 ```
 
-2. Start services with Docker Compose:
+2. Start services with Docker Compose (development):
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 Services started by the compose setup:
@@ -32,7 +32,23 @@ Access:
 To restart after changing `.env`:
 
 ```bash
-docker compose down && docker compose up --build
+docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.dev.yml up --build
+
+## Production (Docker)
+
+Production uses prebuilt images from Docker Hub (`vigneshnidhar/trash2cash`).
+
+Start production:
+
+```bash
+docker compose -f docker-compose.prod.yml up
+```
+
+Stop production:
+
+```bash
+docker compose -f docker-compose.prod.yml down
+```
 ```
 
 ## Manual (local) development
@@ -135,7 +151,8 @@ npm run test:e2e
 
 ## Useful files
 
-- `docker-compose.yml` — Docker compose configuration
+- `docker-compose.dev.yml` — Development compose
+- `docker-compose.prod.yml` — Production compose
 - `server/prisma/schema.prisma` — DB schema
 - `ENV_QUICK_REFERENCE.md` — env vars and quick commands
 
