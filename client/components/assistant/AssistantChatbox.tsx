@@ -293,7 +293,7 @@ export default function AssistantChatbox() {
   };
 
   return (
-    <div className="fixed bottom-5 left-5 z-50" data-assistant-chatbox>
+    <div className="fixed bottom-5 left-5 z-500" data-assistant-chatbox>
       <div
         className={cn(
           "pointer-events-none fixed bottom-20 left-5 w-[320px] origin-bottom-left rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:w-[360px]",

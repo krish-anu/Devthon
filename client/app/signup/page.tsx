@@ -269,7 +269,7 @@ export default function SignupPage() {
               </Button>
             </form>
             <div className="text-xs text-(--muted)">
-              Already have an account?{" "}
+              Already have an account?{"   "}
               <Link href="/login" className="text-(--brand)">
                 Login
               </Link>
