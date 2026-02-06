@@ -66,6 +66,10 @@ services:
 
       # External API keys (loaded from .env file)
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+
+      # Text.lk SMS Gateway
+      TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
+      TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
     volumes:
       # Mount source code for hot reload in development
       - ./server/src:/app/src

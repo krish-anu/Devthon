@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -10,12 +20,17 @@ import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
 import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
+import { AdminSendSmsDto } from './dto/admin-send-sms.dto';
+import { SmsService } from '../sms/sms.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 @Controller('admin')
 export class AdminController {
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private smsService: SmsService,
+  ) {}
 
   @Get('metrics')
   getMetrics() {
@@ -75,5 +90,17 @@ export class AdminController {
   @Patch('pricing')
   updatePricing(@Body() dto: AdminUpdatePricingDto) {
     return this.adminService.updatePricing(dto);
+  }
+
+  @Post('sms/send')
+  async sendSms(@Body() dto: AdminSendSmsDto) {
+    // Join phone numbers with comma for Text.lk API
+    const recipient = dto.phoneNumbers.join(',');
+    return this.smsService.sendSms(recipient, dto.message);
+  }
+
+  @Get('sms/balance')
+  async getSmsBalance() {
+    return this.smsService.getBalance();
   }
 }
