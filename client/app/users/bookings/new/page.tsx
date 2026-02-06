@@ -140,7 +140,7 @@ export default function NewBookingPage() {
               <button
                 key={item.id}
                 className={`rounded-2xl border px-4 py-4 text-left ${
-                  selectedCategory?.id === item.id
+                  selectedItems.some((s) => s.id === item.id)
                     ? "border-(--brand) bg-(--brand)/10"
                     : "border-(--border) bg-(--surface)"
                 }`}
