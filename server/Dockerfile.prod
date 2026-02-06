@@ -46,4 +46,4 @@ ENV PORT=4000
 EXPOSE 4000
 
 # Run migrations at startup, then start the production server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]

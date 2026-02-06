@@ -3,8 +3,6 @@
 # Full-Stack Application: PostgreSQL + NestJS + Next.js
 # ============================================
 
-version: "3.9"
-
 services:
   # ==========================================
   # PostgreSQL Database Service (OPTIONAL - Local Development)

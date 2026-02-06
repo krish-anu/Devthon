@@ -4,8 +4,6 @@
 # Includes Nginx reverse proxy (port 80/443)
 # ============================================
 
-version: "3.9"
-
 services:
   # ==========================================
   # Nginx Reverse Proxy
