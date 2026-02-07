@@ -1,7 +1,11 @@
 import { getAccessToken, getRefreshToken, setAuth } from "./auth";
 import { User } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.hostname}:4000/api`
+    : "http://localhost:4000/api");
 
 export type AuthResponse = {
   user: User;

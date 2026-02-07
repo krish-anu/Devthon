@@ -146,14 +146,25 @@ export class AuthService {
   }
 
   async googleLogin(token: string) {
-    // Verify the token with Google
-    const response = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?access_token=${token}`,
-    );
-    if (!response.ok) {
+    // Verify the token with Google (supports access_token or id_token)
+    const isJwt = token.split('.').length === 3;
+    const tryVerify = async (param: 'access_token' | 'id_token') => {
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?${param}=${token}`,
+      );
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    };
+
+    const googleUser =
+      (isJwt ? await tryVerify('id_token') : await tryVerify('access_token')) ||
+      (isJwt ? await tryVerify('access_token') : await tryVerify('id_token'));
+
+    if (!googleUser) {
       throw new UnauthorizedException('Invalid Google token');
     }
-    const googleUser = await response.json();
     if (!googleUser.email) {
       throw new UnauthorizedException('Invalid Google token');
     }

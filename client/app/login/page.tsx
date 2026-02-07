@@ -46,7 +46,9 @@ export default function LoginPage() {
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const user = await googleLogin(tokenResponse.access_token);
+        const token =
+          tokenResponse.access_token || (tokenResponse as any).credential;
+        const user = await googleLogin(token);
         toast({
           title: "Welcome!",
           description: "Signed in with Google successfully.",
