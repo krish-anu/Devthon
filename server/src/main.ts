@@ -9,6 +9,11 @@ import { RequestLoggingInterceptor } from './common/interceptors/request-logging
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
+// Polyfill: allow BigInt to be serialised by JSON.stringify (Prisma returns BigInt for Int8 columns)
+(BigInt.prototype as any).toJSON = function () {
+  return Number(this);
+};
+
 async function bootstrap() {
   // Render a background-colored level badge using ANSI escapes for console output
   const levelBadge = (level: string) => {
