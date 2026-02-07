@@ -25,7 +25,7 @@ const schema = z.object({
     .min(8, "Password must be at least 8 characters")
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      "Password must contain uppercase, lowercase, and a number"
+      "Password must contain uppercase, lowercase, and a number",
     ),
   type: z.enum(["HOUSEHOLD", "BUSINESS"]),
   terms: z.boolean().refine((v) => v === true, {
@@ -167,10 +167,7 @@ export default function SignupPage() {
             >
               <div className="space-y-2">
                 <Label>Full Name</Label>
-                <Input
-                  placeholder="Full Name"
-                  {...register("fullName")}
-                />
+                <Input placeholder="Full Name" {...register("fullName")} />
                 {errors.fullName && (
                   <p className="text-xs text-rose-500">
                     {errors.fullName.message}
@@ -179,10 +176,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Email Address</Label>
-                <Input
-                  placeholder="you@email.com"
-                  {...register("email")}
-                />
+                <Input placeholder="you@email.com" {...register("email")} />
                 {errors.email && (
                   <p className="text-xs text-rose-500">
                     {errors.email.message}
@@ -191,10 +185,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Phone Number</Label>
-                <Input
-                  placeholder="+94 77 123 4567"
-                  {...register("phone")}
-                />
+                <Input placeholder="+94 77 123 4567" {...register("phone")} />
                 {errors.phone && (
                   <p className="text-xs text-rose-500">
                     {errors.phone.message}

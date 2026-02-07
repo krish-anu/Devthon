@@ -38,14 +38,17 @@ export default function VerifyPage() {
     const next = [...code];
     next[index] = value.slice(-1);
     setCode(next);
-    
+
     // Auto-focus next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -96,7 +99,9 @@ export default function VerifyPage() {
           {code.map((digit, index) => (
             <input
               key={index}
-              ref={(el) => { inputRefs.current[index] = el; }}
+              ref={(el) => {
+                inputRefs.current[index] = el;
+              }}
               value={digit}
               onChange={(event) => handleChange(index, event.target.value)}
               className="h-12 w-12 rounded-xl border border-(--border) bg-(--surface-soft) text-center text-lg text-foreground"
@@ -112,10 +117,10 @@ export default function VerifyPage() {
 
         <p className="text-center text-sm text-slate-500 dark:text-slate-400">
           Didn't receive the email?{" "}
-          <button 
+          <button
             type="button"
             onClick={handleResend}
-            className={`font-medium ${seconds > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-(--brand) hover:text-(--brand-strong)'}`}
+            className={`font-medium ${seconds > 0 ? "text-slate-400 cursor-not-allowed" : "text-(--brand) hover:text-(--brand-strong)"}`}
             disabled={seconds > 0}
           >
             Resend
