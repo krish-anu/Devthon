@@ -85,7 +85,7 @@ services:
       - trash2cash-network
     # Run migrations and seed at container start so Supabase receives the seeded data,
     # then start the dev server. This uses the DATABASE_URL (or Databaseurl) env var.
-    command: sh -c "npx prisma migrate deploy --preview-feature || true && npx prisma db seed || true && npm run start:dev"
+    command: sh -c "npx prisma migrate deploy --preview-feature || true && npm run start:dev"
     # Run migrations and seed at container start so Supabase receives the seeded data,
     # then start the dev server. This uses the DATABASE_URL (or Databaseurl) env var.
 
