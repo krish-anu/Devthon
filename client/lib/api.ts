@@ -137,3 +137,45 @@ export const authApi = {
       false,
     ),
 };
+
+/* ------------------------------------------------------------------ */
+/*  Passkey (WebAuthn) API                                             */
+/* ------------------------------------------------------------------ */
+
+export const passkeyApi = {
+  /** Get registration options (requires auth) */
+  registerOptions: () =>
+    apiFetch<any>("/auth/passkey/register/options", { method: "POST" }),
+
+  /** Send browser credential to server for verification (requires auth) */
+  registerVerify: (credential: any) =>
+    apiFetch<{ verified: boolean }>("/auth/passkey/register/verify", {
+      method: "POST",
+      body: JSON.stringify(credential),
+    }),
+
+  /** Get authentication options for a given email (no auth) */
+  loginOptions: (email: string) =>
+    apiFetch<any>(
+      "/auth/passkey/login/options",
+      { method: "POST", body: JSON.stringify({ email }) },
+      false,
+    ),
+
+  /** Verify passkey authentication and receive tokens (no auth) */
+  loginVerify: (payload: { email: string; credential: any }) =>
+    apiFetch<AuthResponse>(
+      "/auth/passkey/login/verify",
+      { method: "POST", body: JSON.stringify(payload) },
+      false,
+    ),
+
+  /** List current user's registered passkeys (requires auth) */
+  list: () => apiFetch<any[]>("/auth/passkey/list"),
+
+  /** Delete a passkey by ID (requires auth) */
+  delete: (id: string) =>
+    apiFetch<{ success: boolean }>(`/auth/passkey/${id}`, {
+      method: "DELETE",
+    }),
+};

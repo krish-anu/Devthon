@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,13 +24,25 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, passkeyLogin } = useAuth();
   const router = useRouter();
+  const [passkeySupported, setPasskeySupported] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  const emailValue = watch("email");
+
+  // Detect WebAuthn / passkey support on mount
+  useEffect(() => {
+    import("@simplewebauthn/browser").then((mod) => {
+      setPasskeySupported(mod.browserSupportsWebAuthn());
+    });
+  }, []);
 
   const redirectToDashboard = (role: string) => {
     if (role === "ADMIN") {
@@ -94,6 +107,46 @@ export default function LoginPage() {
     }
   };
 
+  const handlePasskeyLogin = async () => {
+    const email = emailValue?.trim();
+    if (!email) {
+      toast({
+        title: "Email required",
+        description:
+          "Please enter your email address first to use passkey login.",
+        variant: "error",
+      });
+      return;
+    }
+    setPasskeyLoading(true);
+    try {
+      const user = await passkeyLogin(email);
+      toast({
+        title: "Welcome back!",
+        description: "Signed in with passkey successfully.",
+        variant: "success",
+      });
+      redirectToDashboard(user.role);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Passkey login failed";
+      // Don't show toast if user cancelled the authenticator dialog
+      if (
+        !message.includes("cancelled") &&
+        !message.includes("canceled") &&
+        !message.includes("NotAllowedError")
+      ) {
+        toast({
+          title: "Passkey login failed",
+          description: message,
+          variant: "error",
+        });
+      }
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
+
   return (
     <AuthLayout
       title="Turn Your Waste Into Wealth"
@@ -135,6 +188,48 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </Button>
+
+            {passkeySupported && (
+              <Button
+                variant="outline"
+                className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={handlePasskeyLogin}
+                disabled={passkeyLoading}
+              >
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 2C9.24 2 7 4.24 7 7C7 9.76 9.24 12 12 12C14.76 12 17 9.76 17 7C17 4.24 14.76 2 12 2ZM12 10C10.35 10 9 8.65 9 7C9 5.35 10.35 4 12 4C13.65 4 15 5.35 15 7C15 8.65 13.65 10 12 10Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M18 16L15 19L16.5 20.5L18 19L19.5 20.5L21 19L19.5 17.5L21 16L18 16Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M12 13C8.13 13 5 14.79 5 17V20H14V18H7V17C7 15.9 9.24 15 12 15C13.08 15 14.07 15.18 14.85 15.47L16.1 14.22C14.93 13.47 13.5 13 12 13Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                {passkeyLoading ? "Authenticating..." : "Sign in with Passkey"}
+              </Button>
+            )}
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-200 dark:border-slate-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white dark:bg-slate-900 px-2 text-slate-500">
+                  or continue with email
+                </span>
+              </div>
+            </div>
+
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-2">
                 <Label>Email</Label>

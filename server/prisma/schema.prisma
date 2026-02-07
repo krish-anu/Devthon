@@ -9,19 +9,34 @@ datasource db {
 }
 
 model User {
-  id               String         @id @default(uuid())
-  fullName         String
-  email            String         @unique
-  phone            String
-  passwordHash     String
-  refreshTokenHash String?
-  role             Role           @default(USER)
-  type             UserType       @default(HOUSEHOLD)
-  address          String?
-  status           UserStatus     @default(ACTIVE)
-  createdAt        DateTime       @default(now())
-  bookings         Booking[]
-  notifications    Notification[]
+  id                   String               @id @default(uuid())
+  fullName             String
+  email                String               @unique
+  phone                String
+  passwordHash         String
+  refreshTokenHash     String?
+  role                 Role                 @default(USER)
+  type                 UserType             @default(HOUSEHOLD)
+  address              String?
+  status               UserStatus           @default(ACTIVE)
+  createdAt            DateTime             @default(now())
+  bookings             Booking[]
+  notifications        Notification[]
+  passkeyCredentials   PasskeyCredential[]
+}
+
+model PasskeyCredential {
+  id                  String   @id @default(uuid())
+  userId              String
+  credentialId        String   @unique
+  credentialPublicKey Bytes
+  counter             BigInt   @default(0)
+  transports          String[] @default([])
+  deviceName          String   @default("Passkey")
+  createdAt           DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Driver {
