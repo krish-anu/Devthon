@@ -22,16 +22,17 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-full flex-col gap-6 bg-linear-to-b from-(--brand-strong) to-(--brand) p-6 text-white md:rounded-r-3xl">
-      <div className="space-y-1">
-        <span className="text-xs uppercase tracking-widest opacity-80">
-          {title}
-        </span>
-        <div className="text-2xl font-bold">Trash2Cash</div>
+    <aside className="sticky top-0 h-screen flex flex-col gap-6 bg-linear-to-b from-(--brand-strong) to-(--brand) p-6 text-white md:rounded-r-3xl">
+      <div className="flex items-center gap-3">
+        <img src="/recycle%20logo.png" alt="Trash2Cash" className="h-10 w-10 object-contain rounded-md bg-white/10 p-1" />
+        <div>
+          <span className="text-xs uppercase tracking-widest opacity-80 block">{title}</span>
+          <div className="text-2xl font-bold">Trash2Cash</div>
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-2 mt-2">
+      <nav className="flex flex-1 flex-col gap-2 mt-2 overflow-y-auto">
         {items.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
