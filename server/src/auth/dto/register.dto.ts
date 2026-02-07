@@ -7,7 +7,7 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
-import { CustomerType } from '@prisma/client';
+import { Role, CustomerType } from '@prisma/client';
 
 export class RegisterDto {
   @IsString()

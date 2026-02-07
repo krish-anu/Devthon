@@ -8,22 +8,30 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ─────────────────────────────────────────────
+// Auth identity table (lightweight – no profile data)
+// Passwords handled by Supabase Auth; passwordHash nullable
+// ─────────────────────────────────────────────
 model User {
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  passwordHash       String?
-  refreshTokenHash   String?
-  createdAt          DateTime            @default(now())
-  role               Role                @default(CUSTOMER)
-  admin              Admin?
-  bookings           Booking[]
+  id               String              @id @default(uuid())
+  email            String              @unique
+  passwordHash     String?
+  refreshTokenHash String?
+  role             Role                @default(CUSTOMER)
+  createdAt        DateTime            @default(now())
+
   customer           Customer?
+  admin              Admin?
   driver             Driver?
+  bookings           Booking[]
   notifications      Notification[]
+  permissions        UserPermission[]
   passkeyCredentials PasskeyCredential[]
-  userPermissions    UserPermission[]
 }
 
+// ─────────────────────────────────────────────
+// Passkey / WebAuthn credentials (1 : N with User)
+// ─────────────────────────────────────────────
 model PasskeyCredential {
   id                  String   @id @default(uuid())
   userId              String
@@ -33,24 +41,88 @@ model PasskeyCredential {
   transports          String[] @default([])
   deviceName          String   @default("Passkey")
   createdAt           DateTime @default(now())
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Role-specific profile tables (1 : 1 with User)
+// ─────────────────────────────────────────────
+model Customer {
+  id        String         @id
+  fullName  String
+  phone     String
+  address   String?
+  type      CustomerType   @default(HOUSEHOLD)
+  status    CustomerStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+
+  user User @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id       String  @id
+  fullName String
+  phone    String
+  address  String?
+  approved Boolean @default(false)
+
+  user User @relation(fields: [id], references: [id], onDelete: Cascade)
 }
 
 model Driver {
   id          String       @id
   fullName    String
+  id          String       @id
+  fullName    String
   phone       String
+  rating      Float        @default(0)
   rating      Float        @default(0)
   pickupCount Int          @default(0)
   vehicle     String
-  createdAt   DateTime     @default(now())
   status      DriverStatus @default(OFFLINE)
-  bookings    Booking[]
-  user        User         @relation(fields: [id], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+
+  user     User      @relation(fields: [id], references: [id], onDelete: Cascade)
+  bookings Booking[]
 }
 
+// ─────────────────────────────────────────────
+// RBAC Permission tables
+// ─────────────────────────────────────────────
+model Permission {
+  id    String           @id @default(uuid())
+  name  String           @unique
+  users UserPermission[]
+}
+
+model UserPermission {
+  userId       String
+  permissionId String
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+}
+
+// ─────────────────────────────────────────────
+// Role change audit log (used by rollback functions)
+// ─────────────────────────────────────────────
+model RoleChangeLog {
+  id             String   @id @default(uuid())
+  userId         String
+  oldRole        String
+  newRole        String
+  oldProfileData Json?
+  changedAt      DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Domain tables
+// ─────────────────────────────────────────────
 model WasteCategory {
   id          String    @id @default(uuid())
   name        String    @unique
@@ -87,11 +159,11 @@ model Booking {
   finalAmountLkr       Float?
   driverId             String?
   createdAt            DateTime             @default(now())
-  status               BookingStatus        @default(SCHEDULED)
-  driver               Driver?              @relation(fields: [driverId], references: [id])
-  user                 User                 @relation(fields: [userId], references: [id])
-  wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
-  transactions         PaymentTransaction[]
+
+  driver        Driver?              @relation(fields: [driverId], references: [id])
+  user          User                 @relation(fields: [userId], references: [id])
+  wasteCategory WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
+  transactions  PaymentTransaction[]
 }
 
 model Notification {
@@ -101,8 +173,8 @@ model Notification {
   message   String
   isRead    Boolean           @default(false)
   createdAt DateTime          @default(now())
-  level     NotificationLevel @default(INFO)
-  user      User?             @relation(fields: [userId], references: [id])
+
+  user User? @relation(fields: [userId], references: [id])
 }
 
 model PaymentTransaction {
@@ -112,7 +184,9 @@ model PaymentTransaction {
   createdAt DateTime      @default(now())
   method    PaymentMethod
   status    PaymentStatus @default(PROCESSED)
-  booking   Booking       @relation(fields: [bookingId], references: [id])
+  createdAt DateTime      @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
 }
 
 model LaunchNotify {
@@ -165,11 +239,26 @@ model UserPermission {
   @@id([userId, permissionId])
 }
 
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
 enum Role {
+  CUSTOMER
   CUSTOMER
   ADMIN
   SUPER_ADMIN
+  SUPER_ADMIN
   DRIVER
+}
+
+enum CustomerType {
+  HOUSEHOLD
+  BUSINESS
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
 }
 
 enum DriverStatus {

@@ -16,6 +16,7 @@ import { Pool } from 'pg';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Delete in reverse-dependency order
   await prisma.paymentTransaction.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.booking.deleteMany();
@@ -64,6 +65,8 @@ async function main() {
       type: CustomerType.HOUSEHOLD,
       status: CustomerStatus.ACTIVE,
       address: '45 Galle Road, Colombo 03',
+      type: CustomerType.HOUSEHOLD,
+      status: CustomerStatus.ACTIVE,
     },
   });
 
@@ -83,6 +86,8 @@ async function main() {
       type: CustomerType.BUSINESS,
       status: CustomerStatus.ACTIVE,
       address: 'Industrial Park, Negombo',
+      type: CustomerType.BUSINESS,
+      status: CustomerStatus.ACTIVE,
     },
   });
 
@@ -293,14 +298,8 @@ async function main() {
   });
 
   // If Supabase credentials are available, mirror the seeded rows to Supabase
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_KEY;
-
-  if (supabaseUrl && supabaseKey) {
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false },
-    });
+  if (supabaseClient) {
+    const supabase = supabaseClient;
 
     try {
       // Upsert users
@@ -318,6 +317,31 @@ async function main() {
         };
       });
       await supabase.from('users').upsert(supUsers, { onConflict: 'id' });
+
+      // Upsert customers
+      const allCustomers = await prisma.customer.findMany();
+      const supCustomers = allCustomers.map((c) => ({
+        id: c.id,
+        fullName: c.fullName,
+        phone: c.phone,
+        address: c.address,
+        type: c.type,
+        status: c.status,
+      }));
+      if (supCustomers.length)
+        await supabase.from('customers').upsert(supCustomers, { onConflict: 'id' });
+
+      // Upsert admins
+      const allAdmins = await prisma.admin.findMany();
+      const supAdmins = allAdmins.map((a) => ({
+        id: a.id,
+        fullName: a.fullName,
+        phone: a.phone,
+        address: a.address,
+        approved: a.approved,
+      }));
+      if (supAdmins.length)
+        await supabase.from('admins').upsert(supAdmins, { onConflict: 'id' });
 
       // Upsert drivers
       const supDrivers = drivers.map((d) => ({

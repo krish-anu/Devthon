@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "PasskeyCredential" (
+CREATE TABLE IF NOT EXISTS "PasskeyCredential" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "credentialId" TEXT NOT NULL,
@@ -13,10 +13,19 @@ CREATE TABLE "PasskeyCredential" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PasskeyCredential_credentialId_key" ON "PasskeyCredential"("credentialId");
+CREATE UNIQUE INDEX IF NOT EXISTS "PasskeyCredential_credentialId_key" ON "PasskeyCredential"("credentialId");
 
 -- CreateIndex
-CREATE INDEX "PasskeyCredential_userId_idx" ON "PasskeyCredential"("userId");
+CREATE INDEX IF NOT EXISTS "PasskeyCredential_userId_idx" ON "PasskeyCredential"("userId");
 
--- AddForeignKey
-ALTER TABLE "PasskeyCredential" ADD CONSTRAINT "PasskeyCredential_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey (guarded)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'PasskeyCredential_userId_fkey'
+  ) THEN
+    ALTER TABLE "PasskeyCredential" ADD CONSTRAINT "PasskeyCredential_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END
+$$;

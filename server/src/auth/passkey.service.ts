@@ -104,6 +104,7 @@ export class PasskeyService implements OnModuleInit {
   async generateRegistrationOptions(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+<<<<<<< HEAD
       include: { passkeyCredentials: true, ...USER_PROFILE_INCLUDE },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -113,6 +114,13 @@ export class PasskeyService implements OnModuleInit {
       (user as any).admin?.fullName ??
       (user as any).driver?.fullName ??
       user.email;
+=======
+      include: { passkeyCredentials: true, customer: true, admin: true, driver: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const displayName = user.customer?.fullName ?? user.admin?.fullName ?? user.driver?.fullName ?? user.email;
+>>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
 
     const options = await this.webauthn.generateRegistrationOptions({
       rpName: this.rpName,
@@ -234,9 +242,17 @@ export class PasskeyService implements OnModuleInit {
       data: { counter: BigInt(verification.authenticationInfo.newCounter) },
     });
 
+    // Reload user with profile before issuing tokens
+    const userWithProfile = await this.prisma.user.findUnique({ where: { id: user.id }, include: { customer: true, admin: true, driver: true } });
+
     // Issue JWT tokens (same as normal login)
+<<<<<<< HEAD
     const tokens = await this.issueTokens(user);
     return { user: flattenUser(user), ...tokens };
+=======
+    const tokens = await this.issueTokens(userWithProfile ?? user);
+    return { user: this.sanitizeUser(userWithProfile ?? user), ...tokens };
+>>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
   }
 
   /* ================================================================== */

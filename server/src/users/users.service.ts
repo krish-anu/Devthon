@@ -90,9 +90,13 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
+<<<<<<< HEAD
     if (!user.passwordHash) {
       throw new BadRequestException('No password set for this account (Google sign-in only)');
     }
+=======
+    if (!user.passwordHash) throw new BadRequestException('No local password is set for this account');
+>>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
 
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Current password is incorrect');
