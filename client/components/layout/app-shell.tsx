@@ -16,7 +16,7 @@ export function AppShell({
       {/* Sidebar fixed on large screens and flush to the left */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:block z-30">
         {sidebar}
-      </div> 
+      </div>
 
       {/* Full-width header bar (fixed at top). Inner container keeps content aligned */}
       {header && (
