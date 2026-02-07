@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { authApi, apiFetch } from "@/lib/api";
+import { authApi, apiFetch, passkeyApi } from "@/lib/api";
 import {
   clearAuth,
   getStoredUser,
@@ -26,6 +26,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   googleLogin: (token: string) => Promise<User>;
+  passkeyLogin: (email: string) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -116,6 +117,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data.user;
   };
 
+  const passkeyLogin = async (email: string) => {
+    const { startAuthentication, browserSupportsWebAuthn } =
+      await import("@simplewebauthn/browser");
+    if (!browserSupportsWebAuthn()) {
+      throw new Error("Your browser does not support passkeys");
+    }
+    // 1. Get authentication options
+    const options = await passkeyApi.loginOptions(email);
+    // 2. Prompt browser / authenticator
+    const credential = await startAuthentication({ optionsJSON: options });
+    // 3. Verify with server → receive JWT tokens
+    const data = await passkeyApi.loginVerify({ email, credential });
+    setAuth(data);
+    setUser(data.user);
+    return data.user;
+  };
+
   const value = useMemo(
     () => ({
       user,
@@ -125,6 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshProfile,
       googleLogin,
+      passkeyLogin,
     }),
     [user, loading],
   );

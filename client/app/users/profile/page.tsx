@@ -10,10 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, passkeyApi } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
 import { authApi } from "@/lib/api";
 import { useForm as useForm2 } from "react-hook-form";
+import { usePasskey } from "@/hooks/usePasskey";
 
 const schema = z.object({
   firstName: z.string().min(2),
@@ -29,6 +30,13 @@ export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
   const [twoStepEnabled, setTwoStepEnabled] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const {
+    supported: passkeySupported,
+    loading: passkeyBusy,
+    registerPasskey,
+  } = usePasskey();
+  const [passkeys, setPasskeys] = useState<any[]>([]);
+  const [passkeysLoading, setPasskeysLoading] = useState(false);
   const names = (user?.fullName ?? "").split(" ");
   const {
     register,
@@ -55,6 +63,47 @@ export default function ProfilePage() {
       address: user?.address ?? "",
     });
   }, [user, reset]);
+
+  // Load registered passkeys
+  const loadPasskeys = async () => {
+    setPasskeysLoading(true);
+    try {
+      const list = await passkeyApi.list();
+      setPasskeys(list);
+    } catch {
+      // User may not have any passkeys yet – that's fine
+      setPasskeys([]);
+    } finally {
+      setPasskeysLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) loadPasskeys();
+  }, [user]);
+
+  const handleRegisterPasskey = async () => {
+    try {
+      await registerPasskey();
+      await loadPasskeys(); // Refresh the list
+    } catch {
+      // Error already toasted by usePasskey hook
+    }
+  };
+
+  const handleDeletePasskey = async (id: string) => {
+    try {
+      await passkeyApi.delete(id);
+      toast({ title: "Passkey removed", variant: "success" });
+      await loadPasskeys();
+    } catch (error: any) {
+      toast({
+        title: "Failed to remove passkey",
+        description: error?.message,
+        variant: "error",
+      });
+    }
+  };
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -374,6 +423,66 @@ export default function ProfilePage() {
               </div>
             </div>
           </Card>
+
+          {/* Passkey Management */}
+          {passkeySupported && (
+            <Card className="mt-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold">Passkeys</h4>
+                    <p className="text-xs text-(--muted)">
+                      Sign in securely without a password using your
+                      device&apos;s biometrics or PIN.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleRegisterPasskey}
+                    disabled={passkeyBusy}
+                    size="sm"
+                  >
+                    {passkeyBusy ? "Registering…" : "+ Add passkey"}
+                  </Button>
+                </div>
+
+                {passkeysLoading ? (
+                  <p className="text-xs text-(--muted)">Loading passkeys…</p>
+                ) : passkeys.length === 0 ? (
+                  <p className="text-xs text-(--muted)">
+                    No passkeys registered yet. Add one to enable passwordless
+                    login.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {passkeys.map((pk) => (
+                      <div
+                        key={pk.id}
+                        className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">
+                            {pk.deviceName || "Passkey"}
+                          </p>
+                          <p className="text-xs text-(--muted)">
+                            Registered{" "}
+                            {new Date(pk.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-rose-500 hover:text-rose-600"
+                          onClick={() => handleDeletePasskey(pk.id)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="notifications">
