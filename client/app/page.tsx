@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api";
 import { PricingItem } from "@/lib/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Leaf, MapPin, Recycle, Users, CheckCircle, Calendar, Truck, Wallet } from "lucide-react";
+import { ScrollAnimatedSection } from "@/components/shared/scroll-animated-section";
 
 const fallbackPricing = [
   { name: "Plastic (PET)", min: 45, max: 70 },
@@ -74,34 +75,44 @@ export default function HomePage() {
       <div className="">
         <section className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10 px-6 pb-20 pt-10 md:flex-row md:items-center">
           <div className="flex-1 space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
-              Sri Lanka&apos;s #1 Waste Marketplace
-            </div>
-            <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
-              Turn Your Waste into Cash
-            </h1>
-            <p className="text-base text-muted md:text-lg">
-              Built for households and businesses across Sri Lanka. Schedule
-              pickups, track impact, and get paid instantly through mobile
-              wallets or bank transfers.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Button size="lg" asChild>
-                <Link href="/signup">Book a Pickup</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <a href="#pricing">Check Prices</a>
-              </Button>
-            </div>
+            <ScrollAnimatedSection>
+              <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
+                Sri Lanka&apos;s #1 Waste Marketplace
+              </div>
+            </ScrollAnimatedSection>
+            <ScrollAnimatedSection delay={100}>
+              <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
+                Turn Your Waste into Cash
+              </h1>
+            </ScrollAnimatedSection>
+            <ScrollAnimatedSection delay={200}>
+              <p className="text-base text-muted md:text-lg">
+                Built for households and businesses across Sri Lanka. Schedule
+                pickups, track impact, and get paid instantly through mobile
+                wallets or bank transfers.
+              </p>
+            </ScrollAnimatedSection>
+            <ScrollAnimatedSection delay={300}>
+              <div className="flex flex-wrap gap-4">
+                <Button size="lg" asChild>
+                  <Link href="/signup">Book a Pickup</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <a href="#pricing">Check Prices</a>
+                </Button>
+              </div>
+            </ScrollAnimatedSection>
           </div>
           <div className="flex-1">
-            <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg aspect-[16/9]">
-              <img
-                src="/recycling-bins.png"
-                alt="Colorful recycling bins for waste segregation"
-                className="h-full w-full object-cover"
-              />
-            </div>
+            <ScrollAnimatedSection delay={400}>
+              <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg aspect-[16/9]">
+                <img
+                  src="/recycling-bins.png"
+                  alt="Colorful recycling bins for waste segregation"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </ScrollAnimatedSection>
           </div>
         </section>
       </div>
@@ -130,18 +141,20 @@ export default function HomePage() {
                 value: "25",
                 label: "Districts Served",
               },
-            ].map((stat) => (
-              <Card key={stat.label} className="bg-(--brand)/10 text-center shadow-md">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
-                    {stat.icon}
+            ].map((stat, index) => (
+              <ScrollAnimatedSection key={stat.label} delay={index * 100}>
+                <Card className="bg-(--brand)/10 text-center shadow-md">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                      {stat.icon}
+                    </div>
+                    <div className="text-lg font-bold text-(--brand)">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs text-(--muted)">{stat.label}</div>
                   </div>
-                  <div className="text-lg font-bold text-(--brand)">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs text-(--muted)">{stat.label}</div>
-                </div>
-              </Card>
+                </Card>
+              </ScrollAnimatedSection>
             ))}
           </div>
         </div>
@@ -151,11 +164,13 @@ export default function HomePage() {
         id="how"
         className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
       >
-        <SectionHeading
-          eyebrow="How it works"
-          title="Pickups in 3 simple steps"
-          description="Book once, relax, and earn. We handle the pickup, sorting, and instant payout."
-        />
+        <ScrollAnimatedSection>
+          <SectionHeading
+            eyebrow="How it works"
+            title="Pickups in 3 simple steps"
+            description="Book once, relax, and earn. We handle the pickup, sorting, and instant payout."
+          />
+        </ScrollAnimatedSection>
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {
@@ -176,39 +191,42 @@ export default function HomePage() {
               desc: "Receive money instantly to your mobile wallet or bank account.",
               icon: <Wallet className="h-6 w-6" />,
             },
-          ].map((item) => (
-            <Card
-              key={item.step}
-              className="bg-(--brand)/10 shadow-md"
-            >
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
-                  {item.icon}
+          ].map((item, index) => (
+            <ScrollAnimatedSection key={item.step} delay={index * 150}>
+              <Card
+                className="bg-(--brand)/10 shadow-md"
+              >
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                    {item.icon}
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-(--brand)">
+                    Step {item.step}
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-sm leading-relaxed text-(--muted)">{item.desc}</p>
                 </div>
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-(--brand)">
-                  Step {item.step}
-                </div>
-                <h3 className="text-xl font-semibold text-foreground">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-(--muted)">{item.desc}</p>
-              </div>
-            </Card>
+              </Card>
+            </ScrollAnimatedSection>
           ))}
         </div>
       </section>
 
       <section className="w-full bg-transparent py-16">
         <div className="mx-auto w-full max-w-6xl space-y-8 px-6">
-          <div className="space-y-4">
-            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-(--brand)">
-              Features
-            </span>
-            <h2 className="text-4xl font-bold text-foreground md:text-5xl">
-              A marketplace built for every<br />Sri Lankan household
-            </h2>
-            <p className="text-lg text-(--muted)">
-              From transparent pricing to carbon tracking, Trash2Cash keeps the cycle circular.
-            </p>
-          </div>
+          <ScrollAnimatedSection>
+            <div className="space-y-4">
+              <span className="text-xs font-semibold uppercase tracking-[0.35em] text-(--brand)">
+                Features
+              </span>
+              <h2 className="text-4xl font-bold text-foreground md:text-5xl">
+                A marketplace built for every<br />Sri Lankan household
+              </h2>
+              <p className="text-lg text-(--muted)">
+                From transparent pricing to carbon tracking, Trash2Cash keeps the cycle circular.
+              </p>
+            </div>
+          </ScrollAnimatedSection>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
@@ -228,16 +246,18 @@ export default function HomePage() {
                 title: "Community Driven",
                 desc: "Building a sustainable future together with local communities across Sri Lanka.",
               },
-            ].map((item) => (
-              <Card key={item.title} className="bg-(--brand)/10 text-center shadow-md">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
-                    <CheckCircle className="h-5 w-5" />
+            ].map((item, index) => (
+              <ScrollAnimatedSection key={item.title} delay={index * 100}>
+                <Card className="bg-(--brand)/10 text-center shadow-md">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-base font-semibold text-(--brand)">{item.title}</h4>
+                    <p className="text-xs text-(--muted)">{item.desc}</p>
                   </div>
-                  <h4 className="text-base font-semibold text-(--brand)">{item.title}</h4>
-                  <p className="text-xs text-(--muted)">{item.desc}</p>
-                </div>
-              </Card>
+                </Card>
+              </ScrollAnimatedSection>
             ))}
           </div>
         </div>
@@ -247,41 +267,47 @@ export default function HomePage() {
         id="pricing"
         className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
       >
-        <SectionHeading
-          eyebrow="Current Waste Prices"
-          title="Transparent pricing for every category"
-          description="Final prices determined after quality inspection."
-        />
+        <ScrollAnimatedSection>
+          <SectionHeading
+            eyebrow="Current Waste Prices"
+            title="Transparent pricing for every category"
+            description="Final prices determined after quality inspection."
+          />
+        </ScrollAnimatedSection>
         <div className="grid gap-6 md:grid-cols-4">
-          {pricingCards.map((item) => (
-            <Card key={item.name} className="bg-(--brand)/10 text-center shadow-md">
-              <div className="flex flex-col items-center gap-2">
-                <h4 className="text-base font-semibold text-(--brand)">{item.name}</h4>
-                <div className="text-sm text-(--muted)">Min: LKR {item.min} / kg</div>
-                <div className="text-sm text-(--muted)">Max: LKR {item.max} / kg</div>
-                <p className="text-xs text-(--muted)">
-                  Final prices determined after quality inspection.
-                </p>
-              </div>
-            </Card>
+          {pricingCards.map((item, index) => (
+            <ScrollAnimatedSection key={item.name} delay={index * 100}>
+              <Card className="bg-(--brand)/10 text-center shadow-md">
+                <div className="flex flex-col items-center gap-2">
+                  <h4 className="text-base font-semibold text-(--brand)">{item.name}</h4>
+                  <div className="text-sm text-(--muted)">Min: LKR {item.min} / kg</div>
+                  <div className="text-sm text-(--muted)">Max: LKR {item.max} / kg</div>
+                  <p className="text-xs text-(--muted)">
+                    Final prices determined after quality inspection.
+                  </p>
+                </div>
+              </Card>
+            </ScrollAnimatedSection>
           ))}
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-6 py-16">
-        <Card className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <h3 className="text-2xl font-semibold">
-              Ready to Start Earning from Your Waste?
-            </h3>
-            <p className="text-sm text-(--muted)">
-              Create a free account and schedule your first pickup today.
-            </p>
-          </div>
-          <Button size="lg" asChild>
-            <Link href="/signup">Create Free Account</Link>
-          </Button>
-        </Card>
+        <ScrollAnimatedSection>
+          <Card className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <h3 className="text-2xl font-semibold">
+                Ready to Start Earning from Your Waste?
+              </h3>
+              <p className="text-sm text-(--muted)">
+                Create a free account and schedule your first pickup today.
+              </p>
+            </div>
+            <Button size="lg" asChild>
+              <Link href="/signup">Create Free Account</Link>
+            </Button>
+          </Card>
+        </ScrollAnimatedSection>
       </section>
 
       <footer id="contact" className="bg-(--card) text-foreground border-t border-(--border)">
@@ -340,3 +366,4 @@ export default function HomePage() {
     </div>
   );
 }
+

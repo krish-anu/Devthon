@@ -44,23 +44,23 @@ export default function DriverLayout({
       <AppShell
         sidebar={<Sidebar title="Driver Console" items={navItems} />}
         header={
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
-                Driver Console
-              </p>
-              <h2 className="text-lg font-semibold">
-                Welcome, {user?.fullName ?? "Driver"}
-              </h2>
+          <div className="flex items-center justify-between w-full gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
+                  Driver Console
+                </p>
+                <h2 className="text-lg font-semibold">
+                  Welcome, {user?.fullName ?? "Admin"}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 right">
+                <ThemeToggle />
+                <Button variant="outline" size="sm" onClick={() => logout()}>
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={() => logout()}>
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
         }
       >
         {children}
