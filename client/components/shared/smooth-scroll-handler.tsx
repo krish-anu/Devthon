@@ -25,18 +25,43 @@ export default function SmoothScrollHandler() {
       window.scrollTo({ top: target, behavior: 'smooth' });
     };
 
-    // On initial load, if there's a hash, scroll to it after a short delay
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const id = window.location.hash;
-      // allow initial rendering and any automatic scroll-to-top to finish
-      setTimeout(() => scrollToHash(id), 120);
-    }
+    // NOTE: Do NOT auto-scroll on initial load even if URL has a hash.
+    // This ensures a refresh always starts at the hero section.
 
     // Listen to hash changes (e.g., user clicks anchor links)
     const onHashChange = () => scrollToHash(window.location.hash);
     window.addEventListener('hashchange', onHashChange);
 
-    return () => window.removeEventListener('hashchange', onHashChange);
+    // Intercept in-page anchor clicks so we can animate and update history
+    const onDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const anchor = target.closest('a') as HTMLAnchorElement | null;
+      if (!anchor || !anchor.getAttribute) return;
+
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+
+      // Only handle same-page anchors like "#pricing" or "./#pricing" or current pathname + hash
+      if (href.startsWith('#') || href.includes(window.location.pathname + '#')) {
+        e.preventDefault();
+        const hash = href.startsWith('#') ? href : '#' + href.split('#').pop();
+
+        // Update URL without causing a full navigation
+        history.pushState(null, '', hash);
+
+        // Smooth scroll to the target
+        scrollToHash(hash);
+      }
+    };
+
+    document.addEventListener('click', onDocumentClick);
+
+    return () => {
+      window.removeEventListener('hashchange', onHashChange);
+      document.removeEventListener('click', onDocumentClick);
+    };
   }, [pathname]);
 
   return null;
