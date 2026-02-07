@@ -82,7 +82,7 @@ export default function AdminLayout({
                   Welcome, {user?.fullName ?? "Admin"}
                 </h2>
               </div>
-              <div className="flex items-center gap-2 ">
+              <div className="flex items-center gap-2 right">
                 <ThemeToggle />
                 <Button variant="outline" size="sm" onClick={() => logout()}>
                   <LogOut className="h-4 w-4" />
