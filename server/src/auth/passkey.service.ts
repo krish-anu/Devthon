@@ -265,9 +265,10 @@ export class PasskeyService implements OnModuleInit {
   /*  Private helpers                                                    */
   /* ------------------------------------------------------------------ */
 
-  private sanitizeUser(user: User) {
+  private sanitizeUser(user: any) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, refreshTokenHash, ...safe } = user;
+    const { passwordHash, refreshTokenHash, passkeyCredentials, ...safe } =
+      user;
     return safe;
   }
 
