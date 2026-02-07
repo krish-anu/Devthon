@@ -31,6 +31,18 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
+  const redirectToDashboard = (role: string) => {
+    if (role === "ADMIN") {
+      router.replace("/admin/dashboard");
+      return;
+    }
+    if (role === "DRIVER") {
+      router.replace("/driver/dashboard");
+      return;
+    }
+    router.replace("/users/dashboard");
+  };
+
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -40,9 +52,7 @@ export default function LoginPage() {
           description: "Signed in with Google successfully.",
           variant: "success",
         });
-        router.replace(
-          user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard",
-        );
+        redirectToDashboard(user.role);
       } catch (error: unknown) {
         toast({
           title: "Google sign-in failed",
@@ -69,9 +79,7 @@ export default function LoginPage() {
         description: "Redirecting to your dashboard.",
         variant: "success",
       });
-      router.replace(
-        user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard",
-      );
+      redirectToDashboard(user.role);
     } catch (error: unknown) {
       toast({
         title: "Login failed",

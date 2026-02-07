@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +36,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function SignupPage() {
+  const pathname = usePathname();
+  const role = pathname?.startsWith("/admin")
+    ? "ADMIN"
+    : pathname?.startsWith("/driver")
+      ? "DRIVER"
+      : "USER";
   const { register, handleSubmit, setValue, watch, formState } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
@@ -43,6 +50,18 @@ export default function SignupPage() {
   const { errors, isSubmitting } = formState;
   const { register: registerUser, googleLogin } = useAuth();
   const termsChecked = watch("terms");
+
+  const redirectToDashboard = (userRole: string) => {
+    if (userRole === "ADMIN") {
+      window.location.href = "/admin/dashboard";
+      return;
+    }
+    if (userRole === "DRIVER") {
+      window.location.href = "/driver/dashboard";
+      return;
+    }
+    window.location.href = "/users/dashboard";
+  };
 
   const handleGoogleSignup = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -53,8 +72,7 @@ export default function SignupPage() {
           description: "Signed up with Google successfully.",
           variant: "success",
         });
-        window.location.href =
-          user.role === "ADMIN" ? "/admin/dashboard" : "/users/dashboard";
+        redirectToDashboard(user.role);
       } catch (error: any) {
         toast({
           title: "Google sign-up failed",
@@ -77,8 +95,8 @@ export default function SignupPage() {
       const { terms, ...payload } = values;
       // debug log before calling API
       // eslint-disable-next-line no-console
-      console.debug("Signup onSubmit payload:", payload);
-      const user = await registerUser(payload);
+      console.debug("Signup onSubmit payload:", { ...payload, role });
+      const user = await registerUser({ ...payload, role });
       // eslint-disable-next-line no-console
       console.debug("Signup success, user:", user);
       toast({

@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { usePathname } from "next/navigation";
 
 export default function DriverLayout({
   children,
@@ -14,6 +15,8 @@ export default function DriverLayout({
   children: React.ReactNode;
 }) {
   const { user, logout } = useAuth();
+  const pathname = usePathname();
+  const isPublicSignup = pathname?.startsWith("/driver/signup");
   const navItems = [
     {
       label: "Dashboard",
@@ -31,6 +34,10 @@ export default function DriverLayout({
       icon: <Bell className="h-4 w-4" />,
     },
   ];
+
+  if (isPublicSignup) {
+    return <>{children}</>;
+  }
 
   return (
     <RequireAuth roles={["DRIVER"]}>

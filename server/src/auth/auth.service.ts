@@ -62,7 +62,12 @@ export class AuthService {
     const supabaseAuthId = await this.supabaseService.createAuthUser(
       dto.email,
       dto.password,
-      { fullName: dto.fullName, phone: dto.phone, type: dto.type },
+      {
+        fullName: dto.fullName,
+        phone: dto.phone,
+        type: dto.type,
+        role: dto.role ?? 'USER',
+      },
     );
 
     const userData: any = {
@@ -71,6 +76,7 @@ export class AuthService {
       phone: dto.phone,
       passwordHash,
       type: dto.type,
+      role: dto.role ?? 'USER',
     };
 
     // If Supabase Auth returned an ID, use it as the Prisma User ID

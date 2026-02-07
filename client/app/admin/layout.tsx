@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -23,6 +24,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { user, logout } = useAuth();
+  const pathname = usePathname();
+  const isPublicSignup = pathname?.startsWith("/admin/signup");
   const navItems = [
     {
       label: "Dashboard",
@@ -55,6 +58,16 @@ export default function AdminLayout({
       icon: <MessageSquare className="h-4 w-4" />,
     },
   ];
+
+  if (isPublicSignup) {
+    return (
+      <GoogleOAuthProvider
+        clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
+      >
+        {children}
+      </GoogleOAuthProvider>
+    );
+  }
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>

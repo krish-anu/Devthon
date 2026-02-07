@@ -6,11 +6,26 @@ import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { authApi } from "@/lib/api";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/components/auth/auth-provider";
+import { getStoredUser } from "@/lib/auth";
 
 export default function VerifyPage() {
   const [code, setCode] = useState(Array(6).fill(""));
   const [seconds, setSeconds] = useState(45);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { user } = useAuth();
+
+  const redirectToDashboard = (role?: string) => {
+    if (role === "ADMIN") {
+      window.location.href = "/admin/dashboard";
+      return;
+    }
+    if (role === "DRIVER") {
+      window.location.href = "/driver/dashboard";
+      return;
+    }
+    window.location.href = "/users/dashboard";
+  };
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -52,7 +67,8 @@ export default function VerifyPage() {
       description: "Your account is ready.",
       variant: "success",
     });
-    window.location.href = "/users/dashboard";
+    const stored = getStoredUser();
+    redirectToDashboard(user?.role ?? stored?.role);
   };
 
   const handleResend = () => {

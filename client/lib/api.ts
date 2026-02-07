@@ -87,6 +87,7 @@ export const authApi = {
     phone: string;
     password: string;
     type: 'HOUSEHOLD' | 'BUSINESS';
+    role?: 'USER' | 'ADMIN' | 'DRIVER';
   }) =>
     apiFetch<AuthResponse>('/auth/register', {
       method: 'POST',
