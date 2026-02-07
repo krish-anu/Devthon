@@ -293,3 +293,13 @@ h5 {
 .animate-slide-in-up {
   animation: slideInUp 0.5s ease-out forwards;
 }
+
+/* Smooth scroll behavior for in-page navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure anchored sections position correctly under the fixed header (h-16 = 4rem) */
+section[id], [id] {
+  scroll-margin-top: 4rem;
+}
