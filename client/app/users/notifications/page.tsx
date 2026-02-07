@@ -40,7 +40,7 @@ export default function NotificationsPage() {
   const items = data ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="notifications-page space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Notifications</h2>
         <Button variant="outline" onClick={() => mutation.mutate()}>
@@ -54,8 +54,8 @@ export default function NotificationsPage() {
               <h3 className="text-lg font-semibold">{item.title}</h3>
               <Badge variant={levelVariant[item.level]}>{item.level}</Badge>
             </div>
-            <p className="text-sm text-(--muted)">{item.message}</p>
-            <p className="text-xs text-(--muted)">
+            <p className="text-sm text-[color:var(--muted)]">{item.message}</p>
+            <p className="text-xs text-[color:var(--muted)]">
               {new Date(item.createdAt).toLocaleString()}
             </p>
           </Card>

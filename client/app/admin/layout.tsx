@@ -73,7 +73,7 @@ export default function AdminLayout({
         <AppShell
           sidebar={<Sidebar title="Admin Portal" items={navItems} />}
           header={
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center justify-between w-full gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
                   Admin Console
@@ -82,7 +82,7 @@ export default function AdminLayout({
                   Welcome, {user?.fullName ?? "Admin"}
                 </h2>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ">
                 <ThemeToggle />
                 <Button variant="outline" size="sm" onClick={() => logout()}>
                   <LogOut className="h-4 w-4" />
