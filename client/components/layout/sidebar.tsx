@@ -22,7 +22,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-full flex-col gap-6 bg-gradient-to-b from-(--brand-strong) to-(--brand) p-6 text-white md:rounded-r-3xl">
+    <aside className="flex h-full w-full flex-col gap-6 bg-linear-to-b from-(--brand-strong) to-(--brand) p-6 text-white md:rounded-r-3xl">
       <div className="space-y-1">
         <span className="text-xs uppercase tracking-widest opacity-80">
           {title}
