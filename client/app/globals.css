@@ -264,3 +264,17 @@ h5 {
 .dark [data-card] {
   box-shadow: none;
 }
+
+/* Better badge contrast for notifications in light mode */
+:root:not([data-theme="dark"]) .notifications-page [data-variant="danger"] {
+  background-color: rgba(239, 68, 68, 0.18);
+  color: #9f1239;
+}
+:root:not([data-theme="dark"]) .notifications-page [data-variant="info"] {
+  background-color: rgba(14, 165, 233, 0.18);
+  color: #0369a1;
+}
+:root:not([data-theme="dark"]) .notifications-page [data-variant="warning"] {
+  background-color: rgba(251, 191, 36, 0.18);
+  color: #92400e;
+}
