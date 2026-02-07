@@ -28,7 +28,12 @@ export function AppShell({
       )}
 
       {/* Main content gets left padding on large screens and top padding when header exists to account for the fixed header */}
-      <div className={cn("mx-auto w-full max-w-7xl lg:pl-64", header && "pt-16")}>
+      <div
+        className={cn(
+          "mx-auto w-full max-w-7xl lg:pl-64",
+          Boolean(header) ? "pt-16" : undefined,
+        )}
+      >
         <div className="flex min-h-screen">
           <div className="flex-1">
             <main className={cn("space-y-6 px-6 py-6", className)}>
