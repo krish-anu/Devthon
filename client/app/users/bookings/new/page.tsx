@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { PricingItem } from "@/lib/types";
+import { Booking, PricingItem } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/components/auth/auth-provider";
 
 const weightOptions = [
   { label: "0-5 kg", min: 0, max: 5 },
@@ -28,10 +29,24 @@ const timeSlots = [
   "6:00 PM - 8:00 PM",
 ];
 
+const getTodayInputValue = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export default function NewBookingPage() {
+  const { user } = useAuth();
   const { data } = useQuery({
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
+  });
+  const { data: latestBookingData } = useQuery({
+    queryKey: ["bookings", "latest"],
+    queryFn: () =>
+      apiFetch<{ items: Booking[] }>("/bookings?page=1&pageSize=1"),
   });
 
   const [step, setStep] = useState(1);
@@ -52,13 +67,17 @@ export default function NewBookingPage() {
     }[]
   >([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [weightRange, setWeightRange] = useState(weightOptions[1]);
+  const [weightRange, setWeightRange] = useState<
+    (typeof weightOptions)[number] | null
+  >(null);
   const [addressLine1, setAddressLine1] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [scheduledTimeSlot, setScheduledTimeSlot] = useState(timeSlots[1]);
+  const [scheduledDate, setScheduledDate] = useState(getTodayInputValue());
+  const [scheduledTimeSlot, setScheduledTimeSlot] = useState("");
+  const [locationPicked, setLocationPicked] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [terms, setTerms] = useState(false);
 
   const estimate = useMemo(() => {
@@ -71,6 +90,20 @@ export default function NewBookingPage() {
     }
     return { min, max };
   }, [selectedItems]);
+
+  const latestBooking = latestBookingData?.items?.[0];
+
+  useEffect(() => {
+    if (!latestBooking) return;
+    setAddressLine1((prev) => prev || latestBooking.addressLine1 || "");
+    setCity((prev) => prev || latestBooking.city || "");
+    setPostalCode((prev) => prev || latestBooking.postalCode || "");
+  }, [latestBooking]);
+
+  useEffect(() => {
+    if (!user?.phone) return;
+    setPhoneNumber((prev) => prev || user.phone || "");
+  }, [user]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -249,6 +282,42 @@ export default function NewBookingPage() {
       toast({ title: "Select a category", variant: "warning" });
       return;
     }
+    if (!weightRange) {
+      toast({ title: "Select a weight range", variant: "warning" });
+      return;
+    }
+    if (!addressLine1 || !city || !postalCode || !specialInstructions) {
+      toast({
+        title: "Complete the pickup details",
+        description: "Please fill all address fields.",
+        variant: "warning",
+      });
+      return;
+    }
+    if (!locationPicked) {
+      toast({
+        title: "Select a pickup location",
+        description: "Please confirm the map location before proceeding.",
+        variant: "warning",
+      });
+      return;
+    }
+    if (!scheduledDate || !scheduledTimeSlot) {
+      toast({
+        title: "Select date and time",
+        description: "Please choose a pickup date and time slot.",
+        variant: "warning",
+      });
+      return;
+    }
+    if (!phoneNumber) {
+      toast({
+        title: "Add contact number",
+        description: "Please enter a phone number for pickup coordination.",
+        variant: "warning",
+      });
+      return;
+    }
     if (!terms) {
       toast({
         title: "Accept terms",
@@ -270,7 +339,7 @@ export default function NewBookingPage() {
           city,
           postalCode,
           specialInstructions,
-          scheduledDate: scheduledDate || new Date().toISOString(),
+          scheduledDate,
           scheduledTimeSlot,
         }),
       });
@@ -560,7 +629,7 @@ export default function NewBookingPage() {
               <button
                 key={option.label}
                 className={`rounded-xl border px-4 py-3 text-left ${
-                  weightRange.label === option.label
+                  weightRange?.label === option.label
                     ? "border-(--brand) bg-(--brand)/10"
                     : "border-(--border) bg-(--surface)"
                 }`}
@@ -586,6 +655,7 @@ export default function NewBookingPage() {
               <Input
                 value={addressLine1}
                 onChange={(event) => setAddressLine1(event.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -593,6 +663,7 @@ export default function NewBookingPage() {
               <Input
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -600,6 +671,7 @@ export default function NewBookingPage() {
               <Input
                 value={postalCode}
                 onChange={(event) => setPostalCode(event.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -607,11 +679,19 @@ export default function NewBookingPage() {
               <Textarea
                 value={specialInstructions}
                 onChange={(event) => setSpecialInstructions(event.target.value)}
+                required
               />
             </div>
           </div>
           <div className="h-48 rounded-2xl border border-dashed border-(--border) bg-(--surface) p-4 text-sm text-(--muted)">
             Map Placeholder
+          </div>
+          <div className="flex items-center gap-3 text-sm text-(--muted)">
+            <Checkbox
+              checked={locationPicked}
+              onCheckedChange={(checked) => setLocationPicked(Boolean(checked))}
+            />
+            I have selected the pickup location on the map.
           </div>
         </Card>
       )}
@@ -686,6 +766,15 @@ export default function NewBookingPage() {
               <p className="text-sm text-(--muted)">Time Slot</p>
               <p className="text-lg font-semibold">{scheduledTimeSlot}</p>
             </div>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <Label className="text-sm text-(--muted)">Phone Number</Label>
+              <Input
+                value={phoneNumber}
+                onChange={(event) => setPhoneNumber(event.target.value)}
+                placeholder="Enter phone number"
+                required
+              />
+            </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-(--muted)">
             <Checkbox
@@ -705,7 +794,48 @@ export default function NewBookingPage() {
           Back
         </Button>
         {step < 5 ? (
-          <Button onClick={() => setStep((s) => Math.min(5, s + 1))}>
+          <Button
+            onClick={() => {
+              if (step === 1 && selectedItems.length === 0) {
+                toast({ title: "Select a category", variant: "warning" });
+                return;
+              }
+              if (step === 2 && !weightRange) {
+                toast({ title: "Select a weight range", variant: "warning" });
+                return;
+              }
+              if (
+                step === 3 &&
+                (!addressLine1 || !city || !postalCode || !specialInstructions)
+              ) {
+                toast({
+                  title: "Complete the pickup details",
+                  description: "Please fill all address fields.",
+                  variant: "warning",
+                });
+                return;
+              }
+              if (step === 3 && !locationPicked) {
+                toast({
+                  title: "Select a pickup location",
+                  description:
+                    "Please confirm the map location before proceeding.",
+                  variant: "warning",
+                });
+                return;
+              }
+              if (step === 4 && (!scheduledDate || !scheduledTimeSlot)) {
+                toast({
+                  title: "Select date and time",
+                  description:
+                    "Please choose a pickup date and time slot.",
+                  variant: "warning",
+                });
+                return;
+              }
+              setStep((s) => Math.min(5, s + 1));
+            }}
+          >
             Next
           </Button>
         ) : (
