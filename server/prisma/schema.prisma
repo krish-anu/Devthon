@@ -77,6 +77,7 @@ model Customer {
   fullName  String
   phone     String
   address   String?
+  avatarUrl String?
   type      CustomerType   @default(HOUSEHOLD)
   status    CustomerStatus @default(ACTIVE)
   createdAt DateTime       @default(now())
@@ -89,6 +90,7 @@ model Admin {
   fullName String
   phone    String
   address  String?
+  avatarUrl String?
   approved Boolean @default(false)
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
@@ -102,6 +104,7 @@ model Driver {
   pickupCount Int          @default(0)
   vehicle     String
   status      DriverStatus @default(OFFLINE)
+  avatarUrl   String?
   createdAt   DateTime     @default(now())
 
   user     User      @relation(fields: [id], references: [id], onDelete: Cascade)

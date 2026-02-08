@@ -60,6 +60,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </h2>
             </div>
             <div className="flex items-center gap-2">
+              {user && (user as any).avatar ? (
+                <img
+                  src={(user as any).avatar}
+                  alt={user?.fullName ?? "avatar"}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : null}
               <ThemeToggle />
               <Button variant="outline" size="sm" onClick={() => logout()}>
                 <LogOut className="h-4 w-4" />

@@ -300,6 +300,7 @@ export class AuthService {
             id: newUser.id,
             fullName: googleUser.name || 'Google User',
             phone: '',
+            avatarUrl: googleUser.picture ?? null,
             type: 'HOUSEHOLD',
           },
         });
@@ -316,6 +317,34 @@ export class AuthService {
         include: { customer: true },
       });
       await this.syncUserToSupabase(userWithProfile ?? user);
+    } else {
+      // Existing user — update avatar if Google provides one (or it changed).
+      if (googleUser.picture) {
+        try {
+          const avatarFromDb = user.customer?.avatarUrl ?? null;
+          if (avatarFromDb !== googleUser.picture) {
+            await this.prisma.customer.update({
+              where: { id: user.id },
+              data: { avatarUrl: googleUser.picture },
+            });
+
+            // refresh the user object for return
+            user = await this.prisma.user.findUnique({
+              where: { id: user.id },
+              include: USER_PROFILE_INCLUDE,
+            });
+
+            // Sync updated avatar to Supabase as well
+            const userWithProfile = await this.prisma.user.findUnique({
+              where: { id: user!.id },
+              include: { customer: true },
+            });
+            await this.syncUserToSupabase(userWithProfile ?? user);
+          }
+        } catch (err) {
+          this.logger.warn('Failed to update avatar for existing user', err as any);
+        }
+      }
     }
 
     const tokens = await this.issueTokens(user!);
@@ -348,6 +377,7 @@ export class AuthService {
       fullName: flat.fullName,
       phone: flat.phone,
       address: flat.address,
+      avatar: flat.avatar ?? null,
     });
   }
 }
