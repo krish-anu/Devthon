@@ -33,7 +33,7 @@ export default function AdminDriversPage() {
         {drivers.map((driver) => (
           <Card key={driver.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{driver.name}</h3>
+              <h3 className="text-lg font-semibold">{driver.fullName}</h3>
               <span className="rounded-full border border-(--border) bg-(--surface) px-3 py-1 text-xs text-(--muted)">
                 {driver.status.replace("_", " ")}
               </span>
@@ -42,9 +42,7 @@ export default function AdminDriversPage() {
             <p className="text-sm text-(--muted)">
               Pickup count: {driver.pickupCount}
             </p>
-            <p className="text-sm text-(--muted)">
-              Vehicle: {driver.vehicleType}
-            </p>
+            <p className="text-sm text-(--muted)">Vehicle: {driver.vehicle}</p>
           </Card>
         ))}
       </div>

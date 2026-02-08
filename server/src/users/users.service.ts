@@ -8,30 +8,78 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import {
+  flattenUser,
+  USER_PROFILE_INCLUDE,
+} from '../common/utils/user.utils';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  private sanitize(user: any) {
-    if (!user) return user;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, refreshTokenHash, ...safe } = user;
-    return safe;
-  }
-
   async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: USER_PROFILE_INCLUDE,
+    });
     if (!user) throw new NotFoundException('User not found');
-    return this.sanitize(user);
+    return flattenUser(user);
   }
 
   async updateMe(userId: string, dto: UpdateProfileDto) {
-    const user = await this.prisma.user.update({
+    // Fetch the user to determine their role
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: dto,
     });
-    return this.sanitize(user);
+    if (!user) throw new NotFoundException('User not found');
+
+    // Update email on User table if provided
+    if (dto.email) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { email: dto.email },
+      });
+    }
+
+    // Update profile data on the role-specific table
+    const profileData: any = {};
+    if (dto.fullName !== undefined) profileData.fullName = dto.fullName;
+    if (dto.phone !== undefined) profileData.phone = dto.phone;
+    if (dto.address !== undefined) profileData.address = dto.address;
+
+    if (Object.keys(profileData).length > 0) {
+      switch (user.role) {
+        case 'CUSTOMER':
+          await this.prisma.customer.upsert({
+            where: { id: userId },
+            update: profileData,
+            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
+          });
+          break;
+        case 'ADMIN':
+        case 'SUPER_ADMIN':
+          await this.prisma.admin.upsert({
+            where: { id: userId },
+            update: profileData,
+            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
+          });
+          break;
+        case 'DRIVER':
+          await this.prisma.driver.upsert({
+            where: { id: userId },
+            update: profileData,
+            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', vehicle: '', ...profileData },
+          });
+          break;
+      }
+    }
+
+    // Re-fetch and return flattened user
+    const updated = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: USER_PROFILE_INCLUDE,
+    });
+    return flattenUser(updated);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
@@ -41,6 +89,10 @@ export class UsersService {
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+
+    if (!user.passwordHash) {
+      throw new BadRequestException('No password set for this account (Google sign-in only)');
+    }
 
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Current password is incorrect');

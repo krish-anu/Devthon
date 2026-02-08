@@ -13,6 +13,10 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import type { StringValue } from 'ms';
+import {
+  flattenUser,
+  USER_PROFILE_INCLUDE,
+} from '../common/utils/user.utils';
 
 @Injectable()
 export class AuthService {
@@ -24,12 +28,6 @@ export class AuthService {
     private configService: ConfigService,
     private supabaseService: SupabaseService,
   ) {}
-
-  private sanitizeUser(user: User) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, refreshTokenHash, ...safe } = user;
-    return safe;
-  }
 
   private async issueTokens(user: User) {
     const payload = { sub: user.id, role: user.role };
@@ -66,39 +64,54 @@ export class AuthService {
         fullName: dto.fullName,
         phone: dto.phone,
         type: dto.type,
-        role: dto.role ?? 'USER',
+        role: dto.role ?? 'CUSTOMER',
       },
     );
 
-    const userData: any = {
-      fullName: dto.fullName,
-      email: dto.email,
-      phone: dto.phone,
-      passwordHash,
-      type: dto.type,
-      role: dto.role ?? 'USER',
-    };
+    // Create User + Customer profile in a single transaction
+    const user = await this.prisma.$transaction(async (tx) => {
+      const userData: any = {
+        email: dto.email,
+        passwordHash,
+        role: dto.role ?? 'CUSTOMER',
+      };
 
-    // If Supabase Auth returned an ID, use it as the Prisma User ID
-    if (supabaseAuthId) {
-      userData.id = supabaseAuthId;
-      this.logger.log(
-        `Using Supabase Auth ID ${supabaseAuthId} for new user ${dto.email}`,
-      );
-    }
+      if (supabaseAuthId) {
+        userData.id = supabaseAuthId;
+        this.logger.log(
+          `Using Supabase Auth ID ${supabaseAuthId} for new user ${dto.email}`,
+        );
+      }
 
-    const user = await this.prisma.user.create({ data: userData });
+      const newUser = await tx.user.create({ data: userData });
+
+      // Create the Customer profile (default registration is always a customer)
+      await tx.customer.create({
+        data: {
+          id: newUser.id,
+          fullName: dto.fullName,
+          phone: dto.phone,
+          type: dto.type,
+        },
+      });
+
+      return tx.user.findUnique({
+        where: { id: newUser.id },
+        include: USER_PROFILE_INCLUDE,
+      });
+    });
 
     // Sync user row to Supabase DB (if configured)
     await this.syncUserToSupabase(user);
 
-    const tokens = await this.issueTokens(user);
-    return { user: this.sanitizeUser(user), ...tokens };
+    const tokens = await this.issueTokens(user!);
+    return { user: flattenUser(user), ...tokens };
   }
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: USER_PROFILE_INCLUDE,
     });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -112,7 +125,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     const tokens = await this.issueTokens(user);
-    return { user: this.sanitizeUser(user), ...tokens };
+    return { user: flattenUser(user), ...tokens };
   }
 
   async refresh(refreshToken: string) {
@@ -122,6 +135,7 @@ export class AuthService {
       });
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
+        include: USER_PROFILE_INCLUDE,
       });
       if (!user || !user.refreshTokenHash) {
         throw new UnauthorizedException('Invalid refresh token');
@@ -131,7 +145,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
       const tokens = await this.issueTokens(user);
-      return { user: this.sanitizeUser(user), ...tokens };
+      return { user: flattenUser(user), ...tokens };
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -162,17 +176,16 @@ export class AuthService {
       (isJwt ? await tryVerify('id_token') : await tryVerify('access_token')) ||
       (isJwt ? await tryVerify('access_token') : await tryVerify('id_token'));
 
-    if (!googleUser) {
-      throw new UnauthorizedException('Invalid Google token');
-    }
-    if (!googleUser.email) {
+    if (!googleUser || !googleUser.email) {
       throw new UnauthorizedException('Invalid Google token');
     }
 
     // Find or create user
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
+      include: USER_PROFILE_INCLUDE,
     });
+
     if (!user) {
       // Try to create Supabase Auth user for Google users too
       const supabaseAuthId = await this.supabaseService.createAuthUser(
@@ -182,28 +195,42 @@ export class AuthService {
         { fullName: googleUser.name || 'Google User', provider: 'google' },
       );
 
-      const userData: any = {
-        fullName: googleUser.name || 'Google User',
-        email: googleUser.email,
-        phone: '',
-        passwordHash: '', // No password for Google users
-        type: 'HOUSEHOLD' as const, // Default type
-      };
+      user = await this.prisma.$transaction(async (tx) => {
+        const userData: any = {
+          email: googleUser.email,
+          role: 'CUSTOMER',
+        };
 
-      if (supabaseAuthId) {
-        userData.id = supabaseAuthId;
-        this.logger.log(
-          `Using Supabase Auth ID ${supabaseAuthId} for Google user ${googleUser.email}`,
-        );
-      }
+        if (supabaseAuthId) {
+          userData.id = supabaseAuthId;
+          this.logger.log(
+            `Using Supabase Auth ID ${supabaseAuthId} for Google user ${googleUser.email}`,
+          );
+        }
 
-      user = await this.prisma.user.create({ data: userData });
+        const newUser = await tx.user.create({ data: userData });
+
+        await tx.customer.create({
+          data: {
+            id: newUser.id,
+            fullName: googleUser.name || 'Google User',
+            phone: '',
+            type: 'HOUSEHOLD',
+          },
+        });
+
+        return tx.user.findUnique({
+          where: { id: newUser.id },
+          include: USER_PROFILE_INCLUDE,
+        });
+      });
 
       // Sync to Supabase DB
       await this.syncUserToSupabase(user);
     }
-    const tokens = await this.issueTokens(user);
-    return { user: this.sanitizeUser(user), ...tokens };
+
+    const tokens = await this.issueTokens(user!);
+    return { user: flattenUser(user), ...tokens };
   }
 
   private getRequiredConfig(key: string) {
@@ -223,16 +250,15 @@ export class AuthService {
    * Sync a user record to Supabase DB (if configured).
    * This keeps the Supabase `users` table in sync with Prisma.
    */
-  private async syncUserToSupabase(user: User): Promise<void> {
+  private async syncUserToSupabase(user: any): Promise<void> {
+    const flat = flattenUser(user);
     await this.supabaseService.upsertRow('users', {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      type: user.type,
-      status: user.status,
-      address: user.address,
+      id: flat.id,
+      email: flat.email,
+      role: flat.role,
+      fullName: flat.fullName,
+      phone: flat.phone,
+      address: flat.address,
     });
   }
 }

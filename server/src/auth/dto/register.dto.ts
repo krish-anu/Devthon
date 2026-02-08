@@ -7,7 +7,7 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
-import { Role, UserType } from '@prisma/client';
+import { CustomerType } from '@prisma/client';
 
 export class RegisterDto {
   @IsString()
@@ -29,10 +29,10 @@ export class RegisterDto {
   })
   password: string;
 
-  @IsEnum(UserType)
-  type: UserType;
+  @IsEnum(CustomerType)
+  type: CustomerType;
 
-  @IsEnum(Role)
   @IsOptional()
-  role?: Role;
+  @IsString()
+  role?: string;
 }

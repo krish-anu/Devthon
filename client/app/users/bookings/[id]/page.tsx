@@ -61,7 +61,7 @@ export default function BookingDetailsPage() {
           <h3 className="text-lg font-semibold">Driver Info</h3>
           <div className="space-y-2">
             <p className="text-sm">
-              {booking?.driver?.name ?? "Assigned soon"}
+              {booking?.driver?.fullName ?? "Assigned soon"}
             </p>
             <p className="text-xs text-(--muted)">
               Rating: {booking?.driver?.rating ?? "4.7"} ?

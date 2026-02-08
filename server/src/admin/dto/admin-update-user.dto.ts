@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { Role, UserStatus, UserType } from '@prisma/client';
+import { Role, CustomerType, CustomerStatus } from '@prisma/client';
 
 export class AdminUpdateUserDto {
   @IsOptional()
@@ -24,10 +24,10 @@ export class AdminUpdateUserDto {
   role?: Role;
 
   @IsOptional()
-  @IsEnum(UserType)
-  type?: UserType;
+  @IsEnum(CustomerType)
+  type?: CustomerType;
 
   @IsOptional()
-  @IsEnum(UserStatus)
-  status?: UserStatus;
+  @IsEnum(CustomerStatus)
+  status?: CustomerStatus;
 }

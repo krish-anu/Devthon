@@ -44,9 +44,7 @@ export default function DriverBookingsPage() {
                     {b.id.slice(0, 8)}
                   </Link>
                 </TableCell>
-                <TableCell>
-                  {b.user?.fullName ?? b.user?.name ?? "Customer"}
-                </TableCell>
+                <TableCell>{b.user?.fullName ?? "Customer"}</TableCell>
                 <TableCell>{b.addressLine1}</TableCell>
                 <TableCell>{b.status}</TableCell>
               </TableRow>

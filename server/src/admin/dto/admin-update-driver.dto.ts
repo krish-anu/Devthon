@@ -4,7 +4,7 @@ import { DriverStatus } from '@prisma/client';
 export class AdminUpdateDriverDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  fullName?: string;
 
   @IsOptional()
   @IsString()
@@ -20,7 +20,7 @@ export class AdminUpdateDriverDto {
 
   @IsOptional()
   @IsString()
-  vehicleType?: string;
+  vehicle?: string;
 
   @IsOptional()
   @IsEnum(DriverStatus)

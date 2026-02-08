@@ -155,7 +155,9 @@ export default function PendingPickupsPage() {
             {filtered.map((pickup) => (
               <TableRow key={pickup.id}>
                 <TableCell>{pickup.id.slice(0, 8)}</TableCell>
-                <TableCell>{pickup.driver?.name ?? "Assigned soon"}</TableCell>
+                <TableCell>
+                  {pickup.driver?.fullName ?? "Assigned soon"}
+                </TableCell>
                 <TableCell>{pickup.driver?.phone ?? "--"}</TableCell>
                 <TableCell>{pickup.addressLine1}</TableCell>
                 <TableCell>

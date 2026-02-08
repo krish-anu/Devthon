@@ -21,7 +21,7 @@ interface AuthContextValue {
     phone: string;
     password: string;
     type: "HOUSEHOLD" | "BUSINESS";
-    role?: "USER" | "ADMIN" | "DRIVER";
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     phone: string;
     password: string;
     type: "HOUSEHOLD" | "BUSINESS";
-    role?: "USER" | "ADMIN" | "DRIVER";
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
   }) => {
     const data = await authApi.register(payload);
     setAuth(data);

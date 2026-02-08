@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, UserType } from '@prisma/client';
+import { Prisma, CustomerType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
@@ -8,17 +8,14 @@ import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import * as bcrypt from 'bcrypt';
+import {
+  flattenUser,
+  USER_PROFILE_INCLUDE,
+} from '../common/utils/user.utils';
 
 @Injectable()
 export class AdminService {
   constructor(private prisma: PrismaService) {}
-
-  private sanitizeUser(user: any) {
-    if (!user) return user;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, refreshTokenHash, ...safe } = user;
-    return safe;
-  }
 
   async getMetrics() {
     const [revenueAgg, totalUsers, activeDrivers, pendingPickups] =
@@ -69,7 +66,10 @@ export class AdminService {
     const recentActivity = await this.prisma.booking.findMany({
       take: 6,
       orderBy: { createdAt: 'desc' },
-      include: { user: true, wasteCategory: true },
+      include: {
+        user: { include: USER_PROFILE_INCLUDE },
+        wasteCategory: true,
+      },
     });
 
     return {
@@ -83,79 +83,163 @@ export class AdminService {
       wasteDistribution,
       recentActivity: recentActivity.map((booking) => ({
         ...booking,
-        user: this.sanitizeUser(booking.user),
+        user: flattenUser(booking.user),
       })),
     };
   }
 
   async listUsers(search?: string, type?: string) {
-    const where: Prisma.UserWhereInput = {};
+    // Build the customer filter for type
+    const typeValue: CustomerType | null =
+      type === 'HOUSEHOLD' || type === 'BUSINESS' ? (type as CustomerType) : null;
 
-    // Validate and normalize type - only accept valid UserType values
-    const typeValue: UserType | null =
-      type === 'HOUSEHOLD' || type === 'BUSINESS' ? (type as UserType) : null;
-
-    // Validate search - only use if non-empty after trim
     const hasSearch = search?.trim().length;
 
-    // Build search filters array if search is valid
-    const searchFilters: Prisma.UserWhereInput[] | null = hasSearch
-      ? [
-          {
-            fullName: {
-              contains: search!.trim(),
-              mode: 'insensitive' as const,
-            },
-          },
-          { email: { contains: search!.trim(), mode: 'insensitive' as const } },
-        ]
-      : null;
+    // We query users with their customer profile included
+    const where: Prisma.UserWhereInput = {};
 
-    // Combine type and search filters with AND logic
-    if (typeValue && searchFilters) {
-      where.AND = [{ type: typeValue }, { OR: searchFilters }];
-    } else if (typeValue) {
-      where.type = typeValue;
-    } else if (searchFilters) {
-      where.OR = searchFilters;
+    // Only show CUSTOMER-role users in the admin users list
+    where.role = 'CUSTOMER';
+
+    if (typeValue) {
+      where.customer = { type: typeValue };
+    }
+
+    if (hasSearch) {
+      const term = search!.trim();
+      where.OR = [
+        { customer: { fullName: { contains: term, mode: 'insensitive' as const } } },
+        { email: { contains: term, mode: 'insensitive' as const } },
+      ];
     }
 
     const users = await this.prisma.user.findMany({
-      where: Object.keys(where).length > 0 ? where : undefined,
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
+        ...USER_PROFILE_INCLUDE,
         _count: {
           select: { bookings: true },
         },
       },
     });
-    return users.map((user) => this.sanitizeUser(user));
+
+    return users.map((user) => ({
+      ...flattenUser(user),
+      _count: (user as any)._count,
+    }));
   }
 
   async createUser(dto: AdminCreateUserDto) {
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        fullName: dto.fullName,
-        email: dto.email,
-        phone: dto.phone,
-        passwordHash,
-        role: dto.role,
-        type: dto.type,
-        status: dto.status ?? 'ACTIVE',
-      },
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          role: dto.role,
+        },
+      });
+
+      // Create the appropriate profile based on role
+      switch (dto.role) {
+        case 'CUSTOMER':
+          await tx.customer.create({
+            data: {
+              id: newUser.id,
+              fullName: dto.fullName,
+              phone: dto.phone,
+              type: dto.type ?? 'HOUSEHOLD',
+              status: dto.status ?? 'ACTIVE',
+            },
+          });
+          break;
+        case 'ADMIN':
+        case 'SUPER_ADMIN':
+          await tx.admin.create({
+            data: {
+              id: newUser.id,
+              fullName: dto.fullName,
+              phone: dto.phone,
+            },
+          });
+          break;
+        case 'DRIVER':
+          await tx.driver.create({
+            data: {
+              id: newUser.id,
+              fullName: dto.fullName,
+              phone: dto.phone,
+              vehicle: '',
+            },
+          });
+          break;
+      }
+
+      return tx.user.findUnique({
+        where: { id: newUser.id },
+        include: USER_PROFILE_INCLUDE,
+      });
     });
-    return this.sanitizeUser(user);
+
+    return flattenUser(user);
   }
 
   async updateUser(id: string, dto: AdminUpdateUserDto) {
-    const data: any = { ...dto };
+    const userUpdate: any = {};
+    if (dto.email) userUpdate.email = dto.email;
+    if (dto.role) userUpdate.role = dto.role;
     if (dto.password) {
-      data.passwordHash = await bcrypt.hash(dto.password, 10);
-      delete data.password;
+      userUpdate.passwordHash = await bcrypt.hash(dto.password, 10);
     }
-    const user = await this.prisma.user.update({ where: { id }, data });
-    return this.sanitizeUser(user);
+
+    if (Object.keys(userUpdate).length > 0) {
+      await this.prisma.user.update({ where: { id }, data: userUpdate });
+    }
+
+    // Update profile data
+    const profileData: any = {};
+    if (dto.fullName) profileData.fullName = dto.fullName;
+    if (dto.phone) profileData.phone = dto.phone;
+    if (dto.type) profileData.type = dto.type;
+    if (dto.status) profileData.status = dto.status;
+
+    if (Object.keys(profileData).length > 0) {
+      const user = await this.prisma.user.findUnique({ where: { id } });
+      if (user) {
+        switch (user.role) {
+          case 'CUSTOMER':
+            await this.prisma.customer.upsert({
+              where: { id },
+              update: profileData,
+              create: { id, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
+            });
+            break;
+          case 'ADMIN':
+          case 'SUPER_ADMIN':
+            await this.prisma.admin.upsert({
+              where: { id },
+              update: { fullName: profileData.fullName, phone: profileData.phone, address: profileData.address },
+              create: { id, fullName: dto.fullName ?? '', phone: dto.phone ?? '' },
+            });
+            break;
+          case 'DRIVER':
+            await this.prisma.driver.upsert({
+              where: { id },
+              update: { fullName: profileData.fullName, phone: profileData.phone },
+              create: { id, fullName: dto.fullName ?? '', phone: dto.phone ?? '', vehicle: '' },
+            });
+            break;
+        }
+      }
+    }
+
+    const updated = await this.prisma.user.findUnique({
+      where: { id },
+      include: USER_PROFILE_INCLUDE,
+    });
+    return flattenUser(updated);
   }
 
   async deleteUser(id: string) {
@@ -166,65 +250,112 @@ export class AdminService {
     });
     await this.prisma.booking.deleteMany({ where: { userId: id } });
 
+    // Delete profile tables (they share the same ID)
+    await this.prisma.customer.deleteMany({ where: { id } });
+    await this.prisma.admin.deleteMany({ where: { id } });
+    await this.prisma.driver.deleteMany({ where: { id } });
+    await this.prisma.userPermission.deleteMany({ where: { userId: id } });
+    await this.prisma.passkeyCredential.deleteMany({ where: { userId: id } });
+
     // Now delete the user
     await this.prisma.user.delete({ where: { id } });
     return { success: true };
   }
 
   async listDrivers() {
-    return this.prisma.driver.findMany({ orderBy: { createdAt: 'desc' } });
+    const drivers = await this.prisma.driver.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: true },
+    });
+    return drivers.map((d) => ({
+      id: d.id,
+      fullName: d.fullName,
+      phone: d.phone,
+      email: d.user?.email ?? '',
+      rating: d.rating,
+      pickupCount: d.pickupCount,
+      vehicle: d.vehicle,
+      status: d.status,
+      createdAt: d.createdAt,
+    }));
   }
 
   async createDriver(dto: AdminCreateDriverDto) {
-    return this.prisma.driver.create({
-      data: {
-        name: dto.name,
-        phone: dto.phone,
-        rating: dto.rating ?? 4.6,
-        pickupCount: dto.pickupCount ?? 0,
-        vehicleType: dto.vehicleType,
-        status: dto.status ?? 'OFFLINE',
-      },
+    // Driver is now linked 1:1 with User, so we must create both
+    const passwordHash = dto.password
+      ? await bcrypt.hash(dto.password, 10)
+      : undefined;
+
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          role: 'DRIVER',
+        },
+      });
+
+      const driver = await tx.driver.create({
+        data: {
+          id: user.id,
+          fullName: dto.fullName,
+          phone: dto.phone,
+          rating: dto.rating ?? 0,
+          pickupCount: dto.pickupCount ?? 0,
+          vehicle: dto.vehicle,
+          status: dto.status ?? 'OFFLINE',
+        },
+      });
+
+      return {
+        ...driver,
+        email: dto.email,
+      };
     });
   }
 
   async updateDriver(id: string, dto: AdminUpdateDriverDto) {
-    return this.prisma.driver.update({ where: { id }, data: dto });
+    const data: any = {};
+    if (dto.fullName !== undefined) data.fullName = dto.fullName;
+    if (dto.phone !== undefined) data.phone = dto.phone;
+    if (dto.rating !== undefined) data.rating = dto.rating;
+    if (dto.pickupCount !== undefined) data.pickupCount = dto.pickupCount;
+    if (dto.vehicle !== undefined) data.vehicle = dto.vehicle;
+    if (dto.status !== undefined) data.status = dto.status;
+
+    return this.prisma.driver.update({ where: { id }, data });
   }
 
   async deleteDriver(id: string) {
+    // Delete the driver profile, then the user record
     await this.prisma.driver.delete({ where: { id } });
+    await this.prisma.user.delete({ where: { id } }).catch(() => {});
     return { success: true };
   }
 
   async listBookings(query: AdminBookingsQueryDto) {
     const where: Prisma.BookingWhereInput = {};
 
-    // Filter by status
     if (query.status) {
       where.status = query.status;
     }
 
-    // Filter by user ID
     if (query.userId) {
       where.userId = query.userId;
     }
 
-    // Filter by date range
     if (query.from || query.to) {
       where.createdAt = {};
       if (query.from) {
         where.createdAt.gte = new Date(query.from);
       }
       if (query.to) {
-        // Add 1 day to include the entire "to" day
         const toDate = new Date(query.to);
         toDate.setDate(toDate.getDate() + 1);
         where.createdAt.lt = toDate;
       }
     }
 
-    // Filter by search (booking ID or address)
     if (query.search) {
       const searchTerm = query.search.trim();
       where.OR = [
@@ -238,12 +369,16 @@ export class AdminService {
     const bookings = await this.prisma.booking.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: { createdAt: 'desc' },
-      include: { user: true, wasteCategory: true, driver: true },
+      include: {
+        user: { include: USER_PROFILE_INCLUDE },
+        wasteCategory: true,
+        driver: true,
+      },
     });
 
     return bookings.map((booking) => ({
       ...booking,
-      user: this.sanitizeUser(booking.user),
+      user: flattenUser(booking.user),
     }));
   }
 

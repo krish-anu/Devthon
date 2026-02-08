@@ -1,16 +1,17 @@
-export type UserRole = 'USER' | 'ADMIN' | 'DRIVER';
-export type UserType = 'HOUSEHOLD' | 'BUSINESS';
-export type UserStatus = 'ACTIVE' | 'INACTIVE';
+export type UserRole = 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN' | 'DRIVER';
+export type CustomerType = 'HOUSEHOLD' | 'BUSINESS';
+export type CustomerStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface User {
   id: string;
-  fullName: string;
+  fullName: string | null;
   email: string;
-  phone: string;
+  phone: string | null;
   role: UserRole;
-  type: UserType;
+  type?: CustomerType;
   address?: string | null;
-  status: UserStatus;
+  status?: CustomerStatus;
+  approved?: boolean;
   createdAt: string;
 }
 
@@ -44,7 +45,7 @@ export interface Booking {
   finalAmountLkr?: number | null;
   driver?: {
     id: string;
-    name: string;
+    fullName: string;
     rating: number;
     phone: string;
   } | null;

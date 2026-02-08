@@ -9,20 +9,19 @@ datasource db {
 }
 
 model User {
-  id                   String               @id @default(uuid())
-  fullName             String
-  email                String               @unique
-  phone                String
-  passwordHash         String
-  refreshTokenHash     String?
-  role                 Role                 @default(USER)
-  type                 UserType             @default(HOUSEHOLD)
-  address              String?
-  status               UserStatus           @default(ACTIVE)
-  createdAt            DateTime             @default(now())
-  bookings             Booking[]
-  notifications        Notification[]
-  passkeyCredentials   PasskeyCredential[]
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  passwordHash       String?
+  refreshTokenHash   String?
+  createdAt          DateTime            @default(now())
+  role               Role                @default(CUSTOMER)
+  admin              Admin?
+  bookings           Booking[]
+  customer           Customer?
+  driver             Driver?
+  notifications      Notification[]
+  passkeyCredentials PasskeyCredential[]
+  userPermissions    UserPermission[]
 }
 
 model PasskeyCredential {
@@ -40,15 +39,16 @@ model PasskeyCredential {
 }
 
 model Driver {
-  id          String       @id @default(uuid())
-  name        String
+  id          String       @id
+  fullName    String
   phone       String
-  rating      Float        @default(4.6)
+  rating      Float        @default(0)
   pickupCount Int          @default(0)
-  vehicleType String
-  status      DriverStatus @default(OFFLINE)
+  vehicle     String
   createdAt   DateTime     @default(now())
+  status      DriverStatus @default(OFFLINE)
   bookings    Booking[]
+  user        User         @relation(fields: [id], references: [id], onDelete: Cascade)
 }
 
 model WasteCategory {
@@ -83,11 +83,11 @@ model Booking {
   specialInstructions  String?
   scheduledDate        DateTime
   scheduledTimeSlot    String
-  status               BookingStatus        @default(SCHEDULED)
   actualWeightKg       Float?
   finalAmountLkr       Float?
   driverId             String?
   createdAt            DateTime             @default(now())
+  status               BookingStatus        @default(SCHEDULED)
   driver               Driver?              @relation(fields: [driverId], references: [id])
   user                 User                 @relation(fields: [userId], references: [id])
   wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
@@ -99,9 +99,9 @@ model Notification {
   userId    String?
   title     String
   message   String
-  level     NotificationLevel @default(INFO)
   isRead    Boolean           @default(false)
   createdAt DateTime          @default(now())
+  level     NotificationLevel @default(INFO)
   user      User?             @relation(fields: [userId], references: [id])
 }
 
@@ -109,9 +109,9 @@ model PaymentTransaction {
   id        String        @id @default(uuid())
   bookingId String
   amountLkr Float
+  createdAt DateTime      @default(now())
   method    PaymentMethod
   status    PaymentStatus @default(PROCESSED)
-  createdAt DateTime      @default(now())
   booking   Booking       @relation(fields: [bookingId], references: [id])
 }
 
@@ -121,20 +121,55 @@ model LaunchNotify {
   createdAt DateTime @default(now())
 }
 
+model Admin {
+  id       String  @id
+  fullName String
+  phone    String
+  address  String?
+  approved Boolean @default(false)
+  user     User    @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id        String         @id
+  fullName  String
+  phone     String
+  address   String?
+  type      CustomerType   @default(HOUSEHOLD)
+  status    CustomerStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Permission {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  userPermissions UserPermission[]
+}
+
+model RoleChangeLog {
+  id             String   @id @default(uuid())
+  userId         String
+  oldRole        String
+  newRole        String
+  oldProfileData Json?
+  changedAt      DateTime @default(now())
+}
+
+model UserPermission {
+  userId       String
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+}
+
 enum Role {
-  USER
+  CUSTOMER
   ADMIN
+  SUPER_ADMIN
   DRIVER
-}
-
-enum UserType {
-  HOUSEHOLD
-  BUSINESS
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
 }
 
 enum DriverStatus {
@@ -167,4 +202,14 @@ enum PaymentMethod {
 enum PaymentStatus {
   PROCESSED
   FAILED
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CustomerType {
+  HOUSEHOLD
+  BUSINESS
 }

@@ -26,7 +26,7 @@ import { AdminSendSmsDto } from './dto/admin-send-sms.dto';
 import { SmsService } from '../sms/sms.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
+@Roles(Role.ADMIN, Role.SUPER_ADMIN)
 @Controller('admin')
 export class AdminController {
   constructor(
