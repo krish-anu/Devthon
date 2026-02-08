@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { PricingItem } from "@/lib/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/components/auth/auth-provider";
 import { Leaf, MapPin, Recycle, Users, CheckCircle, Calendar, Truck, Wallet } from "lucide-react";
 import { ScrollAnimatedSection } from "@/components/shared/scroll-animated-section";
 
@@ -31,6 +32,10 @@ export default function HomePage() {
         max: item.maxPriceLkrPerKg,
       }))
     : fallbackPricing;
+
+  // Redirect booking link depending on authentication state
+  const { user } = useAuth();
+  const bookingHref = user ? "/users/bookings/new" : "/login?redirect=/users/bookings/new";
 
   return (
     <div className="min-h-screen bg-background text-foreground section-grid">
@@ -95,7 +100,7 @@ export default function HomePage() {
             <ScrollAnimatedSection delay={300}>
               <div className="flex flex-wrap gap-4">
                 <Button size="lg" asChild>
-                  <Link href="/signup">Book a Pickup</Link>
+                  <Link href={bookingHref}>Book a Pickup</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <a href="#pricing">Check Prices</a>
