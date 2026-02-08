@@ -1,7 +1,9 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
 import { Card } from "@/components/ui/card";
@@ -15,9 +17,25 @@ const steps = [
   "Pickup Complete",
 ];
 
+const mapContainerStyle = {
+  height: "100%",
+  width: "100%",
+};
+
+const defaultCenter = {
+  lat: 6.9271, // Colombo, Sri Lanka as default
+  lng: 79.8612,
+};
+
 export default function BookingDetailsPage() {
   const params = useParams();
   const id = params?.id as string;
+  const queryClient = useQueryClient();
+
+  // Load Google Maps script
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: "AIzaSyBSvWSJfQMojEZpNYrq9c6pW4yQXg8k5AY",
+  });
 
   const { data } = useQuery({
     queryKey: ["booking", id],
@@ -26,6 +44,39 @@ export default function BookingDetailsPage() {
   });
 
   const booking = data;
+
+  // State for map marker position
+  const [markerPosition, setMarkerPosition] = useState(defaultCenter);
+
+  // Mutation to save location
+  const saveLocationMutation = useMutation({
+    mutationFn: (location: { lng: number; lat: number }) =>
+      apiFetch(`/bookings/${id}/location`, {
+        method: "POST",
+        body: JSON.stringify(location),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["booking", id] });
+      alert("Location saved successfully!");
+    },
+    onError: () => {
+      alert("Failed to save location. Please try again.");
+    },
+  });
+
+  // Handle map click to place marker
+  const handleMapClick = (event: google.maps.MapMouseEvent) => {
+    if (event.latLng) {
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      setMarkerPosition({ lat, lng });
+    }
+  };
+
+  // Handle save location
+  const handleSaveLocation = () => {
+    saveLocationMutation.mutate(markerPosition);
+  };
 
   return (
     <div className="space-y-6">
@@ -80,9 +131,29 @@ export default function BookingDetailsPage() {
         </Card>
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Live Tracking Map</h3>
-          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-(--border) bg-(--surface) text-sm text-(--muted)">
-            Map Placeholder
+          <div className="h-48 rounded-xl border border-(--border) overflow-hidden">
+            {loadError ? (
+              <div className="flex items-center justify-center h-full text-sm text-(--muted)">
+                Error loading map
+              </div>
+            ) : !isLoaded ? (
+              <div className="flex items-center justify-center h-full text-sm text-(--muted)">
+                Loading map...
+              </div>
+            ) : (
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={defaultCenter}
+                zoom={10}
+                onClick={handleMapClick}
+              >
+                <Marker position={markerPosition} />
+              </GoogleMap>
+            )}
           </div>
+          <Button onClick={handleSaveLocation} disabled={saveLocationMutation.isPending}>
+            {saveLocationMutation.isPending ? "Saving..." : "Save Location"}
+          </Button>
         </Card>
       </div>
     </div>

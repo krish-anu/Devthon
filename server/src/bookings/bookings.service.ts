@@ -221,4 +221,40 @@ export class BookingsService {
       throw err;
     }
   }
+
+  async updateLocation(userId: string, id: string, lng: number, lat: number) {
+    this.transactionLogger.logTransaction('booking.updateLocation.start', {
+      userId,
+      bookingId: id,
+      lng,
+      lat,
+    });
+    try {
+      const booking = await this.prisma.booking.findUnique({ where: { id } });
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (booking.userId !== userId) throw new ForbiddenException();
+
+      // Update location in Supabase as geography(Point, 4326) with SRID=4326;POINT(lng lat)
+      const location = `SRID=4326;POINT(${lng} ${lat})`;
+      await this.supabaseService.upsertRow('bookings', {
+        id,
+        location,
+      });
+
+      this.transactionLogger.logTransaction('booking.updateLocation.success', {
+        userId,
+        bookingId: id,
+        location,
+      });
+      return { message: 'Location updated successfully' };
+    } catch (err) {
+      this.transactionLogger.logError('booking.updateLocation.failure', err as Error, {
+        userId,
+        bookingId: id,
+        lng,
+        lat,
+      });
+      throw err;
+    }
+  }
 }

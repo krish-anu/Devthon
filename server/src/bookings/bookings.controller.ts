@@ -37,4 +37,13 @@ export class BookingsController {
   cancel(@Req() req: any, @Param('id') id: string) {
     return this.bookingsService.cancel(req.user.sub, id);
   }
+
+  @Post(':id/location')
+  updateLocation(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: { lng: number; lat: number },
+  ) {
+    return this.bookingsService.updateLocation(req.user.sub, id, body.lng, body.lat);
+  }
 }
