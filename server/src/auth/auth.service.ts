@@ -29,7 +29,6 @@ export class AuthService {
     private supabaseService: SupabaseService,
   ) {}
 
->>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
   private async issueTokens(user: User) {
     const payload = { sub: user.id, role: user.role };
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -56,7 +55,6 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     // Try to create Supabase Auth user first to get a consistent ID
-<<<<<<< HEAD
     const supabaseAuthId = await this.supabaseService.createAuthUser(
       dto.email,
       dto.password,
@@ -102,7 +100,7 @@ export class AuthService {
     });
 
     // Sync user row to Supabase DB (if configured)
-    await this.syncUserToSupabase(createdUser ?? user);
+    await this.syncUserToSupabase(user);
 
     const tokens = await this.issueTokens(user!);
     return { user: flattenUser(user), ...tokens };
@@ -124,7 +122,6 @@ export class AuthService {
     if (!valid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-<<<<<<< HEAD
     const tokens = await this.issueTokens(user);
     return { user: flattenUser(user), ...tokens };
   }
@@ -227,7 +224,7 @@ export class AuthService {
       });
 
       // Sync to Supabase DB
-      const userWithProfile = await this.prisma.user.findUnique({ where: { id: user.id }, include: { customer: true } });
+      const userWithProfile = await this.prisma.user.findUnique({ where: { id: user!.id }, include: { customer: true } });
       await this.syncUserToSupabase(userWithProfile ?? user);
     }
 
