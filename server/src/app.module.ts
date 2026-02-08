@@ -24,6 +24,7 @@ import { TransactionLogger } from './common/logger/transaction-logger.service';
 import { LoggingModule } from './common/logger/logger.module';
 import { ChatModule } from './chat/chat.module';
 import { SupabaseModule } from './common/supabase/supabase.module';
+import { PartnersModule } from './partners/partners.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { SupabaseModule } from './common/supabase/supabase.module';
     AdminModule,
     LoggingModule,
     ChatModule,
+    PartnersModule,
   ],
   controllers: [AppController],
   providers: [

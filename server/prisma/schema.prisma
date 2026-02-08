@@ -27,6 +27,28 @@ model User {
   notifications      Notification[]
   passkeyCredentials PasskeyCredential[]
   userPermissions    UserPermission[]
+  recycler           Recycler?
+  corporate          Corporate?
+}
+
+model Recycler {
+  id              String   @id
+  companyName     String
+  contactPerson   String
+  phone           String
+  materialTypes   String   // Stored as comma-separated or JSON string for now
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Corporate {
+  id              String   @id
+  organizationName String
+  contactName     String
+  phone           String
+  requirements    String?
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [id], references: [id], onDelete: Cascade)
 }
 
 // ─────────────────────────────────────────────
@@ -198,6 +220,8 @@ enum Role {
   ADMIN
   SUPER_ADMIN
   DRIVER
+  RECYCLER
+  CORPORATE
 }
 
 enum DriverStatus {
