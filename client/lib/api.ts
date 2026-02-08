@@ -95,7 +95,7 @@ export const authApi = {
     phone: string;
     password: string;
     type: "HOUSEHOLD" | "BUSINESS";
-    role?: "USER" | "ADMIN" | "DRIVER";
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
   }) =>
     apiFetch<AuthResponse>(
       "/auth/register",

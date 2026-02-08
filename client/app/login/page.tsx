@@ -45,7 +45,7 @@ export default function LoginPage() {
   }, []);
 
   const redirectToDashboard = (role: string) => {
-    if (role === "ADMIN") {
+    if (role === "ADMIN" || role === "SUPER_ADMIN") {
       router.replace("/admin/dashboard");
       return;
     }

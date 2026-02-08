@@ -41,7 +41,7 @@ export default function SignupPage() {
     ? "ADMIN"
     : pathname?.startsWith("/driver")
       ? "DRIVER"
-      : "USER";
+      : "CUSTOMER";
   const { register, handleSubmit, setValue, watch, formState } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
@@ -52,7 +52,7 @@ export default function SignupPage() {
   const termsChecked = watch("terms");
 
   const redirectToDashboard = (userRole: string) => {
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
       window.location.href = "/admin/dashboard";
       return;
     }

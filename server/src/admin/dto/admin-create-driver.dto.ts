@@ -4,10 +4,18 @@ import { DriverStatus } from '@prisma/client';
 export class AdminCreateDriverDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  fullName: string;
 
   @IsString()
   phone: string;
+
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
 
   @IsOptional()
   @IsNumber()
@@ -18,7 +26,7 @@ export class AdminCreateDriverDto {
   pickupCount?: number;
 
   @IsString()
-  vehicleType: string;
+  vehicle: string;
 
   @IsOptional()
   @IsEnum(DriverStatus)

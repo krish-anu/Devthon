@@ -1,36 +1,43 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StatusPill } from '@/components/shared/status-pill';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatusPill } from "@/components/shared/status-pill";
 
 export default function AdminBookingsPage() {
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "thisMonth">("all");
 
   const { data } = useQuery({
-    queryKey: ['admin-bookings', status, search, dateFilter],
+    queryKey: ["admin-bookings", status, search, dateFilter],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (status) params.append('status', status);
-      if (search) params.append('search', search);
-      
+      if (status) params.append("status", status);
+      if (search) params.append("search", search);
+
       // Add date filter for "This Month"
-      if (dateFilter === 'thisMonth') {
+      if (dateFilter === "thisMonth") {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
-        params.append('from', firstDay.toISOString().split('T')[0]);
-        params.append('to', lastDay.toISOString().split('T')[0]);
+
+        params.append("from", firstDay.toISOString().split("T")[0]);
+        params.append("to", lastDay.toISOString().split("T")[0]);
       }
-      
+
       return apiFetch<any[]>(`/admin/bookings?${params.toString()}`);
     },
   });
@@ -40,37 +47,49 @@ export default function AdminBookingsPage() {
       <Card className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-2">
           <Button
-            variant={dateFilter === 'all' && status === '' ? 'default' : 'outline'}
+            variant={
+              dateFilter === "all" && status === "" ? "default" : "outline"
+            }
             size="sm"
             onClick={() => {
-              setDateFilter('all');
-              setStatus('');
+              setDateFilter("all");
+              setStatus("");
             }}
           >
             All Status
           </Button>
           <Button
-            variant={dateFilter === 'thisMonth' ? 'default' : 'outline'}
+            variant={dateFilter === "thisMonth" ? "default" : "outline"}
             size="sm"
-            onClick={() => setDateFilter('thisMonth')}
+            onClick={() => setDateFilter("thisMonth")}
           >
             This Month
           </Button>
-          {['SCHEDULED', 'COMPLETED', 'CANCELLED', 'REFUNDED'].map((statusOption) => (
-            <Button
-              key={statusOption}
-              variant={status === statusOption && dateFilter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setStatus(statusOption);
-                setDateFilter('all');
-              }}
-            >
-              {statusOption}
-            </Button>
-          ))}
+          {["SCHEDULED", "COMPLETED", "CANCELLED", "REFUNDED"].map(
+            (statusOption) => (
+              <Button
+                key={statusOption}
+                variant={
+                  status === statusOption && dateFilter === "all"
+                    ? "default"
+                    : "outline"
+                }
+                size="sm"
+                onClick={() => {
+                  setStatus(statusOption);
+                  setDateFilter("all");
+                }}
+              >
+                {statusOption}
+              </Button>
+            ),
+          )}
         </div>
-        <Input placeholder="Search bookings" value={search} onChange={(event) => setSearch(event.target.value)} />
+        <Input
+          placeholder="Search bookings"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
       </Card>
 
       <Card>
@@ -91,13 +110,21 @@ export default function AdminBookingsPage() {
             {(data ?? []).map((booking) => (
               <TableRow key={booking.id}>
                 <TableCell>{booking.id.slice(0, 8)}</TableCell>
-                <TableCell>{booking.user?.fullName ?? '--'}</TableCell>
-                <TableCell>{booking.wasteCategory?.name ?? '--'}</TableCell>
-                <TableCell>{booking.actualWeightKg ?? '-'} kg</TableCell>
-                <TableCell>LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}</TableCell>
-                <TableCell>{booking.driver?.name ?? 'Unassigned'}</TableCell>
-                <TableCell><StatusPill status={booking.status} /></TableCell>
-                <TableCell>{new Date(booking.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
+                <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
+                <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                <TableCell>
+                  LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                </TableCell>
+                <TableCell>
+                  {booking.driver?.fullName ?? "Unassigned"}
+                </TableCell>
+                <TableCell>
+                  <StatusPill status={booking.status} />
+                </TableCell>
+                <TableCell>
+                  {new Date(booking.createdAt).toLocaleDateString()}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -1,50 +1,62 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, X } from 'lucide-react';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, X } from "lucide-react";
 
 interface User {
   id: string;
   fullName: string;
   email: string;
   phone: string;
-  type: 'HOUSEHOLD' | 'BUSINESS';
-  role: 'USER' | 'ADMIN' | 'DRIVER';
-  status: 'ACTIVE' | 'INACTIVE';
+  type?: "HOUSEHOLD" | "BUSINESS";
+  role: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
+  status?: "ACTIVE" | "INACTIVE";
   _count?: { bookings: number };
 }
 
 export default function AdminUsersPage() {
-  const [search, setSearch] = useState('');
-  const [type, setType] = useState<'ALL' | 'HOUSEHOLD' | 'BUSINESS'>('ALL');
+  const [search, setSearch] = useState("");
+  const [type, setType] = useState<"ALL" | "HOUSEHOLD" | "BUSINESS">("ALL");
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    type: 'HOUSEHOLD' as 'HOUSEHOLD' | 'BUSINESS',
-    role: 'USER' as 'USER' | 'ADMIN' | 'DRIVER',
-    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    type: "HOUSEHOLD" as "HOUSEHOLD" | "BUSINESS",
+    role: "CUSTOMER" as "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
+    status: "ACTIVE" as "ACTIVE" | "INACTIVE",
   });
 
   const queryClient = useQueryClient();
 
   const { data } = useQuery({
-    queryKey: ['admin-users', search, type],
+    queryKey: ["admin-users", search, type],
     queryFn: () => {
-      let url = '/admin/users';
+      let url = "/admin/users";
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (type !== 'ALL') params.append('type', type);
+      if (search) params.append("search", search);
+      if (type !== "ALL") params.append("type", type);
       if (params.toString()) url += `?${params.toString()}`;
       return apiFetch<User[]>(url);
     },
@@ -52,13 +64,13 @@ export default function AdminUsersPage() {
 
   const createUserMutation = useMutation({
     mutationFn: (userData: typeof formData) =>
-      apiFetch('/admin/users', {
-        method: 'POST',
+      apiFetch("/admin/users", {
+        method: "POST",
         body: JSON.stringify(userData),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       resetForm();
       setShowModal(false);
     },
@@ -67,12 +79,12 @@ export default function AdminUsersPage() {
   const updateUserMutation = useMutation({
     mutationFn: (userData: Partial<typeof formData>) =>
       apiFetch(`/admin/users/${editingUser?.id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         body: JSON.stringify(userData),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       resetForm();
       setShowModal(false);
     },
@@ -80,21 +92,21 @@ export default function AdminUsersPage() {
 
   const deleteUserMutation = useMutation({
     mutationFn: (userId: string) =>
-      apiFetch(`/admin/users/${userId}`, { method: 'DELETE' }),
+      apiFetch(`/admin/users/${userId}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
 
   const resetForm = () => {
     setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      password: '',
-      type: 'HOUSEHOLD',
-      role: 'USER',
-      status: 'ACTIVE',
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      type: "HOUSEHOLD",
+      role: "CUSTOMER",
+      status: "ACTIVE",
     });
     setEditingUser(null);
   };
@@ -110,17 +122,17 @@ export default function AdminUsersPage() {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      password: '',
-      type: user.type,
+      password: "",
+      type: user.type ?? "HOUSEHOLD",
       role: user.role,
-      status: user.status,
+      status: user.status ?? "ACTIVE",
     });
     setShowModal(true);
   };
 
   const handleSubmit = () => {
     if (!formData.fullName || !formData.email || !formData.phone) {
-      alert('Please fill all required fields');
+      alert("Please fill all required fields");
       return;
     }
 
@@ -130,7 +142,7 @@ export default function AdminUsersPage() {
       updateUserMutation.mutate(updateData);
     } else {
       if (!formData.password) {
-        alert('Password is required for new users');
+        alert("Password is required for new users");
         return;
       }
       createUserMutation.mutate(formData);
@@ -140,9 +152,11 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
-        <select 
+        <select
           value={type}
-          onChange={(event) => setType(event.target.value as 'ALL' | 'HOUSEHOLD' | 'BUSINESS')}
+          onChange={(event) =>
+            setType(event.target.value as "ALL" | "HOUSEHOLD" | "BUSINESS")
+          }
           className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
         >
           <option value="ALL">All Types</option>
@@ -177,7 +191,7 @@ export default function AdminUsersPage() {
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phone}</TableCell>
                 <TableCell>{user.type}</TableCell>
-                <TableCell>{user._count?.bookings ?? '--'}</TableCell>
+                <TableCell>{user._count?.bookings ?? "--"}</TableCell>
                 <TableCell>{user.status}</TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -185,8 +199,13 @@ export default function AdminUsersPage() {
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditUser(user)}>Edit</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => deleteUserMutation.mutate(user.id)} className="text-red-600">
+                      <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => deleteUserMutation.mutate(user.id)}
+                        className="text-red-600"
+                      >
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -203,7 +222,9 @@ export default function AdminUsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-md space-y-4 p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{editingUser ? 'Edit User' : 'Add User'}</h2>
+              <h2 className="text-lg font-semibold">
+                {editingUser ? "Edit User" : "Add User"}
+              </h2>
               <button onClick={() => setShowModal(false)} className="p-1">
                 <X className="h-5 w-5" />
               </button>
@@ -214,7 +235,9 @@ export default function AdminUsersPage() {
                 <label className="text-sm font-medium">Full Name</label>
                 <Input
                   value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fullName: e.target.value })
+                  }
                   placeholder="Full Name"
                 />
               </div>
@@ -224,7 +247,9 @@ export default function AdminUsersPage() {
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   placeholder="Email"
                 />
               </div>
@@ -233,7 +258,9 @@ export default function AdminUsersPage() {
                 <label className="text-sm font-medium">Phone</label>
                 <Input
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   placeholder="Phone"
                 />
               </div>
@@ -244,7 +271,9 @@ export default function AdminUsersPage() {
                   <Input
                     type="password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     placeholder="Password (min 6 characters)"
                   />
                 </div>
@@ -254,7 +283,12 @@ export default function AdminUsersPage() {
                 <label className="text-sm font-medium">User Type</label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'HOUSEHOLD' | 'BUSINESS' })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      type: e.target.value as "HOUSEHOLD" | "BUSINESS",
+                    })
+                  }
                   className="h-10 w-full rounded-lg border border-(--border) bg-(--surface-soft) px-3 text-sm"
                 >
                   <option value="HOUSEHOLD">HOUSEHOLD</option>
@@ -266,11 +300,21 @@ export default function AdminUsersPage() {
                 <label className="text-sm font-medium">Role</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'USER' | 'ADMIN' | 'DRIVER' })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      role: e.target.value as
+                        | "CUSTOMER"
+                        | "ADMIN"
+                        | "SUPER_ADMIN"
+                        | "DRIVER",
+                    })
+                  }
                   className="h-10 w-full rounded-lg border border-(--border) bg-(--surface-soft) px-3 text-sm"
                 >
-                  <option value="USER">USER</option>
+                  <option value="CUSTOMER">CUSTOMER</option>
                   <option value="ADMIN">ADMIN</option>
+                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
                   <option value="DRIVER">DRIVER</option>
                 </select>
               </div>
@@ -279,7 +323,12 @@ export default function AdminUsersPage() {
                 <label className="text-sm font-medium">Status</label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as "ACTIVE" | "INACTIVE",
+                    })
+                  }
                   className="h-10 w-full rounded-lg border border-(--border) bg-(--surface-soft) px-3 text-sm"
                 >
                   <option value="ACTIVE">ACTIVE</option>
@@ -298,9 +347,13 @@ export default function AdminUsersPage() {
               <Button
                 onClick={handleSubmit}
                 className="flex-1"
-                disabled={createUserMutation.isPending || updateUserMutation.isPending}
+                disabled={
+                  createUserMutation.isPending || updateUserMutation.isPending
+                }
               >
-                {createUserMutation.isPending || updateUserMutation.isPending ? 'Loading...' : 'Save'}
+                {createUserMutation.isPending || updateUserMutation.isPending
+                  ? "Loading..."
+                  : "Save"}
               </Button>
             </div>
           </Card>
@@ -309,4 +362,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

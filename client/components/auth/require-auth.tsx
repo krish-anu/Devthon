@@ -32,7 +32,7 @@ export function RequireAuth({
       )
         return;
       router.replace(
-        user.role === "ADMIN"
+        user.role === "ADMIN" || user.role === "SUPER_ADMIN"
           ? "/admin/dashboard"
           : user.role === "DRIVER"
             ? "/driver/dashboard"

@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import type { User } from '@prisma/client';
 import type { StringValue } from 'ms';
+import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class PasskeyService implements OnModuleInit {
@@ -103,16 +104,22 @@ export class PasskeyService implements OnModuleInit {
   async generateRegistrationOptions(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { passkeyCredentials: true },
+      include: { passkeyCredentials: true, ...USER_PROFILE_INCLUDE },
     });
     if (!user) throw new NotFoundException('User not found');
+
+    const displayName =
+      (user as any).customer?.fullName ??
+      (user as any).admin?.fullName ??
+      (user as any).driver?.fullName ??
+      user.email;
 
     const options = await this.webauthn.generateRegistrationOptions({
       rpName: this.rpName,
       rpID: this.rpId,
       userID: new TextEncoder().encode(user.id),
       userName: user.email,
-      userDisplayName: user.fullName,
+      userDisplayName: displayName,
       attestationType: 'none', // privacy-friendly; no attestation needed
       excludeCredentials: user.passkeyCredentials.map((c: any) => ({
         id: c.credentialId,
@@ -192,7 +199,7 @@ export class PasskeyService implements OnModuleInit {
 
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { passkeyCredentials: true },
+      include: { passkeyCredentials: true, ...USER_PROFILE_INCLUDE },
     });
     if (!user) throw new UnauthorizedException('User not found');
 
@@ -229,7 +236,7 @@ export class PasskeyService implements OnModuleInit {
 
     // Issue JWT tokens (same as normal login)
     const tokens = await this.issueTokens(user);
-    return { user: this.sanitizeUser(user), ...tokens };
+    return { user: flattenUser(user), ...tokens };
   }
 
   /* ================================================================== */
