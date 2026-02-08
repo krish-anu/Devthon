@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -48,20 +49,29 @@ export default function SignupPage() {
       defaultValues: { type: "HOUSEHOLD", terms: false },
     });
   const { errors, isSubmitting } = formState;
-  const { register: registerUser, googleLogin } = useAuth();
+  const router = useRouter();
+  const { register: registerUser, googleLogin, user, loading: authLoading } = useAuth();
   const termsChecked = watch("terms");
 
   const redirectToDashboard = (userRole: string) => {
     if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
-      window.location.href = "/admin/dashboard";
+      router.replace("/admin/dashboard");
       return;
     }
     if (userRole === "DRIVER") {
-      window.location.href = "/driver/dashboard";
+      router.replace("/driver/dashboard");
       return;
     }
-    window.location.href = "/users/dashboard";
+    router.replace("/users/dashboard");
   };
+
+  // Redirect authenticated users away from auth pages
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      redirectToDashboard(user.role);
+    }
+  }, [user, authLoading, router]);
 
   const handleGoogleSignup = useGoogleLogin({
     onSuccess: async (tokenResponse) => {

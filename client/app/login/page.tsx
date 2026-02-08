@@ -24,7 +24,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const { login, googleLogin, passkeyLogin } = useAuth();
+  const { login, googleLogin, passkeyLogin, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -55,6 +55,14 @@ export default function LoginPage() {
     }
     router.replace("/users/dashboard");
   };
+
+  // Redirect authenticated users away from auth pages
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      redirectToDashboard(user.role);
+    }
+  }, [user, authLoading]);
 
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
