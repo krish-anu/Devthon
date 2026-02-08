@@ -37,9 +37,12 @@
   --surface-strong: #d1e7d8;
   --surface-soft: #f0fdf4;
   --ring: rgba(118, 217, 77, 0.4);
+  --scrollbar-thumb: rgba(var(--brand-rgb), 0.95);
+  --scrollbar-thumb-hover: rgba(var(--brand-rgb), 0.75);
+  --scrollbar-track: transparent;
   --auth-text: #0f172a; /* text color for auth header in light mode */
   --auth-image-transition-duration: 20s;
-}
+} 
 
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -59,6 +62,9 @@
   --surface-strong: #171717;
   --surface-soft: #0b0b0b;
   --ring: rgba(75, 220, 0, 0.4);
+  --scrollbar-thumb: rgba(var(--brand-rgb), 0.9);
+  --scrollbar-thumb-hover: rgba(var(--brand-rgb), 0.6);
+  --scrollbar-track: rgba(255, 255, 255, 0.02);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -80,6 +86,9 @@
     --surface-strong: #171717;
     --surface-soft: #0b0b0b;
     --ring: rgba(75, 220, 0, 0.4);
+    --scrollbar-thumb: rgba(var(--brand-rgb), 0.9);
+    --scrollbar-thumb-hover: rgba(var(--brand-rgb), 0.6);
+    --scrollbar-track: rgba(255, 255, 255, 0.02);
     --auth-text: #ffffff; /* auth header text in dark mode */
   }
 }
@@ -102,6 +111,9 @@
   --surface-strong: #171717;
   --surface-soft: #0b0b0b;
   --ring: rgba(75, 220, 0, 0.4);
+  --scrollbar-thumb: rgba(var(--brand-rgb), 0.9);
+  --scrollbar-thumb-hover: rgba(var(--brand-rgb), 0.6);
+  --scrollbar-track: rgba(255, 255, 255, 0.02);
 }
 
 @theme inline {
@@ -389,3 +401,112 @@ section[id], [id] {
   }
 }
 
+/* Assistant chat — themed custom scrollbars for chat list and input */
+.assistant-scrollbar,
+.assistant-input-scrollbar {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit browsers */
+.assistant-scrollbar::-webkit-scrollbar,
+.assistant-input-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.assistant-scrollbar::-webkit-scrollbar-track,
+.assistant-input-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 6px 0;
+  border-radius: 9999px;
+}
+
+.assistant-scrollbar::-webkit-scrollbar-thumb,
+.assistant-input-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--scrollbar-thumb), var(--scrollbar-thumb-hover));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 2px 6px rgba(2,6,23,0.08);
+} 
+
+.assistant-scrollbar::-webkit-scrollbar-thumb:hover,
+.assistant-input-scrollbar::-webkit-scrollbar-thumb:hover {
+  filter: brightness(0.95);
+}
+
+/* Slightly different rendering in dark mode for contrast */
+:root[data-theme="dark"] .assistant-scrollbar::-webkit-scrollbar-thumb,
+:root[data-theme="dark"] .assistant-input-scrollbar::-webkit-scrollbar-thumb,
+.dark .assistant-scrollbar::-webkit-scrollbar-thumb,
+.dark .assistant-input-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--scrollbar-thumb), var(--scrollbar-thumb-hover));
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+/* Make the textarea scrollable when content grows (keeps it small by default)
+   and apply the same scrollbar styles */
+.assistant-input-scrollbar {
+  overflow-y: auto;
+  max-height: 160px;
+}
+
+/* Slight hover affordance for the thumb */
+.assistant-scrollbar:hover::-webkit-scrollbar-thumb,
+.assistant-input-scrollbar:hover::-webkit-scrollbar-thumb {
+  width: 12px;
+}
+
+/* New-message glow animation for the chat list */
+@keyframes assistant-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--brand-rgb), 0.0);
+  }
+  10% {
+    box-shadow: 0 0 18px 0 rgba(var(--brand-rgb), 0.22);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--brand-rgb), 0.0);
+  }
+}
+
+.assistant-scrollbar-pulse {
+  animation: assistant-glow 2.2s ease-out forwards;
+  border-radius: 12px; /* keep glow soft */
+}
+
+/* Small ring animation on the closed assistant button to indicate new messages */
+@keyframes assistant-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
+}
+
+.assistant-notification {
+  position: relative;
+}
+
+.assistant-notification::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  border: 2px solid rgba(var(--brand-rgb), 0.14);
+  pointer-events: none;
+  animation: assistant-ring 1.6s ease-out infinite;
+}

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/ui/phone-input";
+import { isValidSriLankaPhone } from "@/lib/phone";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
@@ -26,7 +28,7 @@ import { useState } from "react";
 const corporateSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
   contactName: z.string().min(2, "Contact name is required"),
-  phone: z.string().min(9, "Valid phone number is required"),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Enter a valid Sri Lanka phone number" }),
   email: z.string().email("Invalid email address"),
   requirements: z.string().optional(),
 });
@@ -211,11 +213,7 @@ export default function CorporatePage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      placeholder="+94 ..."
-                      {...register("phone")}
-                    />
+                    <PhoneInput id="phone" placeholder="+94 77 123 4567" {...register("phone")} />
                     {errors.phone && (
                       <p className="text-red-500 text-xs">
                         {errors.phone.message}

@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch, passkeyApi } from "@/lib/api";
+import PhoneInput from "@/components/ui/phone-input";
+import { isValidSriLankaPhone } from "@/lib/phone";
 import { toast } from "@/components/ui/use-toast";
 import { authApi } from "@/lib/api";
 import { useForm as useForm2 } from "react-hook-form";
@@ -21,7 +23,7 @@ const schema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().min(7),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Invalid Sri Lanka phone number" }),
   address: z.string().min(3),
 });
 
@@ -294,7 +296,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
-                <Input {...register("phone")} />
+                <PhoneInput {...register("phone")} />
                 {errors.phone && (
                   <p className="text-xs text-rose-400">
                     {errors.phone.message}
