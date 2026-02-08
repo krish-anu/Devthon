@@ -440,13 +440,19 @@ export default function AssistantChatbox() {
       </div>
       <button
         type="button"
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-sm font-semibold text-white shadow-lg transition hover:bg-[color:var(--brand-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
+        className={cn(
+          "relative flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-sm font-semibold text-white shadow-lg transition hover:bg-[color:var(--brand-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]",
+          !isOpen && "assistant-bounce",
+        )}
         aria-expanded={isOpen}
         aria-controls="assistant-chat-panel"
         aria-label={isOpen ? "Close assistant chat" : "Open assistant chat"}
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <Bot className="h-5 w-5" aria-hidden="true" />
+        {!isOpen && (
+          <span className="assistant-bounce-shadow" aria-hidden="true" />
+        )}
       </button>
     </div>
   );
