@@ -420,24 +420,36 @@ export default function HomePage() {
             <p className="mb-3 font-semibold text-foreground">Company</p>
             <ul className="space-y-2 text-(--muted)">
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/about"
+                  className="hover:text-foreground transition-colors"
+                >
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/careers"
+                  className="hover:text-foreground transition-colors"
+                >
                   Careers
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/partners"
+                  className="hover:text-foreground transition-colors"
+                >
                   Partners
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/blog"
+                  className="hover:text-foreground transition-colors"
+                >
                   Blog
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -446,24 +458,36 @@ export default function HomePage() {
             <p className="mb-3 font-semibold text-foreground">Support</p>
             <ul className="space-y-2 text-(--muted)">
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/help-center"
+                  className="hover:text-foreground transition-colors"
+                >
                   Help Center
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/contact"
+                  className="hover:text-foreground transition-colors"
+                >
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/faqs"
+                  className="hover:text-foreground transition-colors"
+                >
                   FAQs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/terms"
+                  className="hover:text-foreground transition-colors"
+                >
                   Terms of Service
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -472,22 +496,42 @@ export default function HomePage() {
             <p className="mb-3 font-semibold text-foreground">Connect</p>
             <ul className="space-y-2 text-(--muted)">
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://facebook.com/trash2cash"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   Facebook
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://twitter.com/trash2cash"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   Twitter
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://instagram.com/trash2cash"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   Instagram
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a
+                  href="https://linkedin.com/company/trash2cash"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
                   LinkedIn
                 </a>
               </li>

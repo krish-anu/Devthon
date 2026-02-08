@@ -46,9 +46,8 @@ services:
       - "4000:4000"
     environment:
       # Database connection (using external Supabase database)
-      # Accept common variants; prefer explicit DATABASE_URL, fall back to Databaseurl
-      DATABASE_URL: ${DATABASE_URL:-${Databaseurl}}
-      Databaseurl: ${Databaseurl}
+      # Use explicit DATABASE_URL only
+      DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
 
       # Application settings
@@ -81,10 +80,10 @@ services:
     networks:
       - trash2cash-network
     # Run migrations and seed at container start so Supabase receives the seeded data,
-    # then start the dev server. This uses the DATABASE_URL (or Databaseurl) env var.
+    # then start the dev server. This uses the DATABASE_URL env var.
     command: sh -c "npx prisma migrate deploy --preview-feature || true && npm run start:dev"
     # Run migrations and seed at container start so Supabase receives the seeded data,
-    # then start the dev server. This uses the DATABASE_URL (or Databaseurl) env var.
+    # then start the dev server. This uses the DATABASE_URL env var.
 
   # ==========================================
   # Next.js Frontend Service
