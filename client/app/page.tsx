@@ -8,7 +8,19 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { PricingItem } from "@/lib/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Leaf, MapPin, Recycle, Users, CheckCircle, Calendar, Truck, Wallet } from "lucide-react";
+import {
+  Leaf,
+  MapPin,
+  Recycle,
+  Users,
+  CheckCircle,
+  Calendar,
+  Truck,
+  Wallet,
+  Mail,
+  Phone,
+  MessageCircle,
+} from "lucide-react";
 import { ScrollAnimatedSection } from "@/components/shared/scroll-animated-section";
 
 const fallbackPricing = [
@@ -88,9 +100,8 @@ export default function HomePage() {
             {/* Built for households */}
             <ScrollAnimatedSection delay={200}>
               <p className="text-base text-muted md:text-lg">
-                 and businesses across Sri Lanka. Schedule
-                pickups, track impact, and get paid instantly through mobile
-                wallets or bank transfers.
+                and businesses across Sri Lanka. Schedule pickups, track impact,
+                and get paid instantly through mobile wallets or bank transfers.
               </p>
             </ScrollAnimatedSection>
             <ScrollAnimatedSection delay={300}>
@@ -118,7 +129,17 @@ export default function HomePage() {
         </section>
       </div>
 
-      <section className="mx-auto w-full max-w-6xl px-6 pb-16 ">
+      <section
+        id="impact"
+        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
+      >
+        <ScrollAnimatedSection>
+          <SectionHeading
+            eyebrow="Our Impact"
+            title="Making a Real Difference"
+            description="Together with our community, we are transforming waste management in Sri Lanka."
+          />
+        </ScrollAnimatedSection>
         <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-4">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
@@ -194,9 +215,7 @@ export default function HomePage() {
             },
           ].map((item, index) => (
             <ScrollAnimatedSection key={item.step} delay={index * 150}>
-              <Card
-                className="bg-(--brand)/10 shadow-md"
-              >
+              <Card className="bg-(--brand)/10 shadow-md">
                 <div className="flex flex-col items-center gap-3 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                     {item.icon}
@@ -204,8 +223,12 @@ export default function HomePage() {
                   <div className="text-xs font-semibold uppercase tracking-[0.2em] text-(--brand)">
                     Step {item.step}
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground">{item.title}</h3>
-                  <p className="text-sm leading-relaxed text-(--muted)">{item.desc}</p>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-(--muted)">
+                    {item.desc}
+                  </p>
                 </div>
               </Card>
             </ScrollAnimatedSection>
@@ -221,10 +244,13 @@ export default function HomePage() {
                 Features
               </span>
               <h2 className="text-4xl font-bold text-foreground md:text-5xl">
-                A marketplace built for every<br />Sri Lankan household
+                A marketplace built for every
+                <br />
+                Sri Lankan household
               </h2>
               <p className="text-lg text-(--muted)">
-                From transparent pricing to carbon tracking, Trash2Cash keeps the cycle circular.
+                From transparent pricing to carbon tracking, Trash2Cash keeps
+                the cycle circular.
               </p>
             </div>
           </ScrollAnimatedSection>
@@ -254,7 +280,9 @@ export default function HomePage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                       <CheckCircle className="h-5 w-5" />
                     </div>
-                    <h4 className="text-base font-semibold text-(--brand)">{item.title}</h4>
+                    <h4 className="text-base font-semibold text-(--brand)">
+                      {item.title}
+                    </h4>
                     <p className="text-xs text-(--muted)">{item.desc}</p>
                   </div>
                 </Card>
@@ -280,12 +308,70 @@ export default function HomePage() {
             <ScrollAnimatedSection key={item.name} delay={index * 100}>
               <Card className="bg-(--brand)/10 text-center shadow-md">
                 <div className="flex flex-col items-center gap-2">
-                  <h4 className="text-base font-semibold text-(--brand)">{item.name}</h4>
-                  <div className="text-sm text-(--muted)">Min: LKR {item.min} / kg</div>
-                  <div className="text-sm text-(--muted)">Max: LKR {item.max} / kg</div>
+                  <h4 className="text-base font-semibold text-(--brand)">
+                    {item.name}
+                  </h4>
+                  <div className="text-sm text-(--muted)">
+                    Min: LKR {item.min} / kg
+                  </div>
+                  <div className="text-sm text-(--muted)">
+                    Max: LKR {item.max} / kg
+                  </div>
                   <p className="text-xs text-(--muted)">
                     Final prices determined after quality inspection.
                   </p>
+                </div>
+              </Card>
+            </ScrollAnimatedSection>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="contact"
+        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
+      >
+        <ScrollAnimatedSection>
+          <SectionHeading
+            eyebrow="Contact Us"
+            title="Get in touch"
+            description="Have questions? We're here to help you get started with sustainable waste management."
+          />
+        </ScrollAnimatedSection>
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              title: "General Inquiries",
+              desc: "info@trash2cash.lk",
+              icon: <Mail className="h-6 w-6" />,
+              action: "Email Us",
+            },
+            {
+              title: "Support",
+              desc: "+94 11 234 5678",
+              icon: <Phone className="h-6 w-6" />,
+              action: "Call Now",
+            },
+            {
+              title: "Live Chat",
+              desc: "Available 9am - 5pm",
+              icon: <MessageCircle className="h-6 w-6" />,
+              action: "Start Chat",
+            },
+          ].map((item, index) => (
+            <ScrollAnimatedSection key={item.title} delay={index * 100}>
+              <Card className="bg-(--brand)/10 shadow-md">
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-(--muted)">{item.desc}</p>
+                  <Button variant="outline" size="sm" className="mt-2">
+                    {item.action}
+                  </Button>
                 </div>
               </Card>
             </ScrollAnimatedSection>
@@ -311,7 +397,7 @@ export default function HomePage() {
         </ScrollAnimatedSection>
       </section>
 
-      <footer id="contact" className="bg-(--card) text-foreground border-t border-(--border)">
+      <footer className="bg-(--card) text-foreground border-t border-(--border)">
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -325,46 +411,95 @@ export default function HomePage() {
               <h4 className="text-xl font-bold text-foreground">Trash2Cash</h4>
             </div>
             <p className="text-sm leading-relaxed text-(--muted)">
-              Sri Lanka&apos;s leading digital waste aggregation and recycling marketplace.
+              Sri Lanka&apos;s leading digital waste aggregation and recycling
+              marketplace.
             </p>
           </div>
 
           <div className="text-sm">
             <p className="mb-3 font-semibold text-foreground">Company</p>
             <ul className="space-y-2 text-(--muted)">
-              <li><a href="#" className="hover:text-foreground transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Partners</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Careers
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Partners
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Blog
+                </a>
+              </li>
             </ul>
           </div>
 
           <div className="text-sm">
             <p className="mb-3 font-semibold text-foreground">Support</p>
             <ul className="space-y-2 text-(--muted)">
-              <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">FAQs</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Help Center
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Contact Us
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  FAQs
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Terms of Service
+                </a>
+              </li>
             </ul>
           </div>
 
           <div className="text-sm">
             <p className="mb-3 font-semibold text-foreground">Connect</p>
             <ul className="space-y-2 text-(--muted)">
-              <li><a href="#" className="hover:text-foreground transition-colors">Facebook</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Twitter</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Instagram</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">LinkedIn</a></li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Facebook
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Twitter
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-foreground transition-colors">
+                  LinkedIn
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-(--border) py-6 text-center text-sm text-(--muted)">
-          © 2026 Trash2Cash. All rights reserved. Making Sri Lanka greener, one pickup at a time.
+          © 2026 Trash2Cash. All rights reserved. Making Sri Lanka greener, one
+          pickup at a time.
         </div>
       </footer>
     </div>
   );
 }
-
