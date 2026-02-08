@@ -13,10 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import type { StringValue } from 'ms';
-import {
-  flattenUser,
-  USER_PROFILE_INCLUDE,
-} from '../common/utils/user.utils';
+import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class AuthService {
@@ -48,7 +45,9 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -224,7 +223,10 @@ export class AuthService {
       });
 
       // Sync to Supabase DB
-      const userWithProfile = await this.prisma.user.findUnique({ where: { id: user!.id }, include: { customer: true } });
+      const userWithProfile = await this.prisma.user.findUnique({
+        where: { id: user!.id },
+        include: { customer: true },
+      });
       await this.syncUserToSupabase(userWithProfile ?? user);
     }
 

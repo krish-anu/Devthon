@@ -13,43 +13,25 @@ datasource db {
 // Passwords handled by Supabase Auth; passwordHash nullable
 // ─────────────────────────────────────────────
 model User {
-<<<<<<< HEAD
-  id               String              @id @default(uuid())
-  email            String              @unique
-  passwordHash     String?
-  refreshTokenHash String?
-  role             Role                @default(CUSTOMER)
-  createdAt        DateTime            @default(now())
-
-  customer           Customer?
-  admin              Admin?
-  driver             Driver?
-  bookings           Booking[]
-  notifications      Notification[]
-  permissions        UserPermission[]
-  passkeyCredentials PasskeyCredential[]
-}
-
-// ─────────────────────────────────────────────
-// Passkey / WebAuthn credentials (1 : N with User)
-// ─────────────────────────────────────────────
-=======
   id                 String              @id @default(uuid())
   email              String              @unique
   passwordHash       String?
   refreshTokenHash   String?
-  createdAt          DateTime            @default(now())
   role               Role                @default(CUSTOMER)
-  admin              Admin?
-  bookings           Booking[]
+  createdAt          DateTime            @default(now())
+
   customer           Customer?
+  admin              Admin?
   driver             Driver?
+  bookings           Booking[]
   notifications      Notification[]
   passkeyCredentials PasskeyCredential[]
   userPermissions    UserPermission[]
 }
 
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
+// ─────────────────────────────────────────────
+// Passkey / WebAuthn credentials (1 : N with User)
+// ─────────────────────────────────────────────
 model PasskeyCredential {
   id                  String   @id @default(uuid())
   userId              String
@@ -59,9 +41,8 @@ model PasskeyCredential {
   transports          String[] @default([])
   deviceName          String   @default("Passkey")
   createdAt           DateTime @default(now())
-<<<<<<< HEAD
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -89,21 +70,12 @@ model Admin {
   approved Boolean @default(false)
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
-=======
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model Driver {
   id          String       @id
   fullName    String
-<<<<<<< HEAD
-  id          String       @id
-  fullName    String
   phone       String
-  rating      Float        @default(0)
   rating      Float        @default(0)
   pickupCount Int          @default(0)
   vehicle     String
@@ -112,16 +84,6 @@ model Driver {
 
   user     User      @relation(fields: [id], references: [id], onDelete: Cascade)
   bookings Booking[]
-=======
-  phone       String
-  rating      Float        @default(0)
-  pickupCount Int          @default(0)
-  vehicle     String
-  createdAt   DateTime     @default(now())
-  status      DriverStatus @default(OFFLINE)
-  bookings    Booking[]
-  user        User         @relation(fields: [id], references: [id], onDelete: Cascade)
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 // ─────────────────────────────────────────────
@@ -194,19 +156,11 @@ model Booking {
   finalAmountLkr       Float?
   driverId             String?
   createdAt            DateTime             @default(now())
-<<<<<<< HEAD
-
-  driver        Driver?              @relation(fields: [driverId], references: [id])
-  user          User                 @relation(fields: [userId], references: [id])
-  wasteCategory WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
-  transactions  PaymentTransaction[]
-=======
   status               BookingStatus        @default(SCHEDULED)
   driver               Driver?              @relation(fields: [driverId], references: [id])
   user                 User                 @relation(fields: [userId], references: [id])
   wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
   transactions         PaymentTransaction[]
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model Notification {
@@ -215,14 +169,9 @@ model Notification {
   title     String
   message   String
   isRead    Boolean           @default(false)
-  createdAt DateTime          @default(now())
-<<<<<<< HEAD
-
-  user User? @relation(fields: [userId], references: [id])
-=======
   level     NotificationLevel @default(INFO)
+  createdAt DateTime          @default(now())
   user      User?             @relation(fields: [userId], references: [id])
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model PaymentTransaction {
@@ -232,13 +181,7 @@ model PaymentTransaction {
   createdAt DateTime      @default(now())
   method    PaymentMethod
   status    PaymentStatus @default(PROCESSED)
-<<<<<<< HEAD
-  createdAt DateTime      @default(now())
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-=======
   booking   Booking       @relation(fields: [bookingId], references: [id])
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model LaunchNotify {
@@ -247,82 +190,16 @@ model LaunchNotify {
   createdAt DateTime @default(now())
 }
 
-model Admin {
-  id       String  @id
-  fullName String
-  phone    String
-  address  String?
-  approved Boolean @default(false)
-  user     User    @relation(fields: [id], references: [id], onDelete: Cascade)
-}
-
-model Customer {
-  id        String         @id
-  fullName  String
-  phone     String
-  address   String?
-  type      CustomerType   @default(HOUSEHOLD)
-  status    CustomerStatus @default(ACTIVE)
-  createdAt DateTime       @default(now())
-  user      User           @relation(fields: [id], references: [id], onDelete: Cascade)
-}
-
-model Permission {
-  id              String           @id @default(uuid())
-  name            String           @unique
-  userPermissions UserPermission[]
-}
-
-model RoleChangeLog {
-  id             String   @id @default(uuid())
-  userId         String
-  oldRole        String
-  newRole        String
-  oldProfileData Json?
-  changedAt      DateTime @default(now())
-}
-
-model UserPermission {
-  userId       String
-  permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, permissionId])
-}
-
-<<<<<<< HEAD
 // ─────────────────────────────────────────────
 // Enums
 // ─────────────────────────────────────────────
 enum Role {
   CUSTOMER
-  CUSTOMER
-  ADMIN
-  SUPER_ADMIN
-  SUPER_ADMIN
-  DRIVER
-}
-
-enum CustomerType {
-  HOUSEHOLD
-  BUSINESS
-}
-
-enum CustomerStatus {
-  ACTIVE
-  INACTIVE
-}
-
-=======
-enum Role {
-  CUSTOMER
   ADMIN
   SUPER_ADMIN
   DRIVER
 }
 
->>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 enum DriverStatus {
   ONLINE
   OFFLINE

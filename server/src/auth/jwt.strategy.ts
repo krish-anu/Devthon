@@ -33,12 +33,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         result.expReadable = new Date(payload.exp * 1000).toISOString();
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn('Failed to parse iat/exp in JWT payload', e);
     }
 
     // Log payload for debugging auth failures (temporary)
-    // eslint-disable-next-line no-console
+
     console.debug('JwtStrategy validate payload:', result);
     return result;
   }

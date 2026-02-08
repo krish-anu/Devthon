@@ -8,10 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import {
-  flattenUser,
-  USER_PROFILE_INCLUDE,
-} from '../common/utils/user.utils';
+import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class UsersService {
@@ -53,7 +50,12 @@ export class UsersService {
           await this.prisma.customer.upsert({
             where: { id: userId },
             update: profileData,
-            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
+            create: {
+              id: userId,
+              fullName: dto.fullName ?? '',
+              phone: dto.phone ?? '',
+              ...profileData,
+            },
           });
           break;
         case 'ADMIN':
@@ -61,14 +63,25 @@ export class UsersService {
           await this.prisma.admin.upsert({
             where: { id: userId },
             update: profileData,
-            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
+            create: {
+              id: userId,
+              fullName: dto.fullName ?? '',
+              phone: dto.phone ?? '',
+              ...profileData,
+            },
           });
           break;
         case 'DRIVER':
           await this.prisma.driver.upsert({
             where: { id: userId },
             update: profileData,
-            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', vehicle: '', ...profileData },
+            create: {
+              id: userId,
+              fullName: dto.fullName ?? '',
+              phone: dto.phone ?? '',
+              vehicle: '',
+              ...profileData,
+            },
           });
           break;
       }
@@ -91,7 +104,9 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     if (!user.passwordHash) {
-      throw new BadRequestException('No local password is set for this account');
+      throw new BadRequestException(
+        'No local password is set for this account',
+      );
     }
 
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);

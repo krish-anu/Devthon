@@ -46,7 +46,7 @@ async function bootstrap() {
                   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
                   winston.format.printf(
                     ({ timestamp, level, message, ...meta }) => {
-                      const badge = levelBadge(level as string);
+                      const badge = levelBadge(level);
                       const msg =
                         typeof message === 'string'
                           ? message
@@ -83,7 +83,7 @@ async function bootstrap() {
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
             winston.format.printf(({ timestamp, level, message, ...meta }) => {
               const lvl = (level || '').toUpperCase();
-              let msg =
+              const msg =
                 typeof message === 'string' ? message : JSON.stringify(message);
               let metaStr = '';
               try {

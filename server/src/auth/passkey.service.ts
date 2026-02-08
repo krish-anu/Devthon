@@ -108,8 +108,13 @@ export class PasskeyService implements OnModuleInit {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const displayName = user.customer?.fullName ?? user.admin?.fullName ?? user.driver?.fullName ?? user.email;
+    const displayName =
+      user.customer?.fullName ??
+      user.admin?.fullName ??
+      user.driver?.fullName ??
+      user.email;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const options = await this.webauthn.generateRegistrationOptions({
       rpName: this.rpName,
       rpID: this.rpId,
@@ -117,6 +122,7 @@ export class PasskeyService implements OnModuleInit {
       userName: user.email,
       userDisplayName: displayName,
       attestationType: 'none', // privacy-friendly; no attestation needed
+
       excludeCredentials: user.passkeyCredentials.map((c: any) => ({
         id: c.credentialId,
         transports: c.transports,
@@ -127,6 +133,7 @@ export class PasskeyService implements OnModuleInit {
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.storeChallenge(`reg:${userId}`, options.challenge);
     return options;
   }
@@ -134,6 +141,7 @@ export class PasskeyService implements OnModuleInit {
   async verifyRegistration(userId: string, body: any) {
     const expectedChallenge = this.consumeChallenge(`reg:${userId}`);
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const verification = await this.webauthn.verifyRegistrationResponse({
       response: body,
       expectedChallenge,
@@ -147,6 +155,7 @@ export class PasskeyService implements OnModuleInit {
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const { credential } = verification.registrationInfo;
 
     await this.prisma.passkeyCredential.create({
@@ -177,8 +186,10 @@ export class PasskeyService implements OnModuleInit {
       throw new NotFoundException('No passkeys registered for this account');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const options = await this.webauthn.generateAuthenticationOptions({
       rpID: this.rpId,
+
       allowCredentials: user.passkeyCredentials.map((c: any) => ({
         id: c.credentialId,
         transports: c.transports,
@@ -186,6 +197,7 @@ export class PasskeyService implements OnModuleInit {
       userVerification: 'preferred',
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.storeChallenge(`auth:${email}`, options.challenge);
     return options;
   }
@@ -207,6 +219,7 @@ export class PasskeyService implements OnModuleInit {
       throw new UnauthorizedException('Credential not recognised');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const verification = await this.webauthn.verifyAuthenticationResponse({
       response: credential,
       expectedChallenge,
@@ -225,6 +238,7 @@ export class PasskeyService implements OnModuleInit {
     }
 
     // Update the signature counter (replay-attack protection)
+
     await this.prisma.passkeyCredential.update({
       where: { id: stored.id },
       data: { counter: BigInt(verification.authenticationInfo.newCounter) },
