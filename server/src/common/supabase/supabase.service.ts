@@ -23,9 +23,9 @@ export class SupabaseService implements OnModuleInit {
       this._isConfigured = true;
       this.logger.log('Supabase client initialized');
     } else {
-      this.logger.warn(
-        'SUPABASE_URL / SUPABASE_SERVICE_KEY not set – Supabase Auth sync disabled',
-      );
+      // Supabase integration disabled when no credentials are provided.
+      // Use DATABASE_URL-only deployments without noisy warnings.
+      this.logger.debug('Supabase credentials not provided; integration disabled');
     }
   }
 

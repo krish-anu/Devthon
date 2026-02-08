@@ -49,9 +49,6 @@ services:
 
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
-
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
     networks:
       - trash2cash-network
 

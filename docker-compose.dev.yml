@@ -70,10 +70,7 @@ services:
       # Text.lk SMS Gateway
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
-
-      # Supabase (optional – enables Auth sync & DB mirroring)
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
+      # Note: Supabase env vars removed; runtime uses DATABASE_URL only
     volumes:
       # Mount source code for hot reload in development
       - ./server/src:/app/src
