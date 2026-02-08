@@ -9,6 +9,7 @@ import { RequestLoggingInterceptor } from './common/interceptors/request-logging
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import cookieParser from 'cookie-parser';
+import * as bodyParser from 'body-parser';
 
 // Polyfill: allow BigInt to be serialised by JSON.stringify (Prisma returns BigInt for Int8 columns)
 (BigInt.prototype as any).toJSON = function () {
@@ -115,6 +116,9 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(cookieParser());
+  // Increase request body size limits to allow base64 image payloads
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -1,25 +1,26 @@
-import type { Metadata } from 'next';
-import { Space_Grotesk, Plus_Jakarta_Sans } from 'next/font/google';
-import './globals.css';
-import Providers from './providers';
+import type { Metadata } from "next";
+import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
+import "./globals.css";
+import Providers from "./providers";
 
 const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-display',
+  subsets: ["latin"],
+  variable: "--font-display",
 });
 
 const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-body',
+  subsets: ["latin"],
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
-  title: 'Trash2Cash | Sri Lanka Waste Marketplace',
-  description: 'Turn your waste into cash with Sri Lanka?s #1 waste marketplace.',
+  title: "Trash2Cash | Sri Lanka Waste Marketplace",
+  description:
+    "Turn your waste into cash with Sri Lanka?s #1 waste marketplace.",
   icons: {
-    icon: '/favicon.svg',
-    apple: '/favicon.svg'
-  }
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -28,9 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-       <head>
-        <style dangerouslySetInnerHTML={{__html: `html:not([data-theme]) { visibility: hidden; }`}} />
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="auto">
+      <head>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `html:not([data-theme]) { visibility: hidden; }`,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
