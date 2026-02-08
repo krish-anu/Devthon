@@ -93,6 +93,7 @@ jobs:
 
             # ── Write / refresh the .env from GitHub Secrets ──
             cat > .env << 'ENVEOF'
+            DOCKER_HUB_USER=${{ secrets.DOCKER_HUB_USERNAME }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             DIRECT_URL=${{ secrets.DIRECT_URL }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
