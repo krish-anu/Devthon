@@ -237,7 +237,7 @@ export default function ProfilePage() {
             <img
               src={(user as any).avatar}
               alt={user?.fullName ?? "User avatar"}
-              className="h-16 w-16 rounded-full object-cover"
+              className="h-16 w-16 rounded-full object-cover border border-[color:var(--brand)] dark:border-[color:var(--brand)] p-1"
             />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--brand)/20 text-xl font-semibold">

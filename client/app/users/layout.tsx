@@ -11,9 +11,9 @@ import {
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Header } from "@/components/layout/header";
+import { UserMenu } from "@/components/layout/user-menu";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -49,32 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <RequireAuth roles={["CUSTOMER", "ADMIN", "SUPER_ADMIN"]}>
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
-        header={
-          <div className="flex items-center justify-between w-full gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
-                User Portal
-              </p>
-              <h2 className="text-lg font-semibold">
-                Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              {user && (user as any).avatar ? (
-                <img
-                  src={(user as any).avatar}
-                  alt={user?.fullName ?? "avatar"}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : null}
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={() => logout()}>
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        }
+        header={<Header title="User Portal" right={<UserMenu />} showThemeToggle />}
       >
         {children}
       </AppShell>
