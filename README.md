@@ -133,6 +133,10 @@ JWT_REFRESH_EXPIRES=7d                 # Default: 7d
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
+# Server (for auth-code flow)
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_REDIRECT_URI=http://localhost:3000
 ```
 
 If you need the full reference and troubleshooting tips, see `ENV_QUICK_REFERENCE.md`.

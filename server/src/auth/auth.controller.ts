@@ -5,7 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { OtpSendDto } from './dto/otp-send.dto';
 import { OtpVerifyDto } from './dto/otp-verify.dto';
-import { GoogleLoginDto } from './dto';
+import { GoogleLoginDto, GoogleCodeDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @Controller('auth')
@@ -25,6 +25,11 @@ export class AuthController {
   @Post('google')
   google(@Body() dto: GoogleLoginDto) {
     return this.authService.googleLogin(dto.token);
+  }
+
+  @Post('google/code')
+  googleCode(@Body() dto: GoogleCodeDto) {
+    return this.authService.googleLoginWithCode(dto.code, dto.redirectUri);
   }
 
   @Post('refresh')

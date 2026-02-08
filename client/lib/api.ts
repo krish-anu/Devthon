@@ -136,6 +136,15 @@ export const authApi = {
       },
       false,
     ),
+  googleLoginWithCode: (payload: { code: string; redirectUri?: string }) =>
+    apiFetch<AuthResponse>(
+      "/auth/google/code",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      false,
+    ),
 };
 
 /* ------------------------------------------------------------------ */

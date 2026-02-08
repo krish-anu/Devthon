@@ -50,7 +50,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
         header={
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center justify-between w-full gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
                 User Portal

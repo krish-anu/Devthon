@@ -8,10 +8,7 @@ import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import * as bcrypt from 'bcrypt';
-import {
-  flattenUser,
-  USER_PROFILE_INCLUDE,
-} from '../common/utils/user.utils';
+import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class AdminService {
@@ -91,7 +88,9 @@ export class AdminService {
   async listUsers(search?: string, type?: string) {
     // Build the customer filter for type
     const typeValue: CustomerType | null =
-      type === 'HOUSEHOLD' || type === 'BUSINESS' ? (type as CustomerType) : null;
+      type === 'HOUSEHOLD' || type === 'BUSINESS'
+        ? (type as CustomerType)
+        : null;
 
     const hasSearch = search?.trim().length;
 
@@ -106,9 +105,13 @@ export class AdminService {
     }
 
     if (hasSearch) {
-      const term = search!.trim();
+      const term = search.trim();
       where.OR = [
-        { customer: { fullName: { contains: term, mode: 'insensitive' as const } } },
+        {
+          customer: {
+            fullName: { contains: term, mode: 'insensitive' as const },
+          },
+        },
         { email: { contains: term, mode: 'insensitive' as const } },
       ];
     }
@@ -213,22 +216,43 @@ export class AdminService {
             await this.prisma.customer.upsert({
               where: { id },
               update: profileData,
-              create: { id, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
+              create: {
+                id,
+                fullName: dto.fullName ?? '',
+                phone: dto.phone ?? '',
+                ...profileData,
+              },
             });
             break;
           case 'ADMIN':
           case 'SUPER_ADMIN':
             await this.prisma.admin.upsert({
               where: { id },
-              update: { fullName: profileData.fullName, phone: profileData.phone, address: profileData.address },
-              create: { id, fullName: dto.fullName ?? '', phone: dto.phone ?? '' },
+              update: {
+                fullName: profileData.fullName,
+                phone: profileData.phone,
+                address: profileData.address,
+              },
+              create: {
+                id,
+                fullName: dto.fullName ?? '',
+                phone: dto.phone ?? '',
+              },
             });
             break;
           case 'DRIVER':
             await this.prisma.driver.upsert({
               where: { id },
-              update: { fullName: profileData.fullName, phone: profileData.phone },
-              create: { id, fullName: dto.fullName ?? '', phone: dto.phone ?? '', vehicle: '' },
+              update: {
+                fullName: profileData.fullName,
+                phone: profileData.phone,
+              },
+              create: {
+                id,
+                fullName: dto.fullName ?? '',
+                phone: dto.phone ?? '',
+                vehicle: '',
+              },
             });
             break;
         }

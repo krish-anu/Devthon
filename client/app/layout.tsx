@@ -16,6 +16,10 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Trash2Cash | Sri Lanka Waste Marketplace',
   description: 'Turn your waste into cash with Sri Lanka?s #1 waste marketplace.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg'
+  }
 };
 
 export default function RootLayout({
@@ -44,6 +48,11 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Favicon and touch icon */}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <meta name="theme-color" content="#10B981" />
       </head>
       <body
         className={`${spaceGrotesk.variable} ${jakarta.variable} antialiased`}

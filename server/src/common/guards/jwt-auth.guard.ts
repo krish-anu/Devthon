@@ -10,13 +10,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   // Override to log auth failures (info contains passport failure details)
   handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
     if (err) {
-      // eslint-disable-next-line no-console
       console.error('JwtAuthGuard error:', err);
       throw err;
     }
 
     if (!user) {
-      // eslint-disable-next-line no-console
       console.debug('JwtAuthGuard no user - auth failed, info:', info);
       throw new UnauthorizedException();
     }

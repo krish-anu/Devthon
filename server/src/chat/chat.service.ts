@@ -167,7 +167,8 @@ export class ChatService {
 
       const data = await response.json();
       const reply =
-        data?.candidates?.[0]?.content?.parts?.map((part: any) => part?.text)
+        data?.candidates?.[0]?.content?.parts
+          ?.map((part: any) => part?.text)
           .filter(Boolean)
           .join('') ||
         data?.candidates?.[0]?.content?.parts?.[0]?.text ||
@@ -285,7 +286,8 @@ export class ChatService {
     let detail = '';
     try {
       const parsed = JSON.parse(rawText);
-      detail = parsed?.error?.message || parsed?.error?.status || parsed?.message;
+      detail =
+        parsed?.error?.message || parsed?.error?.status || parsed?.message;
     } catch (_) {
       // ignore parse errors
     }
@@ -293,16 +295,13 @@ export class ChatService {
   }
 
   private async getFetch() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let fetchFn: any = (globalThis as any).fetch;
     if (!fetchFn) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const undici = require('undici');
         fetchFn = undici.fetch;
       } catch (e) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
           fetchFn = require('node-fetch');
         } catch (e2) {
           throw new Error(
@@ -339,5 +338,3 @@ export class ChatService {
     this.buckets.set(ip, existing);
   }
 }
-
-

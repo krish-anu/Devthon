@@ -44,7 +44,7 @@ export class TransactionLogger {
     }
 
     // Final fallback
-    // eslint-disable-next-line no-console
+
     if (level === 'error') console.error(message, payload);
     else console.log(`${level.toUpperCase()} ${message}`, payload);
   }
