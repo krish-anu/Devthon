@@ -24,18 +24,16 @@ async function parseError(response: Response) {
 }
 
 export async function refreshTokens() {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
+    credentials: "include",
   });
   if (!response.ok) {
     return null;
   }
   const data = (await response.json()) as AuthResponse;
-  setAuth(data);
+  setAuth({ accessToken: data.accessToken, user: data.user } as any);
   return data;
 }
 
@@ -59,6 +57,7 @@ export async function apiFetch<T>(
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
+    credentials: (options as any).credentials ?? "include",
   });
 
   if (response.status === 401 && auth && retry) {

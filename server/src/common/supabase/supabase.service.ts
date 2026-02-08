@@ -1,34 +1,19 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+// Supabase env-var usage removed; keep service as a no-op when not explicitly wired
 
 @Injectable()
 export class SupabaseService implements OnModuleInit {
   private readonly logger = new Logger(SupabaseService.name);
-  private client: SupabaseClient | null = null;
+  private client: any | null = null;
   private _isConfigured = false;
 
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    const url = this.configService.get<string>('SUPABASE_URL');
-    const key =
-      this.configService.get<string>('SUPABASE_SERVICE_KEY') ??
-      this.configService.get<string>('SUPABASE_KEY');
-
-    if (url && key) {
-      this.client = createClient(url, key, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
-      this._isConfigured = true;
-      this.logger.log('Supabase client initialized');
-    } else {
-      // Supabase integration disabled when no credentials are provided.
-      // Use DATABASE_URL-only deployments without noisy warnings.
-      this.logger.debug(
-        'Supabase credentials not provided; integration disabled',
-      );
-    }
+    // Supabase env-vars removed; keep the service unconfigured by default.
+    this._isConfigured = false;
+    this.logger.debug('Supabase integration disabled (env-vars removed)');
   }
 
   /** Whether the Supabase client is configured and ready */
@@ -37,7 +22,7 @@ export class SupabaseService implements OnModuleInit {
   }
 
   /** Get the raw Supabase client (null when not configured) */
-  getClient(): SupabaseClient | null {
+  getClient(): any | null {
     return this.client;
   }
 

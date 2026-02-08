@@ -8,6 +8,7 @@ import 'winston-daily-rotate-file';
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import * as cookieParser from 'cookie-parser';
 
 // Polyfill: allow BigInt to be serialised by JSON.stringify (Prisma returns BigInt for Int8 columns)
 (BigInt.prototype as any).toJSON = function () {
@@ -113,6 +114,7 @@ async function bootstrap() {
     origin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000').split(','),
     credentials: true,
   });
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

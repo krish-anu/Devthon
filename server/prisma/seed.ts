@@ -10,15 +10,11 @@ import {
   Role,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { createClient } from '@supabase/supabase-js';
+// Supabase integration removed from seeds
 
 const prisma = new PrismaClient();
 
-// Optional Supabase client – used to mirror seeded rows into Supabase when credentials are provided
-// Read credentials from environment so seeding remains optional and safe in CI/local setups
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_KEY ?? null;
-const supabaseClient = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+// Supabase syncing removed from seed script to avoid relying on external credentials
 
 async function main() {
   // Delete in reverse-dependency order
@@ -298,149 +294,7 @@ async function main() {
     drivers: drivers.map((d) => d.fullName),
   });
 
-  // If Supabase credentials are available, mirror the seeded rows to Supabase
-  if (supabaseClient) {
-    const supabase = supabaseClient;
-
-    try {
-      // Upsert users
-      const allUsers = await prisma.user.findMany({
-        include: { customer: true, admin: true, driver: true },
-      });
-      const supUsers = allUsers.map((u) => {
-        const profile = u.customer || u.admin || u.driver;
-        return {
-          id: u.id,
-          email: u.email,
-          role: u.role,
-          fullName: (profile as any)?.fullName ?? null,
-          phone: (profile as any)?.phone ?? null,
-        };
-      });
-      await supabase.from('users').upsert(supUsers, { onConflict: 'id' });
-
-      // Upsert customers
-      const allCustomers = await prisma.customer.findMany();
-      const supCustomers = allCustomers.map((c) => ({
-        id: c.id,
-        fullName: c.fullName,
-        phone: c.phone,
-        address: c.address,
-        type: c.type,
-        status: c.status,
-      }));
-      if (supCustomers.length)
-        await supabase.from('customers').upsert(supCustomers, { onConflict: 'id' });
-
-      // Upsert admins
-      const allAdmins = await prisma.admin.findMany();
-      const supAdmins = allAdmins.map((a) => ({
-        id: a.id,
-        fullName: a.fullName,
-        phone: a.phone,
-        address: a.address,
-        approved: a.approved,
-      }));
-      if (supAdmins.length)
-        await supabase.from('admins').upsert(supAdmins, { onConflict: 'id' });
-
-      // Upsert drivers
-      const supDrivers = drivers.map((d) => ({
-        id: d.id,
-        fullName: d.fullName,
-        phone: d.phone,
-        rating: d.rating,
-        pickupCount: d.pickupCount,
-        vehicle: d.vehicle,
-        status: d.status,
-      }));
-      await supabase.from('drivers').upsert(supDrivers, { onConflict: 'id' });
-
-      // Upsert categories
-      const supCategories = categories.map((c) => ({
-        id: c.id,
-        name: c.name,
-        description: c.description,
-      }));
-      await supabase
-        .from('waste_categories')
-        .upsert(supCategories, { onConflict: 'id' });
-
-      // Upsert pricing (read from prisma to ensure correct fields)
-      const allPricing = await prisma.pricing.findMany();
-      const supPricing = allPricing.map((p) => ({
-        id: p.id,
-        wasteCategoryId: p.wasteCategoryId,
-        minPriceLkrPerKg: p.minPriceLkrPerKg,
-        maxPriceLkrPerKg: p.maxPriceLkrPerKg,
-        updatedAt: p.updatedAt,
-      }));
-      if (supPricing.length)
-        await supabase.from('pricing').upsert(supPricing, { onConflict: 'id' });
-
-      // Upsert bookings
-      const supBookings = [booking1, booking2, booking3].map((b) => ({
-        id: b.id,
-        userId: b.userId,
-        wasteCategoryId: b.wasteCategoryId,
-        estimatedWeightRange: b.estimatedWeightRange,
-        estimatedMinAmount: b.estimatedMinAmount,
-        estimatedMaxAmount: b.estimatedMaxAmount,
-        addressLine1: b.addressLine1,
-        city: b.city,
-        postalCode: b.postalCode,
-        scheduledDate: b.scheduledDate,
-        scheduledTimeSlot: b.scheduledTimeSlot,
-        status: b.status,
-        driverId: b.driverId,
-        actualWeightKg: b.actualWeightKg ?? null,
-        finalAmountLkr: b.finalAmountLkr ?? null,
-      }));
-      await supabase.from('bookings').upsert(supBookings, { onConflict: 'id' });
-
-      // Upsert payment transactions
-      const payments = await prisma.paymentTransaction.findMany();
-      const supPayments = payments.map((p) => ({
-        id: p.id,
-        bookingId: p.bookingId,
-        amountLkr: p.amountLkr,
-        method: p.method,
-        status: p.status,
-      }));
-      if (supPayments.length)
-        await supabase
-          .from('payment_transactions')
-          .upsert(supPayments, { onConflict: 'id' });
-
-      // Upsert notifications
-      const notifications = await prisma.notification.findMany();
-      const supNotifications = notifications.map((n) => ({
-        id: n.id,
-        userId: n.userId ?? null,
-        title: n.title,
-        message: n.message,
-        level: n.level,
-      }));
-      if (supNotifications.length)
-        await supabase
-          .from('notifications')
-          .upsert(supNotifications, { onConflict: 'id' });
-
-      // Upsert launch notifications
-      const launchList = await prisma.launchNotify.findMany();
-      const supLaunch = launchList.map((l) => ({ id: l.id, email: l.email }));
-      if (supLaunch.length)
-        await supabase
-          .from('launch_notify')
-          .upsert(supLaunch, { onConflict: 'id' });
-
-      console.log('Supabase sync completed.');
-    } catch (supErr) {
-      console.error('Error syncing to Supabase:', supErr);
-    }
-  } else {
-    console.warn('No Supabase credentials found; skipping external sync.');
-  }
+  // Supabase syncing removed to avoid depending on external credentials during seeding.
 }
 
 main()
