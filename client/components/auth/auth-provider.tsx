@@ -26,6 +26,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   googleLogin: (token: string) => Promise<User>;
+  googleLoginWithCode: (code: string, redirectUri?: string) => Promise<User>;
   passkeyLogin: (email: string) => Promise<User>;
 }
 
@@ -117,6 +118,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data.user;
   };
 
+  const googleLoginWithCode = async (code: string, redirectUri?: string) => {
+    const data = await authApi.googleLoginWithCode({ code, redirectUri });
+    setAuth(data);
+    setUser(data.user);
+    return data.user;
+  };
+
   const passkeyLogin = async (email: string) => {
     const { startAuthentication, browserSupportsWebAuthn } =
       await import("@simplewebauthn/browser");
@@ -143,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshProfile,
       googleLogin,
+      googleLoginWithCode,
       passkeyLogin,
     }),
     [user, loading],

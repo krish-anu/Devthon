@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   async headers() {
     return [
+      // Exclude auth pages (login/signup) from COOP so popup-based OAuth can access window.closed
+      {
+        source: "^/(login|signup)(/.*)?$",
+        headers: [],
+      },
+      // Apply COOP to the rest of the site for cross-origin isolation protections
       {
         source: "/(.*)",
         headers: [

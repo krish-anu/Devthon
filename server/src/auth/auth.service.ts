@@ -14,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import type { StringValue } from 'ms';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 @Injectable()
 export class AuthService {
@@ -156,28 +157,116 @@ export class AuthService {
     return { success: true };
   }
 
-  async googleLogin(token: string) {
-    // Verify the token with Google (supports access_token or id_token)
-    const isJwt = token.split('.').length === 3;
-    const tryVerify = async (param: 'access_token' | 'id_token') => {
-      const response = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?${param}=${token}`,
-      );
-      if (!response.ok) {
-        return null;
-      }
-      return response.json();
-    };
+  // Helper: fetch https://openidconnect.googleapis.com/v1/userinfo
+  private async fetchUserInfo(accessToken: string) {
+    const r = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!r.ok) return null;
+    return r.json();
+  }
 
-    const googleUser =
-      (isJwt ? await tryVerify('id_token') : await tryVerify('access_token')) ||
-      (isJwt ? await tryVerify('access_token') : await tryVerify('id_token'));
+  // Helper: verify ID token using Google's JWKS
+  private jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+
+  private async verifyIdToken(idToken: string) {
+    const clientId = this.getRequiredConfig('GOOGLE_CLIENT_ID');
+    try {
+      const { payload } = await jwtVerify(idToken, this.jwks, {
+        issuer: ['https://accounts.google.com', 'accounts.google.com'],
+        audience: clientId,
+      });
+      return payload as any;
+    } catch (err) {
+      this.logger.warn('ID token verification failed', err as any);
+      throw new UnauthorizedException('Invalid Google ID token');
+    }
+  }
+
+  // Public: accept access_token or id_token and authenticate/create user
+  async googleLogin(token: string) {
+    let googleUser: any = null;
+    const isJwt = token.split('.').length === 3;
+
+    if (isJwt) {
+      // Prefer strict JWT verification
+      try {
+        googleUser = await this.verifyIdToken(token);
+      } catch (err) {
+        // Fallback to tokeninfo if verification fails
+        const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+        if (ti.ok) googleUser = await ti.json();
+      }
+    } else {
+      // Treat as access token and call UserInfo
+      googleUser = await this.fetchUserInfo(token);
+      if (!googleUser) {
+        const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+        if (ti.ok) googleUser = await ti.json();
+      }
+    }
 
     if (!googleUser || !googleUser.email) {
       throw new UnauthorizedException('Invalid Google token');
     }
 
-    // Find or create user
+    if (!googleUser.email_verified) {
+      throw new UnauthorizedException('Google email not verified');
+    }
+
+    return this.findOrCreateUserFromGoogle(googleUser);
+  }
+
+  // Exchange authorization code server-side and authenticate
+  async googleLoginWithCode(code: string, redirectUri?: string) {
+    const client_id = this.getRequiredConfig('GOOGLE_CLIENT_ID');
+    const client_secret = this.getRequiredConfig('GOOGLE_CLIENT_SECRET');
+    const redirect_uri = redirectUri ?? this.getRequiredConfig('GOOGLE_REDIRECT_URI');
+
+    const params = new URLSearchParams({
+      code,
+      client_id,
+      client_secret,
+      redirect_uri,
+      grant_type: 'authorization_code',
+    });
+
+    const r = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    if (!r.ok) {
+      const txt = await r.text();
+      this.logger.warn('Failed to exchange code with Google', txt);
+      throw new UnauthorizedException('Invalid authorization code');
+    }
+
+    const tokens = await r.json();
+    let googleUser: any = null;
+
+    if (tokens.access_token) {
+      googleUser = await this.fetchUserInfo(tokens.access_token);
+    }
+
+    if (!googleUser && tokens.id_token) {
+      googleUser = await this.verifyIdToken(tokens.id_token);
+    }
+
+    if (!googleUser || !googleUser.email) {
+      throw new UnauthorizedException('Failed to obtain Google user');
+    }
+
+    if (!googleUser.email_verified) {
+      throw new UnauthorizedException('Google email not verified');
+    }
+
+    return this.findOrCreateUserFromGoogle(googleUser);
+  }
+
+  // Shared logic to find or create app user from Google profile
+  private async findOrCreateUserFromGoogle(googleUser: any) {
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
       include: USER_PROFILE_INCLUDE,
@@ -187,7 +276,6 @@ export class AuthService {
       // Try to create Supabase Auth user for Google users too
       const supabaseAuthId = await this.supabaseService.createAuthUser(
         googleUser.email,
-        // Generate a random password for Supabase Auth (Google users won't use it)
         Math.random().toString(36).slice(-16) + 'A1!',
         { fullName: googleUser.name || 'Google User', provider: 'google' },
       );

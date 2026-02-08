@@ -7,7 +7,7 @@ export function Toaster() {
   const { toasts } = useToast();
 
   return (
-    <ToastProvider swipeDirection="right">
+    <ToastProvider swipeDirection="right" duration={4000}>
       {toasts.map(({ id, title, description, action, ...props }) => (
         <Toast key={id} {...props}>
           <div className="flex flex-1 flex-col gap-1">

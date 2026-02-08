@@ -50,7 +50,7 @@ export default function SignupPage() {
     });
   const { errors, isSubmitting } = formState;
   const router = useRouter();
-  const { register: registerUser, googleLogin, user, loading: authLoading } = useAuth();
+  const { register: registerUser, googleLogin, googleLoginWithCode, user, loading: authLoading } = useAuth();
   const termsChecked = watch("terms");
 
   const redirectToDashboard = (userRole: string) => {
@@ -74,10 +74,22 @@ export default function SignupPage() {
   }, [user, authLoading, router]);
 
   const handleGoogleSignup = useGoogleLogin({
+    flow: "auth-code",
+    scope: "openid email profile",
     onSuccess: async (tokenResponse) => {
       try {
-        const token =
-          tokenResponse.access_token || (tokenResponse as any).credential;
+        if ((tokenResponse as any).code) {
+          const user = await googleLoginWithCode((tokenResponse as any).code);
+          toast({
+            title: "Welcome!",
+            description: "Signed up with Google successfully.",
+            variant: "success",
+          });
+          redirectToDashboard(user.role);
+          return;
+        }
+
+        const token = (tokenResponse as any).access_token || (tokenResponse as any).credential;
         const user = await googleLogin(token);
         toast({
           title: "Welcome!",

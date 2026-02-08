@@ -104,6 +104,9 @@ Add ALL of these secrets:
 | `CORS_ORIGIN`                  | `http://<EC2_PUBLIC_IP>` (or `https://yourdomain.com` later)   |
 | `NEXT_PUBLIC_API_URL`          | `http://<EC2_PUBLIC_IP>/api` (or `https://yourdomain.com/api`) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Your Google OAuth client ID                                    |
+| `GOOGLE_CLIENT_ID`             | Your Google OAuth client ID (server)                           |
+| `GOOGLE_CLIENT_SECRET`         | Your Google OAuth client secret (server)                       |
+| `GOOGLE_REDIRECT_URI`          | Your OAuth redirect URI for the auth-code flow (server)        |
 | `TEXTLK_API_TOKEN`             | (optional) SMS gateway token                                   |
 | `TEXTLK_SENDER_ID`             | (optional) SMS sender ID                                       |
 

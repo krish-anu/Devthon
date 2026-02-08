@@ -573,18 +573,22 @@ export default function ProfilePage() {
                           navigator.serviceWorker &&
                           navigator.serviceWorker.controller
                         ) {
-                          navigator.serviceWorker.controller.postMessage({
-                            type: "TEST_NOTIFICATION",
-                            title: "Test notification",
-                            body: "This is a test from Trash2Cash.",
-                          });
-                          toast({
-                            title: "Test sent",
-                            description:
-                              "Test notification posted to service worker.",
-                            variant: "success",
-                          });
-                          return;
+                          try {
+                            navigator.serviceWorker.controller.postMessage({
+                              type: "TEST_NOTIFICATION",
+                              title: "Test notification",
+                              body: "This is a test from Trash2Cash.",
+                            });
+                            toast({
+                              title: "Test sent",
+                              description:
+                                "Test notification posted to service worker.",
+                              variant: "success",
+                            });
+                            return;
+                          } catch (err) {
+                            // Ignore postMessage failures (COOP / cross-origin) and fallback below
+                          }
                         }
                       } catch (e) {
                         // fallback

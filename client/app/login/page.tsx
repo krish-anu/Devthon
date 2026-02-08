@@ -24,7 +24,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const { login, googleLogin, passkeyLogin, user, loading: authLoading } = useAuth();
+  const { login, googleLogin, googleLoginWithCode, passkeyLogin, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -65,10 +65,22 @@ export default function LoginPage() {
   }, [user, authLoading]);
 
   const handleGoogleLogin = useGoogleLogin({
+    flow: "auth-code",
+    scope: "openid email profile",
     onSuccess: async (tokenResponse) => {
       try {
-        const token =
-          tokenResponse.access_token || (tokenResponse as any).credential;
+        if ((tokenResponse as any).code) {
+          const user = await googleLoginWithCode((tokenResponse as any).code);
+          toast({
+            title: "Welcome!",
+            description: "Signed in with Google successfully.",
+            variant: "success",
+          });
+          redirectToDashboard(user.role);
+          return;
+        }
+
+        const token = (tokenResponse as any).access_token || (tokenResponse as any).credential;
         const user = await googleLogin(token);
         toast({
           title: "Welcome!",
