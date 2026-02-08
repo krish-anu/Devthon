@@ -327,3 +327,65 @@ html {
 section[id], [id] {
   scroll-margin-top: 4rem;
 }
+
+/* Assistant chat bounce animation (ball-like with squash/stretch) */
+@keyframes assistant-bounce {
+  0% {
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+  20% {
+    transform: translateY(-12px) scaleX(1.05) scaleY(0.95);
+  }
+  40% {
+    transform: translateY(0) scaleX(0.95) scaleY(1.05);
+  }
+  60% {
+    transform: translateY(-6px) scaleX(1.03) scaleY(0.98);
+  }
+  100% {
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes assistant-shadow {
+  0% {
+    transform: translateX(-50%) scaleX(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(-50%) scaleX(1.2);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateX(-50%) scaleX(0.85);
+    opacity: 0.6;
+  }
+}
+
+.assistant-bounce {
+  animation: assistant-bounce 1.1s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+  transform-origin: center bottom;
+}
+
+.assistant-bounce-shadow {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  transform: translateX(-50%);
+  width: 18px;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.18);
+  filter: blur(1px);
+  animation: assistant-shadow 1.1s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+  pointer-events: none;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .assistant-bounce,
+  .assistant-bounce-shadow {
+    animation: none !important;
+  }
+}
+

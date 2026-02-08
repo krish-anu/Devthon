@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Recycle } from 'lucide-react';
+import Link from 'next/link';
+import { Recycle, ArrowLeft } from 'lucide-react';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -89,6 +90,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     <div className="flex min-h-screen">
       {/* Left Panel - Green Gradient */}
       <div className="relative hidden lg:flex lg:w-[45%] flex-col justify-between overflow-hidden bg-gradient-to-b from-(--brand) to-(--brand-strong) p-10 text-white">
+
         <div className="pointer-events-none absolute inset-0 auth-bg-container" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#f5f5f5' }}>
           {images.map((src, i) => (
             <img
@@ -102,10 +104,16 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           <div className="absolute inset-0 auth-bg-overlay z-22" />
         </div>
         <div className="relative z-25 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
-            <img src="/recycle%20logo.png" alt="Trash2Cash" className="h-8 w-8 object-contain" />
-          </div>
-          <span className="text-xl font-bold text-[color:var(--brand)]">Trash2Cash</span>
+          {/* <Link href="/" aria-label="Go to landing page" title="Go to landing page" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white shadow transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]">
+            <ArrowLeft className="h-4 w-4" />
+          </Link> */}
+
+          <Link href="/" aria-label="Go to landing page" title="Go to landing page" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
+              <img src="/recycle%20logo.png" alt="Trash2Cash logo" className="h-8 w-8 object-contain" />
+            </div>
+            <span className="text-xl font-bold text-[color:var(--brand)]">Trash2Cash</span>
+          </Link>
         </div>
         
         <div className="relative z-500 space-y-4">
@@ -120,12 +128,12 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
 
       {/* Right Panel - Form Area */}
         <div className="flex justify-between items-center p-6 lg:hidden">
-          <div className="flex items-center gap-2">
+          <Link href="/" aria-label="Go to landing page" title="Go to landing page" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--brand)/10 overflow-hidden">
-              <img src="/recycle%20logo.png" alt="Trash2Cash" className="h-5 w-5 object-contain" />
+              <img src="/recycle%20logo.png" alt="Trash2Cash logo" className="h-5 w-5 object-contain" />
             </div>
             <span className="font-semibold text-[color:var(--auth-text)]">Trash2Cash</span>
-          </div>
+          </Link>
         </div>
         
 

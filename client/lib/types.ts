@@ -13,6 +13,7 @@ export interface User {
   status?: CustomerStatus;
   approved?: boolean;
   createdAt: string;
+  avatar?: string | null;
 }
 
 export type BookingStatus =

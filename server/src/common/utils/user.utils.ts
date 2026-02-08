@@ -36,6 +36,7 @@ export function flattenUser(user: any) {
     fullName: profile.fullName ?? null,
     phone: profile.phone ?? null,
     address: profile.address ?? null,
+    avatar: profile.avatarUrl ?? null,
     // Customer-specific
     ...(customer ? { type: customer.type, status: customer.status } : {}),
     // Admin-specific

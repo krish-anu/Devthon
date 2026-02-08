@@ -232,8 +232,18 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--brand)/20 text-xl font-semibold">
-          {user?.fullName?.[0] ?? "U"}
+        <div>
+          {user && (user as any).avatar ? (
+            <img
+              src={(user as any).avatar}
+              alt={user?.fullName ?? "User avatar"}
+              className="h-16 w-16 rounded-full object-cover border border-[color:var(--brand)] dark:border-[color:var(--brand)] p-1"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--brand)/20 text-xl font-semibold">
+              {user?.fullName?.[0] ?? "U"}
+            </div>
+          )}
         </div>
         <div>
           <h3 className="text-xl font-semibold">{user?.fullName ?? "User"}</h3>

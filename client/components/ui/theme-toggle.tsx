@@ -60,7 +60,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         localStorage.setItem(THEME_KEY, nextTheme);
         applyTheme(nextTheme);
       }}
-      className={cn('rounded-full border border-[color:var(--brand)] dark:border-[color:var(--brand)]', className)}
+      className={cn('rounded-full', className)}
     >
       {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
     </Button>
