@@ -90,9 +90,10 @@ export default function HomePage() {
                 Turn Your Waste into Cash
               </h1>
             </ScrollAnimatedSection>
+            {/* Built for households */}
             <ScrollAnimatedSection delay={200}>
               <p className="text-base text-muted md:text-lg">
-                Built for households and businesses across Sri Lanka. Schedule
+                 and businesses across Sri Lanka. Schedule
                 pickups, track impact, and get paid instantly through mobile
                 wallets or bank transfers.
               </p>
