@@ -282,6 +282,9 @@ export default function LoginPage() {
           </Card>
         </div>
       </div>
+      <p className="text-xs text-center text-muted-foreground mt-4">
+        v1.0.1 - Deployed
+      </p>
     </AuthLayout>
   );
 }
