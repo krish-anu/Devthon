@@ -102,6 +102,9 @@ jobs:
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }}
             TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}
+            PASSKEY_RP_NAME=Trash2Cash
+            PASSKEY_RP_ID=${{ secrets.PASSKEY_RP_ID }}
+            PASSKEY_ORIGIN=${{ secrets.PASSKEY_ORIGIN }}
             NODE_ENV=production
             PORT=4000
             ENVEOF
