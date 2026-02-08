@@ -13,6 +13,7 @@ datasource db {
 // Passwords handled by Supabase Auth; passwordHash nullable
 // ─────────────────────────────────────────────
 model User {
+<<<<<<< HEAD
   id               String              @id @default(uuid())
   email            String              @unique
   passwordHash     String?
@@ -32,6 +33,23 @@ model User {
 // ─────────────────────────────────────────────
 // Passkey / WebAuthn credentials (1 : N with User)
 // ─────────────────────────────────────────────
+=======
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  passwordHash       String?
+  refreshTokenHash   String?
+  createdAt          DateTime            @default(now())
+  role               Role                @default(CUSTOMER)
+  admin              Admin?
+  bookings           Booking[]
+  customer           Customer?
+  driver             Driver?
+  notifications      Notification[]
+  passkeyCredentials PasskeyCredential[]
+  userPermissions    UserPermission[]
+}
+
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 model PasskeyCredential {
   id                  String   @id @default(uuid())
   userId              String
@@ -41,6 +59,7 @@ model PasskeyCredential {
   transports          String[] @default([])
   deviceName          String   @default("Passkey")
   createdAt           DateTime @default(now())
+<<<<<<< HEAD
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -70,11 +89,17 @@ model Admin {
   approved Boolean @default(false)
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
+=======
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model Driver {
   id          String       @id
   fullName    String
+<<<<<<< HEAD
   id          String       @id
   fullName    String
   phone       String
@@ -87,6 +112,16 @@ model Driver {
 
   user     User      @relation(fields: [id], references: [id], onDelete: Cascade)
   bookings Booking[]
+=======
+  phone       String
+  rating      Float        @default(0)
+  pickupCount Int          @default(0)
+  vehicle     String
+  createdAt   DateTime     @default(now())
+  status      DriverStatus @default(OFFLINE)
+  bookings    Booking[]
+  user        User         @relation(fields: [id], references: [id], onDelete: Cascade)
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 // ─────────────────────────────────────────────
@@ -159,11 +194,19 @@ model Booking {
   finalAmountLkr       Float?
   driverId             String?
   createdAt            DateTime             @default(now())
+<<<<<<< HEAD
 
   driver        Driver?              @relation(fields: [driverId], references: [id])
   user          User                 @relation(fields: [userId], references: [id])
   wasteCategory WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
   transactions  PaymentTransaction[]
+=======
+  status               BookingStatus        @default(SCHEDULED)
+  driver               Driver?              @relation(fields: [driverId], references: [id])
+  user                 User                 @relation(fields: [userId], references: [id])
+  wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
+  transactions         PaymentTransaction[]
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model Notification {
@@ -173,8 +216,13 @@ model Notification {
   message   String
   isRead    Boolean           @default(false)
   createdAt DateTime          @default(now())
+<<<<<<< HEAD
 
   user User? @relation(fields: [userId], references: [id])
+=======
+  level     NotificationLevel @default(INFO)
+  user      User?             @relation(fields: [userId], references: [id])
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model PaymentTransaction {
@@ -184,9 +232,13 @@ model PaymentTransaction {
   createdAt DateTime      @default(now())
   method    PaymentMethod
   status    PaymentStatus @default(PROCESSED)
+<<<<<<< HEAD
   createdAt DateTime      @default(now())
 
   booking Booking @relation(fields: [bookingId], references: [id])
+=======
+  booking   Booking       @relation(fields: [bookingId], references: [id])
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 }
 
 model LaunchNotify {
@@ -239,6 +291,7 @@ model UserPermission {
   @@id([userId, permissionId])
 }
 
+<<<<<<< HEAD
 // ─────────────────────────────────────────────
 // Enums
 // ─────────────────────────────────────────────
@@ -261,6 +314,15 @@ enum CustomerStatus {
   INACTIVE
 }
 
+=======
+enum Role {
+  CUSTOMER
+  ADMIN
+  SUPER_ADMIN
+  DRIVER
+}
+
+>>>>>>> dd56274420280dfcfc94fe2697b20f6f2bd4f9b6
 enum DriverStatus {
   ONLINE
   OFFLINE

@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { Role, CustomerStatus, CustomerType } from '@prisma/client';
+import { Role, CustomerType, CustomerStatus } from '@prisma/client';
 
 export class AdminUpdateUserDto {
   @IsOptional()

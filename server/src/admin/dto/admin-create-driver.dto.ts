@@ -13,8 +13,8 @@ export class AdminCreateDriverDto {
   @IsNotEmpty()
   email: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   password?: string;
 
   @IsOptional()

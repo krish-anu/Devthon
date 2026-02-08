@@ -11,9 +11,14 @@ import {
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createClient } from '@supabase/supabase-js';
-import { Pool } from 'pg';
 
 const prisma = new PrismaClient();
+
+// Optional Supabase client – used to mirror seeded rows into Supabase when credentials are provided
+// Read credentials from environment so seeding remains optional and safe in CI/local setups
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_KEY ?? null;
+const supabaseClient = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 async function main() {
   // Delete in reverse-dependency order
@@ -65,8 +70,6 @@ async function main() {
       type: CustomerType.HOUSEHOLD,
       status: CustomerStatus.ACTIVE,
       address: '45 Galle Road, Colombo 03',
-      type: CustomerType.HOUSEHOLD,
-      status: CustomerStatus.ACTIVE,
     },
   });
 
@@ -86,8 +89,6 @@ async function main() {
       type: CustomerType.BUSINESS,
       status: CustomerStatus.ACTIVE,
       address: 'Industrial Park, Negombo',
-      type: CustomerType.BUSINESS,
-      status: CustomerStatus.ACTIVE,
     },
   });
 

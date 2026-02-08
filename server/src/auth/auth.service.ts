@@ -29,20 +29,6 @@ export class AuthService {
     private supabaseService: SupabaseService,
   ) {}
 
-<<<<<<< HEAD
-=======
-  private sanitizeUser(user: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, refreshTokenHash, customer, admin, driver, ...safe } = user as any;
-
-    // Merge profile fields for backward compatibility
-    safe.fullName = customer?.fullName ?? admin?.fullName ?? driver?.fullName ?? safe.fullName;
-    safe.phone = customer?.phone ?? admin?.phone ?? driver?.phone ?? safe.phone;
-    safe.type = customer?.type ?? safe.type;
-    safe.status = customer?.status ?? safe.status;
-    return safe;
-  }
-
 >>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
   private async issueTokens(user: User) {
     const payload = { sub: user.id, role: user.role };
@@ -96,21 +82,6 @@ export class AuthService {
           `Using Supabase Auth ID ${supabaseAuthId} for new user ${dto.email}`,
         );
       }
-=======
-    const supabaseAuthId = await this.supabaseService.createAuthUser(dto.email, dto.password, {
-      fullName: dto.fullName,
-      phone: dto.phone,
-      type: dto.type,
-      role: dto.role ?? 'CUSTOMER',
-    });
-
-    // Create auth user
-    const userData: any = { email: dto.email, passwordHash, role: dto.role ?? 'CUSTOMER' };
-    if (supabaseAuthId) {
-      userData.id = supabaseAuthId;
-      this.logger.log(`Using Supabase Auth ID ${supabaseAuthId} for new user ${dto.email}`);
-    }
->>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
 
       const newUser = await tx.user.create({ data: userData });
 
@@ -130,22 +101,11 @@ export class AuthService {
       });
     });
 
-    // Create profile record for customer
-    await this.prisma.customer.create({ data: { id: user.id, fullName: dto.fullName, phone: dto.phone, type: dto.type, status: 'ACTIVE' } });
-
-<<<<<<< HEAD
-    const tokens = await this.issueTokens(user!);
-    return { user: flattenUser(user), ...tokens };
-=======
-    // Fetch user with related profiles for syncing and returning
-    const createdUser = await this.prisma.user.findUnique({ where: { id: user.id }, include: { customer: true, admin: true, driver: true } });
-
     // Sync user row to Supabase DB (if configured)
     await this.syncUserToSupabase(createdUser ?? user);
 
-    const tokens = await this.issueTokens(createdUser ?? user);
-    return { user: this.sanitizeUser(createdUser ?? user), ...tokens };
->>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
+    const tokens = await this.issueTokens(user!);
+    return { user: flattenUser(user), ...tokens };
   }
 
   async login(dto: LoginDto) {
@@ -167,14 +127,6 @@ export class AuthService {
 <<<<<<< HEAD
     const tokens = await this.issueTokens(user);
     return { user: flattenUser(user), ...tokens };
-=======
-
-    // Fetch related profile before returning
-    const userWithProfile = await this.prisma.user.findUnique({ where: { id: user.id }, include: { customer: true, admin: true, driver: true } });
-
-    const tokens = await this.issueTokens(userWithProfile ?? user);
-    return { user: this.sanitizeUser(userWithProfile ?? user), ...tokens };
->>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
   }
 
   async refresh(refreshToken: string) {
@@ -244,15 +196,11 @@ export class AuthService {
         { fullName: googleUser.name || 'Google User', provider: 'google' },
       );
 
-<<<<<<< HEAD
       user = await this.prisma.$transaction(async (tx) => {
         const userData: any = {
           email: googleUser.email,
           role: 'CUSTOMER',
         };
-=======
-      const userData: any = { email: googleUser.email, passwordHash: '', role: 'CUSTOMER' };
->>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
 
         if (supabaseAuthId) {
           userData.id = supabaseAuthId;
@@ -277,9 +225,6 @@ export class AuthService {
           include: USER_PROFILE_INCLUDE,
         });
       });
-
-      // Create a default customer profile
-      await this.prisma.customer.create({ data: { id: user.id, fullName: googleUser.name || 'Google User', phone: '', type: 'HOUSEHOLD', status: 'ACTIVE' } });
 
       // Sync to Supabase DB
       const userWithProfile = await this.prisma.user.findUnique({ where: { id: user.id }, include: { customer: true } });
@@ -308,7 +253,6 @@ export class AuthService {
    * This keeps the Supabase `users` table in sync with Prisma.
    */
   private async syncUserToSupabase(user: any): Promise<void> {
-<<<<<<< HEAD
     const flat = flattenUser(user);
     await this.supabaseService.upsertRow('users', {
       id: flat.id,
@@ -317,28 +261,6 @@ export class AuthService {
       fullName: flat.fullName,
       phone: flat.phone,
       address: flat.address,
-=======
-    // Ensure we have profile fields available
-    const u =
-      user?.customer || user?.admin || user?.driver
-        ? user
-        : await this.prisma.user.findUnique({ where: { id: user.id }, include: { customer: true, admin: true, driver: true } });
-
-    const profileFullName = u?.customer?.fullName ?? u?.admin?.fullName ?? u?.driver?.fullName ?? undefined;
-    const profilePhone = u?.customer?.phone ?? u?.admin?.phone ?? u?.driver?.phone ?? undefined;
-    const profileType = u?.customer?.type ?? undefined;
-    const profileStatus = u?.customer?.status ?? undefined;
-
-    await this.supabaseService.upsertRow('users', {
-      id: u.id,
-      fullName: profileFullName,
-      email: u.email,
-      phone: profilePhone,
-      role: u.role,
-      type: profileType,
-      status: profileStatus,
-      address: undefined,
->>>>>>> 30208fe (Refactor user model and related tables for role-based access control; implement Supabase Auth for user creation and update seeding logic for new structure)
     });
   }
 }
