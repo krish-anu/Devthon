@@ -25,7 +25,9 @@ export class SupabaseService implements OnModuleInit {
     } else {
       // Supabase integration disabled when no credentials are provided.
       // Use DATABASE_URL-only deployments without noisy warnings.
-      this.logger.debug('Supabase credentials not provided; integration disabled');
+      this.logger.debug(
+        'Supabase credentials not provided; integration disabled',
+      );
     }
   }
 
