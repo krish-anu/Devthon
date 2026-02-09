@@ -23,7 +23,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X, Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface User {
   id: string;
@@ -41,6 +50,8 @@ export default function AdminUsersPage() {
   const [type, setType] = useState<"ALL" | "HOUSEHOLD" | "BUSINESS">("ALL");
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -76,6 +87,11 @@ export default function AdminUsersPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       resetForm();
       setShowModal(false);
+      toast({ title: "User created", variant: "success" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Create user failed", description: error?.message ?? "Failed to create user", variant: "error" });
+      console.error("Create user failed", error);
     },
   });
 
@@ -90,6 +106,11 @@ export default function AdminUsersPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       resetForm();
       setShowModal(false);
+      toast({ title: "User updated", variant: "success" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Update failed", description: error?.message ?? "Failed to update user", variant: "error" });
+      console.error("Update user failed", error);
     },
   });
 
@@ -98,6 +119,10 @@ export default function AdminUsersPage() {
       apiFetch(`/admin/users/${userId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Delete failed", description: error?.message ?? "Failed to delete user", variant: "error" });
+      console.error("Delete user failed", error);
     },
   });
 
@@ -132,6 +157,26 @@ export default function AdminUsersPage() {
     });
     setShowModal(true);
   };
+
+  const openDeleteConfirm = (user: User) => {
+    setConfirmDeleteUser(user);
+  };
+
+  const confirmDelete = () => {
+    if (!confirmDeleteUser) return;
+    const id = confirmDeleteUser.id;
+    setDeletingUserId(id);
+    deleteUserMutation.mutate(id, {
+      onSuccess: () => {
+        toast({ title: "User deleted", variant: "success" });
+        setConfirmDeleteUser(null);
+      },
+      onError: (error: any) => {
+        toast({ title: "Delete failed", description: error?.message ?? "Unable to delete user", variant: "error" });
+      },
+      onSettled: () => setDeletingUserId(null),
+    });
+  }; 
 
   const handleSubmit = () => {
     if (!formData.fullName || !formData.email || !formData.phone) {
@@ -218,10 +263,18 @@ export default function AdminUsersPage() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => deleteUserMutation.mutate(user.id)}
-                          className="text-red-600"
+                          onClick={() => openDeleteConfirm(user)}
+                          disabled={deletingUserId === user.id}
+                          className="text-red-600 flex items-center"
                         >
-                          Delete
+                          {deletingUserId === user.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            "Delete"
+                          )}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -272,12 +325,12 @@ export default function AdminUsersPage() {
 
               <div>
                 <label className="text-sm font-medium">Phone</label>
-                <Input
+                <PhoneInput
                   value={formData.phone}
-                  onChange={(e) =>
+                  onChange={(e: any) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
-                  placeholder="Phone"
+                  placeholder="+94 77 123 4567"
                 />
               </div>
 
@@ -375,6 +428,47 @@ export default function AdminUsersPage() {
           </Card>
         </div>
       )}
+
+      {/* Confirm Delete Dialog */}
+      <Dialog
+        open={!!confirmDeleteUser}
+        onOpenChange={(val) => {
+          if (!val) setConfirmDeleteUser(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm delete</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {confirmDeleteUser?.fullName}? This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              onClick={() => setConfirmDeleteUser(null)}
+              className="flex-1 bg-gray-300 text-gray-800 hover:bg-gray-400"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              className="flex-1 bg-red-600"
+              disabled={deletingUserId === confirmDeleteUser?.id}
+            >
+              {deletingUserId === confirmDeleteUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,18 +25,58 @@ export default function AdminBookingsPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "thisMonth">("all");
 
   const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Mutation to delete booking
+  // Mutation to delete booking with optimistic update + spinner
   const deleteBookingMutation = useMutation({
     mutationFn: (id: string) =>
       apiFetch(`/bookings/${id}`, {
         method: "DELETE",
       }),
+    onMutate: async (id: string) => {
+      setDeletingId(id);
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["admin-bookings"] });
+
+      // Snapshot current data for rollback
+      const previous = queryClient.getQueryData<any[]>([
+        "admin-bookings",
+        status,
+        search,
+        dateFilter,
+      ]);
+
+      // Optimistically remove the booking from the cached lists that match the current filters
+      if (previous) {
+        queryClient.setQueryData([
+          "admin-bookings",
+          status,
+          search,
+          dateFilter,
+        ], previous.filter((b) => b.id !== id));
+      }
+
+      return { previous };
+    },
+    onError: (_err, _id, context: any) => {
+      // rollback
+      queryClient.setQueryData(
+        ["admin-bookings", status, search, dateFilter],
+        context?.previous,
+      );
+      setDeletingId(null);
+      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+    },
     onSuccess: () => {
+      setDeletingId(null);
+      toast({ title: "Booking deleted", variant: "success" });
       queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
     },
-    onError: () => {
-      alert("Failed to delete booking.");
+    onSettled: () => {
+      setDeletingId(null);
+      // Ensure all admin-bookings queries are refreshed
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
     },
   });
 
@@ -163,8 +204,13 @@ export default function AdminBookingsPage() {
                       onClick={() => handleDelete(booking.id)}
                       className="text-red-500 hover:text-red-700 hover:bg-red-50"
                       title="Delete Booking"
+                      disabled={deletingId === booking.id}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingId === booking.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   </TableCell>
                 </TableRow>

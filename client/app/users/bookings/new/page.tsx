@@ -8,6 +8,7 @@ import { Booking, PricingItem, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import Loading from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
@@ -113,6 +114,7 @@ export default function NewBookingPage() {
                 item.item.wasteCategory.name.toLowerCase().includes("cardboard")
     );
   }, [selectedItems]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const estimate = useMemo(() => {
     if (selectedItems.length === 0) return { min: 0, max: 0 };
@@ -375,6 +377,7 @@ export default function NewBookingPage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await apiFetch("/bookings", {
         method: "POST",
@@ -406,6 +409,8 @@ export default function NewBookingPage() {
         description: error?.message,
         variant: "error",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -773,10 +778,10 @@ export default function NewBookingPage() {
             </div>
             <div className="space-y-2">
               <Label>Phone Number *</Label>
-              <Input
+              <PhoneInput
                 value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="Enter contact number"
+                onChange={(e: any) => setPhoneNumber(e.target.value)}
+                placeholder="+94 77 123 4567"
                 required
               />
               {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
@@ -1030,7 +1035,16 @@ export default function NewBookingPage() {
             Next
           </Button>
         ) : (
-          <Button onClick={handleSubmit}>Confirm Booking</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Confirming...
+              </>
+            ) : (
+              "Confirm Booking"
+            )}
+          </Button>
         )}
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { formatPhoneForDisplay } from "@/lib/phone";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,7 +119,7 @@ export default function ApprovalsPage() {
                   {user.fullName || "—"}
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phone || "—"}</TableCell>
+                <TableCell>{formatPhoneForDisplay(user.phone) || "—"}</TableCell>
                 <TableCell>
                   <Badge variant={user.role === "DRIVER" ? "info" : "warning"}>
                     {user.role}
