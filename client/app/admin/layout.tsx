@@ -53,8 +53,8 @@ export default function AdminLayout({
       icon: <ClipboardList className="h-4 w-4" />,
     },
     {
-      label: "Pricing",
-      href: "/admin/pricing",
+      label: "Waste Management",
+      href: "/admin/waste",
       icon: <Tag className="h-4 w-4" />,
     },
     {

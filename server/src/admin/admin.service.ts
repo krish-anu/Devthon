@@ -9,6 +9,8 @@ import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
 import { AdminUpdateBookingDto } from './dto/admin-update-booking.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
+import { AdminCreateWasteCategoryDto } from './dto/admin-create-waste-category.dto';
+import { AdminUpdateWasteCategoryDto } from './dto/admin-update-waste-category.dto';
 import * as bcrypt from 'bcrypt';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
@@ -468,6 +470,41 @@ export class AdminService {
       include: { wasteCategory: true },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  // Waste Category management
+  async listWasteCategories() {
+    return this.prisma.wasteCategory.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  async createWasteCategory(dto: AdminCreateWasteCategoryDto) {
+    try {
+      return await this.prisma.wasteCategory.create({
+        data: {
+          name: dto.name,
+          description: dto.description ?? undefined,
+          isActive: dto.isActive ?? true,
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new BadRequestException('Category name already exists');
+      }
+      throw error;
+    }
+  }
+
+  async updateWasteCategory(id: string, dto: AdminUpdateWasteCategoryDto) {
+    const data: any = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    return this.prisma.wasteCategory.update({ where: { id }, data });
+  }
+
+  async deleteWasteCategory(id: string) {
+    await this.prisma.wasteCategory.delete({ where: { id } }).catch(() => {});
+    return { success: true };
   }
 
   /**

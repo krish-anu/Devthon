@@ -24,6 +24,8 @@ import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
 import { AdminUpdateBookingDto } from './dto/admin-update-booking.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import { AdminSendSmsDto } from './dto/admin-send-sms.dto';
+import { AdminCreateWasteCategoryDto } from './dto/admin-create-waste-category.dto';
+import { AdminUpdateWasteCategoryDto } from './dto/admin-update-waste-category.dto';
 import { SmsService } from '../sms/sms.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -101,6 +103,27 @@ export class AdminController {
   @Patch('pricing')
   updatePricing(@Body() dto: AdminUpdatePricingDto) {
     return this.adminService.updatePricing(dto);
+  }
+
+  // Waste Category management
+  @Get('waste-categories')
+  listWasteCategories() {
+    return this.adminService.listWasteCategories();
+  }
+
+  @Post('waste-categories')
+  createWasteCategory(@Body() dto: AdminCreateWasteCategoryDto) {
+    return this.adminService.createWasteCategory(dto);
+  }
+
+  @Patch('waste-categories/:id')
+  updateWasteCategory(@Param('id') id: string, @Body() dto: AdminUpdateWasteCategoryDto) {
+    return this.adminService.updateWasteCategory(id, dto);
+  }
+
+  @Delete('waste-categories/:id')
+  deleteWasteCategory(@Param('id') id: string) {
+    return this.adminService.deleteWasteCategory(id);
   }
 
   @Post('sms/send')
