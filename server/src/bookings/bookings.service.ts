@@ -239,6 +239,50 @@ export class BookingsService {
     }
   }
 
+  async delete(userId: string, id: string, role: string) {
+    this.transactionLogger.logTransaction('booking.delete.start', {
+      userId,
+      bookingId: id,
+      role,
+    });
+
+    try {
+      const booking = await this.prisma.booking.findUnique({ where: { id } });
+      if (!booking) throw new NotFoundException('Booking not found');
+
+      // Only the owner or admins can delete a booking
+      if (booking.userId !== userId && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+        throw new ForbiddenException();
+      }
+
+      await this.prisma.booking.delete({ where: { id } });
+
+      this.transactionLogger.logTransaction('booking.delete.success', {
+        userId,
+        bookingId: id,
+      });
+
+      // Send deletion push notification
+      this.pushService
+        .notify(booking.userId, {
+          title: 'Booking removed',
+          body: `Your booking #${id.slice(0, 8)} has been removed.`,
+          level: NotificationLevel.WARNING,
+          bookingId: id,
+          url: `/users/bookings/${id}`,
+        })
+        .catch(() => {});
+
+      return { message: 'Booking deleted' };
+    } catch (err) {
+      this.transactionLogger.logError('booking.delete.failure', err as Error, {
+        userId,
+        bookingId: id,
+      });
+      throw err;
+    }
+  }
+
   async pendingPickups(userId: string) {
     this.transactionLogger.logTransaction('booking.pending.start', { userId });
     try {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, CustomerType, NotificationLevel, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../notifications/push.service';
@@ -16,6 +16,8 @@ import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private prisma: PrismaService,
     private pushService: PushService,
@@ -626,6 +628,33 @@ export class AdminService {
       ...updated,
       user: undefined, // Don't leak full user in admin response
     };
+  }
+
+  /** Debug: trigger a 'Booking completed' style notification for a booking (admin only) */
+  async triggerBookingCompletedNotification(id: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      include: { wasteCategory: true },
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    const catName = booking.wasteCategory?.name ?? 'waste';
+    const shortId = id.slice(0, 8);
+
+    try {
+      await this.pushService.notify(booking.userId, {
+        title: 'Booking completed (test) 🎉',
+        body: `Your ${catName} pickup #${shortId} is complete (test).`,
+        level: NotificationLevel.SUCCESS,
+        bookingId: id,
+        url: `/users/bookings/${id}`,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send test completed notification for booking=${id} user=${booking.userId}`, err as Error);
+      throw err;
+    }
+
+    return { success: true };
   }
 
   // ─────────────────────────────────────────────

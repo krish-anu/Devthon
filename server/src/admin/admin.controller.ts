@@ -95,6 +95,12 @@ export class AdminController {
     return this.adminService.updateBooking(id, dto);
   }
 
+  /** Admin-only debug endpoint: trigger a test 'completed' notification */
+  @Post('bookings/:id/notify-complete')
+  triggerBooking(@Param('id') id: string) {
+    return this.adminService.triggerBookingCompletedNotification(id);
+  }
+
   @Get('pricing')
   listPricing() {
     return this.adminService.listPricing();
