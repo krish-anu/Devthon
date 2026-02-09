@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, CustomerType, NotificationLevel } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, CustomerType, NotificationLevel, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../notifications/push.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
@@ -589,5 +589,107 @@ export class AdminService {
       ...updated,
       user: undefined, // Don't leak full user in admin response
     };
+  }
+
+  // ─────────────────────────────────────────────
+  // Super-Admin: approval & role management
+  // ─────────────────────────────────────────────
+
+  /** List admins and drivers whose approved flag is false. */
+  async listPendingApprovals() {
+    const [admins, drivers] = (await Promise.all([
+      this.prisma.admin.findMany({
+        where: { approved: false } as any,
+        include: { user: { select: { id: true, email: true, role: true, createdAt: true } } },
+      }),
+      this.prisma.driver.findMany({
+        // Cast `where` because TypeScript's generated types may be stale during hot-reload
+        where: { approved: false } as any,
+        // Use a simple `include: { user: true }` shape so returned driver objects include `user`
+        include: { user: true },
+      }),
+    ])) as any;
+
+    return [
+      ...admins.map((a: any) => ({
+        id: a.id,
+        fullName: a.fullName,
+        phone: a.phone,
+        email: a.user?.email ?? '',
+        role: a.user?.role ?? 'ADMIN',
+        createdAt: a.user?.createdAt,
+      })),
+      ...drivers.map((d: any) => ({
+        id: d.id,
+        fullName: d.fullName,
+        phone: d.phone,
+        email: d.user?.email ?? '',
+        role: d.user?.role ?? 'DRIVER',
+        createdAt: d.user?.createdAt,
+      })),
+    ];
+  }
+
+  /** Approve an admin or driver account. */
+  async approveUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { admin: true, driver: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.admin) {
+      await this.prisma.admin.update({ where: { id }, data: { approved: true } as any });
+    } else if (user.driver) {
+      await this.prisma.driver.update({ where: { id }, data: { approved: true } as any });
+    } else {
+      throw new BadRequestException('User is neither an admin nor a driver');
+    }
+
+    return { success: true, message: `User ${id} approved` };
+  }
+
+  /** Reject (delete) a pending admin or driver account. */
+  async rejectUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { admin: true, driver: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Clean up profile + user row
+    if (user.admin) {
+      await this.prisma.admin.delete({ where: { id } });
+    }
+    if (user.driver) {
+      await this.prisma.driver.delete({ where: { id } });
+    }
+    await this.prisma.user.delete({ where: { id } });
+
+    return { success: true, message: `User ${id} rejected and removed` };
+  }
+
+  /** List every user with their role (for the manage-roles page). */
+  async listAllUsersWithRoles() {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: USER_PROFILE_INCLUDE,
+    });
+    return users.map((u) => flattenUser(u));
+  }
+
+  /** Change a user's role (Super-Admin only). */
+  async changeUserRole(id: string, role: string) {
+    const validRoles: string[] = Object.values(Role);
+    if (!validRoles.includes(role)) {
+      throw new BadRequestException(`Invalid role: ${role}`);
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.prisma.user.update({ where: { id }, data: { role: role as Role } });
+
+    return { success: true, message: `Role changed to ${role}` };
   }
 }
