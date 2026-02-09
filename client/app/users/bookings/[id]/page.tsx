@@ -65,7 +65,7 @@ export default function BookingDetailsPage() {
   });
 
   // Handle map click to place marker
-  const handleMapClick = (event: google.maps.MapMouseEvent) => {
+  const handleMapClick = (event: any) => {
     if (event.latLng) {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();

@@ -238,11 +238,7 @@ export class AuthService {
   }
 
   // Public: accept access_token or id_token and authenticate/create user
-<<<<<<< HEAD
-  async googleLogin(token: string, role?: string) {
-=======
-  async googleLogin(token: string, isSignup = false) {
->>>>>>> 97d3f2d (feat: integrate reCAPTCHA verification for user registration and login, enhance Google login DTOs)
+  async googleLogin(token: string, isSignup = false, role?: string) {
     let googleUser: any = null;
     const isJwt = token.split('.').length === 3;
 
@@ -276,19 +272,11 @@ export class AuthService {
       throw new UnauthorizedException('Google email not verified');
     }
 
-<<<<<<< HEAD
-    return this.findOrCreateUserFromGoogle(googleUser, role);
+    return this.findOrCreateUserFromGoogle(googleUser, isSignup, role);
   }
 
   // Exchange authorization code server-side and authenticate
-  async googleLoginWithCode(code: string, redirectUri?: string, role?: string) {
-=======
-    return this.findOrCreateUserFromGoogle(googleUser, isSignup);
-  }
-
-  // Exchange authorization code server-side and authenticate
-  async googleLoginWithCode(code: string, redirectUri?: string, isSignup = false) {
->>>>>>> 97d3f2d (feat: integrate reCAPTCHA verification for user registration and login, enhance Google login DTOs)
+  async googleLoginWithCode(code: string, redirectUri?: string, isSignup = false, role?: string) {
     const client_id = this.getRequiredConfig('GOOGLE_CLIENT_ID');
     const client_secret = this.getRequiredConfig('GOOGLE_CLIENT_SECRET');
     const redirect_uri =
@@ -344,19 +332,11 @@ export class AuthService {
       throw new UnauthorizedException('Google email not verified');
     }
 
-<<<<<<< HEAD
-    return this.findOrCreateUserFromGoogle(googleUser, role);
+    return this.findOrCreateUserFromGoogle(googleUser, isSignup, role);
   }
 
   // Shared logic to find or create app user from Google profile
-  private async findOrCreateUserFromGoogle(googleUser: any, role?: string) {
-=======
-    return this.findOrCreateUserFromGoogle(googleUser, isSignup);
-  }
-
-  // Shared logic to find or create app user from Google profile
-  private async findOrCreateUserFromGoogle(googleUser: any, isSignup = false) {
->>>>>>> 97d3f2d (feat: integrate reCAPTCHA verification for user registration and login, enhance Google login DTOs)
+  private async findOrCreateUserFromGoogle(googleUser: any, isSignup = false, role?: string) {
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
       include: USER_PROFILE_INCLUDE,

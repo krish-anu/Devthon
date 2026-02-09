@@ -6,11 +6,12 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { PasskeyController } from './passkey.controller';
 import { PasskeyService } from './passkey.service';
+import { RecaptchaService } from '../common/recaptcha.service';
 
 @Module({
   imports: [PassportModule, JwtModule.register({})],
   controllers: [AuthController, PasskeyController],
-  providers: [AuthService, JwtStrategy, PasskeyService],
+  providers: [AuthService, JwtStrategy, PasskeyService, RecaptchaService],
   exports: [AuthService],
 })
 export class AuthModule {}
