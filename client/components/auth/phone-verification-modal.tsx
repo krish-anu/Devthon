@@ -72,7 +72,7 @@ export function PhoneVerificationModal() {
       toast({
         title: "Error",
         description: "Failed to update phone number.",
-        variant: "destructive",
+        variant: "error",
       });
     }
   };
