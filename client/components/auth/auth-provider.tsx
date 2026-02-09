@@ -26,20 +26,8 @@ interface AuthContextValue {
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-<<<<<<< HEAD
-  googleLogin: (
-    token: string,
-    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
-  ) => Promise<User>;
-  googleLoginWithCode: (
-    code: string,
-    redirectUri?: string,
-    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
-  ) => Promise<User>;
-=======
   googleLogin: (token: string, signup?: boolean) => Promise<User>;
   googleLoginWithCode: (code: string, redirectUri?: string, signup?: boolean) => Promise<User>;
->>>>>>> 8b52e97 (feat: implement reCAPTCHA integration with badge and notice components)
   passkeyLogin: (email: string) => Promise<User>;
 }
 
@@ -125,32 +113,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
-<<<<<<< HEAD
-  const googleLogin = async (
-    token: string,
-    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
-  ) => {
-    const data = await authApi.googleLogin({ token, role });
-=======
   const googleLogin = async (token: string, signup?: boolean) => {
     const data = await authApi.googleLogin({ token, signup });
->>>>>>> 8b52e97 (feat: implement reCAPTCHA integration with badge and notice components)
     setAuth(data);
     setUser(data.user);
     return data.user;
   };
 
-<<<<<<< HEAD
-  const googleLoginWithCode = async (
-    code: string,
-    redirectUri?: string,
-    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
-  ) => {
-    const data = await authApi.googleLoginWithCode({ code, redirectUri, role });
-=======
   const googleLoginWithCode = async (code: string, redirectUri?: string, signup?: boolean) => {
     const data = await authApi.googleLoginWithCode({ code, redirectUri, signup });
->>>>>>> 8b52e97 (feat: implement reCAPTCHA integration with badge and notice components)
     setAuth(data);
     setUser(data.user);
     return data.user;

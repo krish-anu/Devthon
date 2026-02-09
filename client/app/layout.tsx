@@ -60,10 +60,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon.svg" />
         <meta name="theme-color" content="#10B981" />
       </head>
-      <body
-        className={`${spaceGrotesk.variable} ${jakarta.variable} antialiased`}
-        suppressHydrationWarning
-      >
+      <body className="antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
