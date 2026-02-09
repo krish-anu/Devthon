@@ -14,8 +14,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { usePathname } from "next/navigation";
 
 export default function DriverLayout({
@@ -57,7 +57,7 @@ export default function DriverLayout({
     <RequireAuth roles={["DRIVER"]}>
       <AppShell
         sidebar={<Sidebar title="Driver Console" items={navItems} />}
-        header={<Header title="Driver Console" right={<PushNotificationToggle />} />}
+        header={<Header title="Driver Console" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
       >
         {children}
       </AppShell>

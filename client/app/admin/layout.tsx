@@ -17,8 +17,9 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Header } from "@/components/layout/header";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { usePathname } from "next/navigation";
 
@@ -99,12 +100,12 @@ export default function AdminLayout({
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
       <RequireAuth roles={["ADMIN", "SUPER_ADMIN"]}>
         <AppShell
-          sidebar={<Sidebar title="Super Admin Portal" items={allNavItems} />}
-          header={<Header title="Super Admin Console" />}
+          sidebar={<Sidebar title="Admin Portal" items={allNavItems} />}
+          header={<Header title="Admin Console" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
         >
           {children}
         </AppShell>
-      </RequireAuth>
+      </RequireAuth> 
     </GoogleOAuthProvider>
   );
 }
