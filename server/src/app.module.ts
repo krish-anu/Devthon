@@ -25,9 +25,11 @@ import { LoggingModule } from './common/logger/logger.module';
 import { ChatModule } from './chat/chat.module';
 import { SupabaseModule } from './common/supabase/supabase.module';
 import { PartnersModule } from './partners/partners.module';
+import { DriverModule } from './driver/driver.module';
 
 @Module({
   imports: [
+    DriverModule,
     ConfigModule.forRoot({ isGlobal: true }),
     // Cache: in-memory cache configuration
     CacheModule.registerAsync({

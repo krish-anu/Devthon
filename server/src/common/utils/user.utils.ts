@@ -8,6 +8,8 @@ export const USER_PROFILE_INCLUDE = {
   customer: true,
   admin: true,
   driver: true,
+  recycler: true,
+  corporate: true,
 } as const;
 
 /**
@@ -23,13 +25,15 @@ export function flattenUser(user: any) {
     customer,
     admin,
     driver,
+    recycler,
+    corporate,
     passkeyCredentials,
     userPermissions,
     roleChangeLogs,
     ...base
   } = user;
 
-  const profile = customer || admin || driver || {};
+  const profile = customer || admin || driver || recycler || corporate || {};
 
   return {
     ...base,

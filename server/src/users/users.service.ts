@@ -18,18 +18,24 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: USER_PROFILE_INCLUDE,
-    });
-    if (!user) throw new NotFoundException('User not found');
-    return flattenUser(user);
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: USER_PROFILE_INCLUDE,
+      });
+      if (!user) throw new NotFoundException('User not found');
+      return flattenUser(user);
+    } catch (error) {
+      console.error('Error in getMe:', error);
+      throw error;
+    }
   }
 
   async updateMe(userId: string, dto: UpdateProfileDto) {
     // Fetch the user to determine their role
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: USER_PROFILE_INCLUDE,
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -48,30 +54,87 @@ export class UsersService {
     if (dto.address !== undefined) profileData.address = dto.address;
 
     if (Object.keys(profileData).length > 0) {
-      switch (user.role) {
-        case 'CUSTOMER':
-          await this.prisma.customer.upsert({
-            where: { id: userId },
-            update: profileData,
-            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
-          });
-          break;
-        case 'ADMIN':
-        case 'SUPER_ADMIN':
-          await this.prisma.admin.upsert({
-            where: { id: userId },
-            update: profileData,
-            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', ...profileData },
-          });
-          break;
-        case 'DRIVER':
-          await this.prisma.driver.upsert({
-            where: { id: userId },
-            update: profileData,
-            create: { id: userId, fullName: dto.fullName ?? '', phone: dto.phone ?? '', vehicle: '', ...profileData },
-          });
-          break;
-      }
+      // Helper to clean up conflicting profiles if they exist (handling inconsistent DB states)
+      const cleanConflictingProfiles = async (tx: any, role: string) => {
+        if (role !== 'CUSTOMER' && (user as any).customer) {
+          await tx.customer.delete({ where: { id: userId } });
+        }
+        if (!['ADMIN', 'SUPER_ADMIN'].includes(role) && (user as any).admin) {
+          await tx.admin.delete({ where: { id: userId } });
+        }
+        if (role !== 'DRIVER' && (user as any).driver) {
+          await tx.driver.delete({ where: { id: userId } });
+        }
+        if (role !== 'RECYCLER' && (user as any).recycler) {
+          await tx.recycler.delete({ where: { id: userId } });
+        }
+        if (role !== 'CORPORATE' && (user as any).corporate) {
+          await tx.corporate.delete({ where: { id: userId } });
+        }
+      };
+
+      // Helper to get fallback data from any existing profile to prevent data loss
+      const getFallbackData = () => {
+        const p = (user as any).customer || (user as any).admin || (user as any).driver || (user as any).recycler || (user as any).corporate || {};
+        return {
+          fullName: p.fullName ?? p.contactPerson ?? p.organizationName ?? dto.fullName ?? '',
+          phone: p.phone ?? dto.phone ?? '',
+          address: p.address ?? dto.address,
+          avatarUrl: p.avatarUrl,
+        };
+      };
+
+      await this.prisma.$transaction(async (tx) => {
+        switch (user.role) {
+          case 'CUSTOMER':
+            await cleanConflictingProfiles(tx, user.role);
+            const fallbackCust = getFallbackData();
+            await tx.customer.upsert({
+              where: { id: userId },
+              update: profileData,
+              create: {
+                id: userId,
+                fullName: fallbackCust.fullName,
+                phone: fallbackCust.phone,
+                type: 'HOUSEHOLD',
+                ...profileData
+              },
+            });
+            break;
+
+          case 'ADMIN':
+          case 'SUPER_ADMIN':
+            await cleanConflictingProfiles(tx, user.role);
+            const fallbackAdmin = getFallbackData();
+            await tx.admin.upsert({
+              where: { id: userId },
+              update: profileData,
+              create: {
+                id: userId,
+                fullName: fallbackAdmin.fullName,
+                phone: fallbackAdmin.phone,
+                ...profileData
+              },
+            });
+            break;
+
+          case 'DRIVER':
+            await cleanConflictingProfiles(tx, user.role);
+            const fallbackDriver = getFallbackData();
+            await tx.driver.upsert({
+              where: { id: userId },
+              update: profileData,
+              create: {
+                id: userId,
+                fullName: fallbackDriver.fullName,
+                phone: fallbackDriver.phone,
+                vehicle: 'Not specified',
+                ...profileData
+              },
+            });
+            break;
+        }
+      });
     }
 
     // Re-fetch and return flattened user

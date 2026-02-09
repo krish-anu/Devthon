@@ -25,8 +25,15 @@ interface AuthContextValue {
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  googleLogin: (token: string) => Promise<User>;
-  googleLoginWithCode: (code: string, redirectUri?: string) => Promise<User>;
+  googleLogin: (
+    token: string,
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
+  ) => Promise<User>;
+  googleLoginWithCode: (
+    code: string,
+    redirectUri?: string,
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
+  ) => Promise<User>;
   passkeyLogin: (email: string) => Promise<User>;
 }
 
@@ -111,15 +118,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
-  const googleLogin = async (token: string) => {
-    const data = await authApi.googleLogin({ token });
+  const googleLogin = async (
+    token: string,
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
+  ) => {
+    const data = await authApi.googleLogin({ token, role });
     setAuth(data);
     setUser(data.user);
     return data.user;
   };
 
-  const googleLoginWithCode = async (code: string, redirectUri?: string) => {
-    const data = await authApi.googleLoginWithCode({ code, redirectUri });
+  const googleLoginWithCode = async (
+    code: string,
+    redirectUri?: string,
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
+  ) => {
+    const data = await authApi.googleLoginWithCode({ code, redirectUri, role });
     setAuth(data);
     setUser(data.user);
     return data.user;

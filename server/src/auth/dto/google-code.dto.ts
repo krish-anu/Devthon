@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
 
 export class GoogleCodeDto {
   @IsString()
@@ -8,4 +8,9 @@ export class GoogleCodeDto {
   @IsString()
   @IsOptional()
   redirectUri?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['CUSTOMER', 'ADMIN', 'SUPER_ADMIN', 'DRIVER'])
+  role?: string;
 }

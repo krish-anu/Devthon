@@ -126,7 +126,10 @@ export const authApi = {
       },
       false,
     ),
-  googleLogin: (payload: { token: string }) =>
+  googleLogin: (payload: {
+    token: string;
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
+  }) =>
     apiFetch<AuthResponse>(
       "/auth/google",
       {
@@ -135,7 +138,11 @@ export const authApi = {
       },
       false,
     ),
-  googleLoginWithCode: (payload: { code: string; redirectUri?: string }) =>
+  googleLoginWithCode: (payload: {
+    code: string;
+    redirectUri?: string;
+    role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
+  }) =>
     apiFetch<AuthResponse>(
       "/auth/google/code",
       {

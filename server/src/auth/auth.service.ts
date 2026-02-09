@@ -83,15 +83,35 @@ export class AuthService {
 
       const newUser = await tx.user.create({ data: userData });
 
-      // Create the Customer profile (default registration is always a customer)
-      await tx.customer.create({
-        data: {
-          id: newUser.id,
-          fullName: dto.fullName,
-          phone: dto.phone,
-          type: dto.type,
-        },
-      });
+      // Create profile based on role
+      if (dto.role === 'ADMIN') {
+        await tx.admin.create({
+          data: {
+            id: newUser.id,
+            fullName: dto.fullName,
+            phone: dto.phone,
+          },
+        });
+      } else if (dto.role === 'DRIVER') {
+        await tx.driver.create({
+          data: {
+            id: newUser.id,
+            fullName: dto.fullName,
+            phone: dto.phone,
+            vehicle: 'Not specified',
+          },
+        });
+      } else {
+        // Default to CUSTOMER
+        await tx.customer.create({
+          data: {
+            id: newUser.id,
+            fullName: dto.fullName,
+            phone: dto.phone,
+            type: dto.type,
+          },
+        });
+      }
 
       return tx.user.findUnique({
         where: { id: newUser.id },
@@ -167,7 +187,9 @@ export class AuthService {
   }
 
   // Helper: verify ID token using Google's JWKS
-  private jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+  private jwks = createRemoteJWKSet(
+    new URL('https://www.googleapis.com/oauth2/v3/certs'),
+  );
 
   private async verifyIdToken(idToken: string) {
     const clientId = this.getRequiredConfig('GOOGLE_CLIENT_ID');
@@ -184,7 +206,7 @@ export class AuthService {
   }
 
   // Public: accept access_token or id_token and authenticate/create user
-  async googleLogin(token: string) {
+  async googleLogin(token: string, role?: string) {
     let googleUser: any = null;
     const isJwt = token.split('.').length === 3;
 
@@ -194,14 +216,18 @@ export class AuthService {
         googleUser = await this.verifyIdToken(token);
       } catch (err) {
         // Fallback to tokeninfo if verification fails
-        const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+        const ti = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
+        );
         if (ti.ok) googleUser = await ti.json();
       }
     } else {
       // Treat as access token and call UserInfo
       googleUser = await this.fetchUserInfo(token);
       if (!googleUser) {
-        const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+        const ti = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?access_token=${token}`,
+        );
         if (ti.ok) googleUser = await ti.json();
       }
     }
@@ -214,14 +240,15 @@ export class AuthService {
       throw new UnauthorizedException('Google email not verified');
     }
 
-    return this.findOrCreateUserFromGoogle(googleUser);
+    return this.findOrCreateUserFromGoogle(googleUser, role);
   }
 
   // Exchange authorization code server-side and authenticate
-  async googleLoginWithCode(code: string, redirectUri?: string) {
+  async googleLoginWithCode(code: string, redirectUri?: string, role?: string) {
     const client_id = this.getRequiredConfig('GOOGLE_CLIENT_ID');
     const client_secret = this.getRequiredConfig('GOOGLE_CLIENT_SECRET');
-    const redirect_uri = redirectUri ?? this.getRequiredConfig('GOOGLE_REDIRECT_URI');
+    const redirect_uri =
+      redirectUri ?? this.getRequiredConfig('GOOGLE_REDIRECT_URI');
 
     const params = new URLSearchParams({
       code,
@@ -262,11 +289,11 @@ export class AuthService {
       throw new UnauthorizedException('Google email not verified');
     }
 
-    return this.findOrCreateUserFromGoogle(googleUser);
+    return this.findOrCreateUserFromGoogle(googleUser, role);
   }
 
   // Shared logic to find or create app user from Google profile
-  private async findOrCreateUserFromGoogle(googleUser: any) {
+  private async findOrCreateUserFromGoogle(googleUser: any, role?: string) {
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
       include: USER_PROFILE_INCLUDE,
@@ -277,13 +304,17 @@ export class AuthService {
       const supabaseAuthId = await this.supabaseService.createAuthUser(
         googleUser.email,
         Math.random().toString(36).slice(-16) + 'A1!',
-        { fullName: googleUser.name || 'Google User', provider: 'google' },
+        {
+          fullName: googleUser.name || 'Google User',
+          provider: 'google',
+          role: role ?? 'CUSTOMER',
+        },
       );
 
       user = await this.prisma.$transaction(async (tx) => {
         const userData: any = {
           email: googleUser.email,
-          role: 'CUSTOMER',
+          role: role ?? 'CUSTOMER',
         };
 
         if (supabaseAuthId) {
@@ -295,15 +326,38 @@ export class AuthService {
 
         const newUser = await tx.user.create({ data: userData });
 
-        await tx.customer.create({
-          data: {
-            id: newUser.id,
-            fullName: googleUser.name || 'Google User',
-            phone: '',
-            avatarUrl: googleUser.picture ?? null,
-            type: 'HOUSEHOLD',
-          },
-        });
+        const inputRole = role ?? 'CUSTOMER';
+
+        if (inputRole === 'ADMIN') {
+          await tx.admin.create({
+            data: {
+              id: newUser.id,
+              fullName: googleUser.name || 'Google User',
+              phone: '',
+              avatarUrl: googleUser.picture ?? null,
+            },
+          });
+        } else if (inputRole === 'DRIVER') {
+          await tx.driver.create({
+            data: {
+              id: newUser.id,
+              fullName: googleUser.name || 'Google User',
+              phone: '',
+              vehicle: 'Not specified',
+              avatarUrl: googleUser.picture ?? null,
+            },
+          });
+        } else {
+          await tx.customer.create({
+            data: {
+              id: newUser.id,
+              fullName: googleUser.name || 'Google User',
+              phone: '',
+              avatarUrl: googleUser.picture ?? null,
+              type: 'HOUSEHOLD',
+            } as any,
+          });
+        }
 
         return tx.user.findUnique({
           where: { id: newUser.id },
@@ -321,11 +375,11 @@ export class AuthService {
       // Existing user — update avatar if Google provides one (or it changed).
       if (googleUser.picture) {
         try {
-          const avatarFromDb = user.customer?.avatarUrl ?? null;
+          const avatarFromDb = (user as any).customer?.avatarUrl ?? null;
           if (avatarFromDb !== googleUser.picture) {
             await this.prisma.customer.update({
               where: { id: user.id },
-              data: { avatarUrl: googleUser.picture },
+              data: { avatarUrl: googleUser.picture } as any,
             });
 
             // refresh the user object for return
@@ -342,7 +396,10 @@ export class AuthService {
             await this.syncUserToSupabase(userWithProfile ?? user);
           }
         } catch (err) {
-          this.logger.warn('Failed to update avatar for existing user', err as any);
+          this.logger.warn(
+            'Failed to update avatar for existing user',
+            err as any,
+          );
         }
       }
     }

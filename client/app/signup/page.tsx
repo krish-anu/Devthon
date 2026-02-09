@@ -50,7 +50,13 @@ export default function SignupPage() {
     });
   const { errors, isSubmitting } = formState;
   const router = useRouter();
-  const { register: registerUser, googleLogin, googleLoginWithCode, user, loading: authLoading } = useAuth();
+  const {
+    register: registerUser,
+    googleLogin,
+    googleLoginWithCode,
+    user,
+    loading: authLoading,
+  } = useAuth();
   const termsChecked = watch("terms");
 
   const redirectToDashboard = (userRole: string) => {
@@ -79,7 +85,11 @@ export default function SignupPage() {
     onSuccess: async (tokenResponse) => {
       try {
         if ((tokenResponse as any).code) {
-          const user = await googleLoginWithCode((tokenResponse as any).code);
+          const user = await googleLoginWithCode(
+            (tokenResponse as any).code,
+            undefined,
+            role,
+          );
           toast({
             title: "Welcome!",
             description: "Signed up with Google successfully.",
@@ -89,8 +99,10 @@ export default function SignupPage() {
           return;
         }
 
-        const token = (tokenResponse as any).access_token || (tokenResponse as any).credential;
-        const user = await googleLogin(token);
+        const token =
+          (tokenResponse as any).access_token ||
+          (tokenResponse as any).credential;
+        const user = await googleLogin(token, role);
         toast({
           title: "Welcome!",
           description: "Signed up with Google successfully.",
