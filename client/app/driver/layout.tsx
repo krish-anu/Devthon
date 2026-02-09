@@ -53,13 +53,24 @@ export default function DriverLayout({
     return <>{children}</>;
   }
 
+  const isPendingApproval = user && user.role === "DRIVER" && !user.approved;
+
   return (
     <RequireAuth roles={["DRIVER"]}>
       <AppShell
-        sidebar={<Sidebar title="Driver Console" items={navItems} />}
-        header={<Header title="Driver Console" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
+        sidebar={isPendingApproval ? null : <Sidebar title="Driver Console" items={navItems} />}
+        header={<Header title="Driver Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
       >
-        {children}
+        {isPendingApproval ? (
+          <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+            <div className="max-w-2xl text-center">
+              <h2 className="text-2xl font-semibold">Account pending approval</h2>
+              <p className="mt-4 text-(--muted)">Your account is pending approval by a Super Admin. Please wait for acceptance.</p>
+            </div>
+          </div>
+        ) : (
+          children
+        )}
       </AppShell>
     </RequireAuth>
   );

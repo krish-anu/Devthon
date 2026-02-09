@@ -96,16 +96,28 @@ export default function AdminLayout({
     );
   }
 
+  const isPendingApproval =
+    user && (user.role === "ADMIN" || user.role === "DRIVER") && !user.approved;
+
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
       <RequireAuth roles={["ADMIN", "SUPER_ADMIN"]}>
         <AppShell
-          sidebar={<Sidebar title="Admin Portal" items={allNavItems} />}
-          header={<Header title="Admin Console" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
+          sidebar={isPendingApproval ? null : <Sidebar title="Admin Portal" items={allNavItems} />}
+          header={<Header title="Admin Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
         >
-          {children}
+          {isPendingApproval ? (
+            <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+              <div className="max-w-2xl text-center">
+                <h2 className="text-2xl font-semibold">Account pending approval</h2>
+                <p className="mt-4 text-(--muted)">Your account is pending approval by a Super Admin. Please wait for acceptance.</p>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </AppShell>
-      </RequireAuth> 
+      </RequireAuth>
     </GoogleOAuthProvider>
   );
 }
