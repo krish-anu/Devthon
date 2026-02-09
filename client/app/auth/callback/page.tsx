@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { setAuth } from "@/lib/auth";
-import { getAccessTokenFromHash } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
 
 export default function AuthCallbackPage() {

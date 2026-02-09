@@ -105,12 +105,12 @@ export class AuthController {
       maxAge: 5 * 60 * 1000, // 5 minutes
     });
 
-    const client_id = process.env.GOOGLE_CLIENT_ID;
+    const client_id = process.env.GOOGLE_CLIENT_ID ?? '';
     const redirect_uri = process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
     const scope = 'openid email profile';
     const params = new URLSearchParams({
-      client_id,
-      redirect_uri,
+      client_id: String(client_id),
+      redirect_uri: String(redirect_uri),
       response_type: 'code',
       scope,
       state,
