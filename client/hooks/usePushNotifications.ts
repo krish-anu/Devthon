@@ -23,6 +23,7 @@ export function usePushNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   // Flag to indicate the server is missing VAPID keys
   const [vapidMissing, setVapidMissing] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   // Check support & current subscription on mount
   useEffect(() => {
@@ -92,20 +93,34 @@ export function usePushNotifications() {
         applicationServerKey: keyArray.buffer as ArrayBuffer,
       });
 
+      // Optimistically mark subscribed in the UI
+      setIsSubscribed(true);
+
       // 5. Send subscription to server
       const json = sub.toJSON();
-      await apiFetch("/notifications/push/subscribe", {
-        method: "POST",
-        body: JSON.stringify({
-          endpoint: json.endpoint,
-          keys: {
-            p256dh: json.keys?.p256dh,
-            auth: json.keys?.auth,
-          },
-        }),
-      });
+      try {
+        await apiFetch("/notifications/push/subscribe", {
+          method: "POST",
+          body: JSON.stringify({
+            endpoint: json.endpoint,
+            keys: {
+              p256dh: json.keys?.p256dh,
+              auth: json.keys?.auth,
+            },
+          }),
+        });
+      } catch (e) {
+        // If server fails, undo local subscription and revert UI
+        console.error('Server failed to save subscription, cleaning up:', e);
+        try {
+          await sub.unsubscribe();
+        } catch (uerr) {
+          console.error('Failed to unsubscribe locally after server error:', uerr);
+        }
+        setIsSubscribed(false);
+        throw e;
+      }
 
-      setIsSubscribed(true);
       return true;
     } catch (err) {
       console.error("Push subscription failed:", err);
@@ -117,23 +132,59 @@ export function usePushNotifications() {
 
   /** Unsubscribe from push notifications */
   const unsubscribe = useCallback(async () => {
-    if (!isSupported) return;
+    if (!isSupported) return false;
     setIsLoading(true);
+    // Optimistically update UI
+    setIsSubscribed(false);
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
-        // Inform server
-        await apiFetch("/notifications/push/unsubscribe", {
-          method: "POST",
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        }).catch(() => {});
+        // Ask server to remove subscription
+        try {
+          await apiFetch("/notifications/push/unsubscribe", {
+            method: "POST",
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+        } catch (e: any) {
+          const msg = (e?.message || '').toString();
+          // If user is unauthorized (session expired / invalid tokens), treat as session expiration:
+          if (msg.includes('401') || /unauthor/i.test(msg)) {
+            console.warn('Server returned Unauthorized while removing subscription. Clearing local session and unsubscribing locally.');
+            // Mark session expired for the UI to show a helpful message
+            setSessionExpired(true);
+            // Try to clean up local subscription even if server refused
+            try {
+              await sub.unsubscribe();
+            } catch (uerr) {
+              console.error('Failed to unsubscribe locally after 401:', uerr);
+            }
+
+            // Clear local auth (so UI shows logged-out state)
+            try {
+              const { setAuth } = await import('@/lib/auth');
+              setAuth(null as any);
+            } catch (aerr) {
+              console.error('Failed to clear auth after 401:', aerr);
+            }
+
+            return true; // consider unsubscribe successful from user's perspective
+          }
+
+          console.error('Server failed to remove subscription:', e);
+          // Revert optimistic UI and surface failure
+          setIsSubscribed(true);
+          return false;
+        }
         // Unsubscribe locally
         await sub.unsubscribe();
       }
-      setIsSubscribed(false);
+      return true;
     } catch (err) {
       console.error("Push unsubscribe failed:", err);
+      // Revert optimistic UI on error
+      setIsSubscribed(true);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -147,5 +198,7 @@ export function usePushNotifications() {
     subscribe,
     unsubscribe,
     vapidMissing,
+    sessionExpired,
   };
-} 
+}
+

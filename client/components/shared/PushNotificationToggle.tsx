@@ -6,18 +6,33 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
 export function PushNotificationToggle() {
-  const { isSupported, isSubscribed, isLoading, permission, subscribe, unsubscribe, vapidMissing } =
+  const { isSupported, isSubscribed, isLoading, permission, subscribe, unsubscribe, vapidMissing, sessionExpired } =
     usePushNotifications();
 
   if (!isSupported) return null;
 
   const handleToggle = async () => {
     if (isSubscribed) {
-      await unsubscribe();
-      toast({
-        title: "Push notifications disabled",
-        description: "You will no longer receive browser notifications.",
-      });
+      const ok = await unsubscribe();
+      if (ok) {
+        toast({
+          title: "Push notifications disabled",
+          description: "You will no longer receive browser notifications.",
+        });
+      } else if (sessionExpired) {
+        toast({
+          title: "Session expired",
+          description:
+            "Your session expired while updating subscriptions. Please sign in again to manage notifications.",
+          variant: "warning",
+        });
+      } else {
+        toast({
+          title: "Could not disable",
+          description: "Failed to disable push notifications. Try again or check the console.",
+          variant: "error",
+        });
+      }
     } else {
       const ok = await subscribe();
       if (ok) {
@@ -38,7 +53,14 @@ export function PushNotificationToggle() {
           description:
             "Push notifications are not configured on the server (VAPID keys missing). Ask an admin to set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.",
           variant: "warning",
-        });      }
+        });
+      } else {
+        toast({
+          title: "Subscription failed",
+          description: "Could not enable push notifications. Try again or check developer console for details.",
+          variant: "error",
+        });
+      }
     }
   };
 
