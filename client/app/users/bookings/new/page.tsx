@@ -282,14 +282,14 @@ export default function NewBookingPage() {
       toast({ title: "Select a category", variant: "warning" });
       return;
     }
-    if (!weightRange) {
+    if (isPaperCategory && !weightRange) {
       toast({ title: "Select a weight range", variant: "warning" });
       return;
     }
-    if (!addressLine1 || !city || !postalCode || !specialInstructions) {
+    if (!addressLine1 || !city || !postalCode) {
       toast({
         title: "Complete the pickup details",
-        description: "Please fill all address fields.",
+        description: "Please fill all required address fields.",
         variant: "warning",
       });
       return;
@@ -358,13 +358,33 @@ export default function NewBookingPage() {
     }
   };
 
-  const steps = [
-    "Select Waste Categories",
-    "Enter Quantities",
-    "Pickup Location",
-    "Select Date & Time",
-    "Confirm Booking",
-  ];
+  const isPaperCategory = useMemo(() => {
+    return selectedItems.some(
+      (item) => item.item.wasteCategory.name.toLowerCase().includes("paper") ||
+                item.item.wasteCategory.name.toLowerCase().includes("cardboard")
+    );
+  }, [selectedItems]);
+
+  const steps = isPaperCategory
+    ? [
+        "Select Waste Categories",
+        "Enter Quantities",
+        "Pickup Details & Contact",
+        "Select Date & Time",
+        "Confirm Booking",
+      ]
+    : [
+        "Select Waste Categories",
+        "Pickup Details & Contact",
+        "Select Date & Time",
+        "Confirm Booking",
+      ];
+
+  const getActualStep = (currentStep: number) => {
+    if (isPaperCategory) return currentStep;
+    if (currentStep <= 1) return currentStep;
+    return currentStep + 1; // Skip step 2 for non-paper
+  };
 
   return (
     <div className="space-y-6">
@@ -618,10 +638,35 @@ export default function NewBookingPage() {
               ))}
             </div>
           </div>
+
+          {/* Price Variation Warning */}
+          <div className="rounded-xl border-2 border-(--brand) bg-(--brand)/5 p-4">
+            <div className="flex items-start gap-3">
+              <svg
+                className="mt-0.5 h-5 w-5 flex-shrink-0 text-(--brand)"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-(--brand)">Important Note</p>
+                <p className="text-sm text-(--muted) mt-1">
+                  Final prices may vary according to the quality, condition, and actual weight of your product. The quoted prices are estimates and will be confirmed after inspection.
+                </p>
+              </div>
+            </div>
+          </div>
         </Card>
       )}
 
-      {step === 2 && (
+      {step === 2 && isPaperCategory && (
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Estimate Weight</h3>
           <div className="grid gap-3 md:grid-cols-3">
@@ -646,12 +691,12 @@ export default function NewBookingPage() {
         </Card>
       )}
 
-      {step === 3 && (
+      {((step === 3 && isPaperCategory) || (step === 2 && !isPaperCategory)) && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Pickup Location</h3>
+          <h3 className="text-lg font-semibold">Pickup Details & Contact</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Street Address</Label>
+              <Label>Street Address *</Label>
               <Input
                 value={addressLine1}
                 onChange={(event) => setAddressLine1(event.target.value)}
@@ -659,7 +704,7 @@ export default function NewBookingPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>City</Label>
+              <Label>City *</Label>
               <Input
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
@@ -667,7 +712,7 @@ export default function NewBookingPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>ZIP</Label>
+              <Label>ZIP *</Label>
               <Input
                 value={postalCode}
                 onChange={(event) => setPostalCode(event.target.value)}
@@ -675,11 +720,20 @@ export default function NewBookingPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Special Instructions</Label>
+              <Label>Phone Number *</Label>
+              <Input
+                value={phoneNumber}
+                onChange={(event) => setPhoneNumber(event.target.value)}
+                placeholder="Enter contact number"
+                required
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Special Instructions (Optional)</Label>
               <Textarea
                 value={specialInstructions}
                 onChange={(event) => setSpecialInstructions(event.target.value)}
-                required
+                placeholder="Any specific instructions for the pickup driver (e.g., gate code, building entrance)"
               />
             </div>
           </div>
@@ -696,7 +750,7 @@ export default function NewBookingPage() {
         </Card>
       )}
 
-      {step === 4 && (
+      {((step === 4 && isPaperCategory) || (step === 3 && !isPaperCategory)) && (
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Select Date & Time</h3>
           <div className="space-y-4">
@@ -724,56 +778,82 @@ export default function NewBookingPage() {
         </Card>
       )}
 
-      {step === 5 && (
-        <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Confirm Booking</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Categories</p>
-              <div className="space-y-2">
-                {selectedItems.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold">
-                        {s.item.wasteCategory.name}
-                      </p>
-                      <p className="text-xs text-(--muted)">
-                        Qty: {s.quantity} kg
-                      </p>
-                    </div>
-                    <div className="text-sm text-(--muted)">
-                      LKR {(s.item.minPriceLkrPerKg * s.quantity).toFixed(0)} -{" "}
-                      {(s.item.maxPriceLkrPerKg * s.quantity).toFixed(0)}
-                    </div>
+      {((step === 5 && isPaperCategory) || (step === 4 && !isPaperCategory)) && (
+        <Card className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold">Booking Summary</h3>
+            <p className="text-sm text-(--muted) mt-1">Please review all details before confirming</p>
+          </div>
+
+          {/* Waste Categories Summary */}
+          <div className="rounded-xl border-2 border-(--brand) bg-(--brand)/5 p-4">
+            <p className="text-sm font-semibold text-(--brand) mb-3">Waste Categories</p>
+            <div className="space-y-2">
+              {selectedItems.map((s) => (
+                <div key={s.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {s.item.wasteCategory.name}
+                    </p>
+                    <p className="text-xs text-(--muted)">
+                      {isPaperCategory ? `Quantity: ${s.quantity} kg` : `Estimated weight: ${weightRange?.label || 'Not specified'}`}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <div className="text-sm text-(--muted)">
+                    LKR {(s.item.minPriceLkrPerKg * (isPaperCategory ? s.quantity : (weightRange?.min || 1))).toFixed(0)} -{" "}
+                    {(s.item.maxPriceLkrPerKg * (isPaperCategory ? s.quantity : (weightRange?.max || 1))).toFixed(0)}
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Estimated Total */}
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Estimated Total</p>
-              <p className="text-lg font-semibold">
+              <p className="text-sm text-(--muted) mb-2">Estimated Total Earnings</p>
+              <p className="text-2xl font-bold text-(--brand)">
                 LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
               </p>
+              <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
             </div>
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Pickup Address</p>
-              <p className="text-lg font-semibold">{addressLine1 || "--"}</p>
-              <p className="text-sm text-(--muted)">
-                {city} {postalCode}
-              </p>
-            </div>
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Time Slot</p>
-              <p className="text-lg font-semibold">{scheduledTimeSlot}</p>
-            </div>
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <Label className="text-sm text-(--muted)">Phone Number</Label>
-              <Input
-                value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="Enter phone number"
-                required
-              />
+
+            {/* Weight Range */}
+            {!isPaperCategory && weightRange && (
+              <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+                <p className="text-sm text-(--muted) mb-2">Estimated Weight</p>
+                <p className="text-lg font-semibold">{weightRange.label}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pickup Details */}
+          <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+            <p className="text-sm font-semibold mb-3">Pickup Details</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <p className="text-xs text-(--muted)">Address</p>
+                <p className="text-sm font-medium">{addressLine1}</p>
+                <p className="text-sm text-(--muted)">{city}, {postalCode}</p>
+              </div>
+              <div>
+                <p className="text-xs text-(--muted)">Contact Number</p>
+                <p className="text-sm font-medium">{phoneNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs text-(--muted)">Scheduled Date</p>
+                <p className="text-sm font-medium">{new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+              <div>
+                <p className="text-xs text-(--muted)">Time Slot</p>
+                <p className="text-sm font-medium">{scheduledTimeSlot}</p>
+              </div>
+              {specialInstructions && (
+                <div className="md:col-span-2">
+                  <p className="text-xs text-(--muted)">Special Instructions</p>
+                  <p className="text-sm font-medium">{specialInstructions}</p>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-(--muted)">
@@ -790,50 +870,58 @@ export default function NewBookingPage() {
         <Button
           variant="outline"
           onClick={() => setStep((s) => Math.max(1, s - 1))}
+          disabled={step === 1}
         >
           Back
         </Button>
-        {step < 5 ? (
+        {step < steps.length ? (
           <Button
             onClick={() => {
               if (step === 1 && selectedItems.length === 0) {
                 toast({ title: "Select a category", variant: "warning" });
                 return;
               }
-              if (step === 2 && !weightRange) {
+              if (step === 2 && isPaperCategory && !weightRange) {
                 toast({ title: "Select a weight range", variant: "warning" });
                 return;
               }
-              if (
-                step === 3 &&
-                (!addressLine1 || !city || !postalCode || !specialInstructions)
-              ) {
-                toast({
-                  title: "Complete the pickup details",
-                  description: "Please fill all address fields.",
-                  variant: "warning",
-                });
-                return;
+              const isPickupStep = (isPaperCategory && step === 3) || (!isPaperCategory && step === 2);
+              if (isPickupStep) {
+                if (!addressLine1 || !city || !postalCode) {
+                  toast({
+                    title: "Complete the pickup details",
+                    description: "Please fill all required address fields.",
+                    variant: "warning",
+                  });
+                  return;
+                }
+                if (!phoneNumber) {
+                  toast({
+                    title: "Phone number required",
+                    description: "Please enter your contact number.",
+                    variant: "warning",
+                  });
+                  return;
+                }
+                if (!locationPicked) {
+                  toast({
+                    title: "Select a pickup location",
+                    description: "Please confirm the map location before proceeding.",
+                    variant: "warning",
+                  });
+                  return;
+                }
               }
-              if (step === 3 && !locationPicked) {
-                toast({
-                  title: "Select a pickup location",
-                  description:
-                    "Please confirm the map location before proceeding.",
-                  variant: "warning",
-                });
-                return;
-              }
-              if (step === 4 && (!scheduledDate || !scheduledTimeSlot)) {
+              const isDateStep = (isPaperCategory && step === 4) || (!isPaperCategory && step === 3);
+              if (isDateStep && (!scheduledDate || !scheduledTimeSlot)) {
                 toast({
                   title: "Select date and time",
-                  description:
-                    "Please choose a pickup date and time slot.",
+                  description: "Please choose a pickup date and time slot.",
                   variant: "warning",
                 });
                 return;
               }
-              setStep((s) => Math.min(5, s + 1));
+              setStep((s) => Math.min(steps.length, s + 1));
             }}
           >
             Next
