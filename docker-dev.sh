@@ -46,6 +46,30 @@ cmd_start() {
     docker compose up --build
 }
 
+cmd_start_local() {
+    print_header "Starting Docker Services (Local DB)"
+    print_info "Building and starting all services with local database..."
+    export DATABASE_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
+    export DIRECT_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
+    docker compose --profile local-db up --build
+}
+
+cmd_start_local_detached() {
+    print_header "Starting Docker Services (Local DB, Detached)"
+    print_info "Building and starting all services with local database in background..."
+    export DATABASE_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
+    export DIRECT_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
+    docker compose --profile local-db up --build -d
+    print_success "Services started successfully!"
+    echo ""
+    print_info "Access the application:"
+    echo "  Frontend:  http://localhost:3000"
+    echo "  Backend:   http://localhost:4000/api"
+    echo "  API Docs:  http://localhost:4000/api/docs"
+    echo ""
+    print_info "View logs with: ./docker-dev.sh logs"
+}
+
 cmd_start_detached() {
     print_header "Starting Docker Services (Detached)"
     print_info "Building and starting all services in background..."
@@ -189,6 +213,8 @@ ${GREEN}Usage:${NC}
 ${GREEN}Commands:${NC}
   ${YELLOW}start${NC}              Start all services (foreground)
   ${YELLOW}start-bg${NC}           Start all services (background/detached)
+    ${YELLOW}start-local${NC}        Start all services with local DB (foreground)
+    ${YELLOW}start-local-bg${NC}     Start all services with local DB (background)
   ${YELLOW}stop${NC}               Stop all services
   ${YELLOW}restart${NC}            Restart all services
   ${YELLOW}logs${NC} [service]     View logs (all or specific service)
@@ -227,6 +253,12 @@ case "$1" in
         ;;
     start-bg|start-detached)
         cmd_start_detached
+        ;;
+    start-local)
+        cmd_start_local
+        ;;
+    start-local-bg)
+        cmd_start_local_detached
         ;;
     stop)
         cmd_stop

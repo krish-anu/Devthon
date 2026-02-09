@@ -1,6 +1,13 @@
 "use client";
 
-import { LayoutGrid, Truck, ClipboardList, Bell, LogOut } from "lucide-react";
+import {
+  LayoutGrid,
+  Truck,
+  ClipboardList,
+  Bell,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -33,6 +40,11 @@ export default function DriverLayout({
       label: "Notifications",
       href: "/driver/notifications",
       icon: <Bell className="h-4 w-4" />,
+    },
+    {
+      label: "Settings",
+      href: "/driver/settings",
+      icon: <Settings className="h-4 w-4" />,
     },
   ];
 

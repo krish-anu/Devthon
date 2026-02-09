@@ -8,6 +8,7 @@ import {
   Tag,
   LogOut,
   MessageSquare,
+  Settings,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
@@ -57,6 +58,11 @@ export default function AdminLayout({
       label: "SMS",
       href: "/admin/sms",
       icon: <MessageSquare className="h-4 w-4" />,
+    },
+    {
+      label: "Settings",
+      href: "/admin/settings",
+      icon: <Settings className="h-4 w-4" />,
     },
   ];
 
