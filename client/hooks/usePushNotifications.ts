@@ -21,6 +21,8 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
+  // Flag to indicate the server is missing VAPID keys
+  const [vapidMissing, setVapidMissing] = useState(false);
 
   // Check support & current subscription on mount
   useEffect(() => {
@@ -58,11 +60,27 @@ export function usePushNotifications() {
       }
 
       // 3. Get VAPID public key from server
-      const { publicKey } = await apiFetch<{ publicKey: string | null }>(
-        "/notifications/push/public-key",
-      );
+      let publicKeyResponse;
+      try {
+        publicKeyResponse = await apiFetch<{ publicKey: string | null }>(
+          "/notifications/push/public-key",
+        );
+      } catch (e: any) {
+        // Detect structured server error or message indicating missing VAPID keys
+        const msg = (e?.message || '').toString();
+        if (msg.includes('VAPID') || msg.includes('VAPID_NOT_CONFIGURED')) {
+          console.warn('Push subscription failed: VAPID public key not configured on server');
+          setVapidMissing(true);
+          setIsLoading(false);
+          return false;
+        }
+        throw e;
+      }
+
+      const { publicKey } = publicKeyResponse;
       if (!publicKey) {
         console.warn("VAPID public key not configured on server");
+        setVapidMissing(true);
         setIsLoading(false);
         return false;
       }
@@ -128,5 +146,6 @@ export function usePushNotifications() {
     permission,
     subscribe,
     unsubscribe,
+    vapidMissing,
   };
-}
+} 

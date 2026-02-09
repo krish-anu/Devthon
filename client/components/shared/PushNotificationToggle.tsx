@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
 export function PushNotificationToggle() {
-  const { isSupported, isSubscribed, isLoading, permission, subscribe, unsubscribe } =
+  const { isSupported, isSubscribed, isLoading, permission, subscribe, unsubscribe, vapidMissing } =
     usePushNotifications();
 
   if (!isSupported) return null;
@@ -32,8 +32,13 @@ export function PushNotificationToggle() {
           description:
             "Please enable notifications in your browser settings.",
           variant: "error",
-        });
-      }
+        });      } else if (vapidMissing) {
+        toast({
+          title: "Push unavailable",
+          description:
+            "Push notifications are not configured on the server (VAPID keys missing). Ask an admin to set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.",
+          variant: "warning",
+        });      }
     }
   };
 

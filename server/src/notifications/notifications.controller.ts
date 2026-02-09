@@ -28,7 +28,11 @@ export class NotificationsController {
   getPublicKey() {
     const publicKey = this.pushService.getPublicKey();
     if (!publicKey) {
-      throw new ServiceUnavailableException('VAPID public key not configured on server');
+      // Return a structured error payload so clients can detect this specific case.
+      throw new (require('@nestjs/common').HttpException)(
+        { error: 'VAPID_NOT_CONFIGURED', message: 'VAPID public key not configured on server' },
+        503,
+      );
     }
     return { publicKey };
   }
