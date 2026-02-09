@@ -83,6 +83,11 @@ export default function AdminLayout({
             href: "/admin/manage-roles",
             icon: <UserCog className="h-4 w-4" />,
           },
+          {
+            label: "Admin Management",
+            href: "/admin/admins",
+            icon: <UserCog className="h-4 w-4" />,
+          },
         ]
       : [];
 
