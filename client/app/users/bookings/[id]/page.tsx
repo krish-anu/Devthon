@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Loading from "@/components/shared/Loading";
 import { Phone, MessageSquare } from "lucide-react";
 
 const steps = [
@@ -37,13 +38,21 @@ export default function BookingDetailsPage() {
     googleMapsApiKey: "AIzaSyBSvWSJfQMojEZpNYrq9c6pW4yQXg8k5AY",
   });
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["booking", id],
     queryFn: () => apiFetch<Booking>(`/bookings/${id}`),
     enabled: Boolean(id),
   });
 
   const booking = data;
+
+  if (isLoading) {
+    return (
+      <div className="py-8">
+        <Loading message="Loading booking details..." />
+      </div>
+    );
+  }
 
   // State for map marker position
   const [markerPosition, setMarkerPosition] = useState(defaultCenter);

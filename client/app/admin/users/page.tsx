@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
@@ -52,7 +53,7 @@ export default function AdminUsersPage() {
 
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-users", search, type],
     queryFn: () => {
       let url = "/admin/users";
@@ -180,51 +181,57 @@ export default function AdminUsersPage() {
         <Button onClick={handleAddUser}>+ Add User</Button>
       </Card>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Bookings</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(data ?? []).map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.fullName}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{formatPhoneForDisplay(user.phone)}</TableCell>
-                <TableCell>{user.type}</TableCell>
-                <TableCell>{user._count?.bookings ?? "--"}</TableCell>
-                <TableCell>{user.status}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="rounded-full border border-(--border) p-2 text-(--muted)">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => deleteUserMutation.mutate(user.id)}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+      {isLoading ? (
+        <Card className="p-6">
+          <SkeletonTableRows columns={7} rows={6} />
+        </Card>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Bookings</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {(data ?? []).map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.fullName}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{formatPhoneForDisplay(user.phone)}</TableCell>
+                  <TableCell>{user.type}</TableCell>
+                  <TableCell>{user._count?.bookings ?? "--"}</TableCell>
+                  <TableCell>{user.status}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="rounded-full border border-(--border) p-2 text-(--muted)">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => deleteUserMutation.mutate(user.id)}
+                          className="text-red-600"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
       {/* Modal */}
       {showModal && (

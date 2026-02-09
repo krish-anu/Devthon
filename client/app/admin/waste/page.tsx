@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { PricingItem, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import Skeleton, { SkeletonGrid, SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,11 +13,11 @@ import { toast } from "@/components/ui/use-toast";
 
 export default function AdminWasteManagementPage() {
   const qc = useQueryClient();
-  const { data: pricing } = useQuery({
+  const { data: pricing, isLoading: pricingLoading } = useQuery({
     queryKey: ["pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/admin/pricing"),
   });
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["waste-categories"],
     queryFn: () => apiFetch<WasteCategory[]>("/admin/waste-categories"),
   });
@@ -121,29 +122,35 @@ export default function AdminWasteManagementPage() {
     <div className="space-y-6 md:grid md:grid-cols-3 md:gap-6">
       <div className="md:col-span-2 space-y-6">
         <h2 className="text-lg font-semibold">Pricing</h2>
-        <Card className="grid gap-4 md:grid-cols-2">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-(--border) bg-(--surface) p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{item.wasteCategory.name}</h3>
-                <div className="flex items-center gap-2 text-xs text-(--muted)">
-                  <Checkbox checked={item.isActive} onCheckedChange={(checked) => updateItem(item.id, { isActive: Boolean(checked) })} />
-                  Active
+        {pricingLoading ? (
+          <Card className="p-6">
+            <SkeletonGrid count={4} cardClass="h-28" />
+          </Card>
+        ) : (
+          <Card className="grid gap-4 md:grid-cols-2">
+            {items.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-(--border) bg-(--surface) p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">{item.wasteCategory.name}</h3>
+                  <div className="flex items-center gap-2 text-xs text-(--muted)">
+                    <Checkbox checked={item.isActive} onCheckedChange={(checked) => updateItem(item.id, { isActive: Boolean(checked) })} />
+                    Active
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="text-xs text-(--muted)">Min Price (LKR/kg)</label>
+                    <Input type="number" value={item.minPriceLkrPerKg as any} onChange={(event) => updateItem(item.id, { minPriceLkrPerKg: Number(event.target.value) })} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-(--muted)">Max Price (LKR/kg)</label>
+                    <Input type="number" value={item.maxPriceLkrPerKg as any} onChange={(event) => updateItem(item.id, { maxPriceLkrPerKg: Number(event.target.value) })} />
+                  </div>
                 </div>
               </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div>
-                  <label className="text-xs text-(--muted)">Min Price (LKR/kg)</label>
-                  <Input type="number" value={item.minPriceLkrPerKg as any} onChange={(event) => updateItem(item.id, { minPriceLkrPerKg: Number(event.target.value) })} />
-                </div>
-                <div>
-                  <label className="text-xs text-(--muted)">Max Price (LKR/kg)</label>
-                  <Input type="number" value={item.maxPriceLkrPerKg as any} onChange={(event) => updateItem(item.id, { maxPriceLkrPerKg: Number(event.target.value) })} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </Card>
+            ))}
+          </Card>
+        )}
         <Button onClick={handleSavePricing}>Save Changes</Button>
       </div>
 
@@ -160,20 +167,24 @@ export default function AdminWasteManagementPage() {
             <Button onClick={handleCreateCategory}>Add Category</Button>
           </div>
 
-          <div className="mt-2 space-y-2">
-            {categories?.map((c) => (
-              <div key={c.id} className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{c.name}</div>
-                  <div className="text-xs text-(--muted)">{c.description}</div>
+          {categoriesLoading ? (
+            <div className="p-4"><SkeletonTableRows columns={2} rows={5} /></div>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {categories?.map((c) => (
+                <div key={c.id} className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{c.name}</div>
+                    <div className="text-xs text-(--muted)">{c.description}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={Boolean(c.isActive)} onCheckedChange={(val) => handleToggleActive(c.id, Boolean(val))} />
+                    <Button variant="danger" onClick={() => handleDeleteCategory(c.id)}>Delete</Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={Boolean(c.isActive)} onCheckedChange={(val) => handleToggleActive(c.id, Boolean(val))} />
-                  <Button variant="danger" onClick={() => handleDeleteCategory(c.id)}>Delete</Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>

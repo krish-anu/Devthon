@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import { SkeletonGrid } from "@/components/shared/Skeleton";
 import {
   CheckCircle2,
   Info,
@@ -35,7 +36,7 @@ const levelIcon = {
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: () => apiFetch<NotificationItem[]>("/notifications"),
     refetchInterval: 30_000, // Poll every 30s for new notifications
@@ -88,35 +89,40 @@ export default function NotificationsPage() {
       </div>
 
       <div className="grid gap-4">
-        {items.map((item) => (
-          <Card
-            key={item.id}
-            className={`flex flex-col gap-2 transition-colors ${
-              !item.isRead
-                ? "border-l-4 border-l-green-500 bg-[color:var(--card)]/80"
-                : "opacity-75"
-            } ${item.bookingId ? "cursor-pointer hover:shadow-md" : ""}`}
-            onClick={() => handleClick(item)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {levelIcon[item.level]}
-                <h3 className="text-lg font-semibold">{item.title}</h3>
+        {isLoading ? (
+          <Card className="p-6">
+              <SkeletonGrid count={3} cardClass="h-24" />
+            </Card>
+          ) : items.length ? (
+          items.map((item) => (
+            <Card
+              key={item.id}
+              className={`flex flex-col gap-2 transition-colors ${
+                !item.isRead
+                  ? "border-l-4 border-l-green-500 bg-(--card)/80"
+                  : "opacity-75"
+              } ${item.bookingId ? "cursor-pointer hover:shadow-md" : ""}`}
+              onClick={() => handleClick(item)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {levelIcon[item.level]}
+                  <h3 className="text-lg font-semibold">{item.title}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.bookingId && (
+                    <ExternalLink className="h-3.5 w-3.5 text-[color:var(--muted)]" />
+                  )}
+                  <Badge variant={levelVariant[item.level]}>{item.level}</Badge>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {item.bookingId && (
-                  <ExternalLink className="h-3.5 w-3.5 text-[color:var(--muted)]" />
-                )}
-                <Badge variant={levelVariant[item.level]}>{item.level}</Badge>
-              </div>
-            </div>
-            <p className="text-sm text-[color:var(--muted)]">{item.message}</p>
-            <p className="text-xs text-[color:var(--muted)]">
-              {new Date(item.createdAt).toLocaleString()}
-            </p>
-          </Card>
-        ))}
-        {!items.length && (
+              <p className="text-sm text-[color:var(--muted)]">{item.message}</p>
+              <p className="text-xs text-[color:var(--muted)]">
+                {new Date(item.createdAt).toLocaleString()}
+              </p>
+            </Card>
+          ))
+        ) : (
           <Card className="p-8 text-center text-[color:var(--muted)]">
             <p className="text-lg">No notifications yet.</p>
             <p className="text-sm mt-1">

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/shared/kpi-card";
+import Loading from "@/components/shared/Loading";
 import {
   ResponsiveContainer,
   BarChart,
@@ -19,17 +20,27 @@ import {
 const pieColors = ["#4ade80", "#38bdf8", "#f97316", "#facc15", "#ec4899"];
 
 export default function AdminDashboardPage() {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-metrics"],
     queryFn: () => apiFetch<any>("/admin/metrics"),
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-6">
+          <Loading message="Loading dashboard metrics..." />
+        </Card>
+      </div>
+    );
+  }
 
   const totals = data?.totals ?? {
     totalRevenue: 0,
     totalUsers: 0,
     activeDrivers: 0,
     pendingPickups: 0,
-  };
+  }; 
 
   return (
     <div className="space-y-6">
