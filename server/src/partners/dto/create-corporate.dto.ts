@@ -5,6 +5,7 @@ import {
   IsPhoneNumber,
   IsOptional,
 } from 'class-validator';
+import { IsEmailDomainDeliverable } from '../../common/validators/email-mx.validator';
 
 export class CreateCorporateDto {
   @IsNotEmpty()
@@ -21,6 +22,7 @@ export class CreateCorporateDto {
 
   @IsNotEmpty()
   @IsEmail()
+  @IsEmailDomainDeliverable({ message: 'Email domain cannot receive mail' })
   email: string;
 
   @IsOptional()

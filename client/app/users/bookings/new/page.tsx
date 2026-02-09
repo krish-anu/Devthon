@@ -849,6 +849,9 @@ export default function NewBookingPage() {
                 placeholder="Enter phone number"
                 required
               />
+              {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
+                <p className="text-xs text-rose-500">Enter a valid Sri Lanka phone number</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-(--muted)">
