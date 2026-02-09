@@ -8,10 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import {
-  flattenUser,
-  USER_PROFILE_INCLUDE,
-} from '../common/utils/user.utils';
+import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class UsersService {
@@ -75,9 +72,20 @@ export class UsersService {
 
       // Helper to get fallback data from any existing profile to prevent data loss
       const getFallbackData = () => {
-        const p = (user as any).customer || (user as any).admin || (user as any).driver || (user as any).recycler || (user as any).corporate || {};
+        const p =
+          (user as any).customer ||
+          (user as any).admin ||
+          (user as any).driver ||
+          (user as any).recycler ||
+          (user as any).corporate ||
+          {};
         return {
-          fullName: p.fullName ?? p.contactPerson ?? p.organizationName ?? dto.fullName ?? '',
+          fullName:
+            p.fullName ??
+            p.contactPerson ??
+            p.organizationName ??
+            dto.fullName ??
+            '',
           phone: p.phone ?? dto.phone ?? '',
           address: p.address ?? dto.address,
           avatarUrl: p.avatarUrl,
@@ -97,7 +105,7 @@ export class UsersService {
                 fullName: fallbackCust.fullName,
                 phone: fallbackCust.phone,
                 type: 'HOUSEHOLD',
-                ...profileData
+                ...profileData,
               },
             });
             break;
@@ -113,7 +121,7 @@ export class UsersService {
                 id: userId,
                 fullName: fallbackAdmin.fullName,
                 phone: fallbackAdmin.phone,
-                ...profileData
+                ...profileData,
               },
             });
             break;
@@ -129,7 +137,7 @@ export class UsersService {
                 fullName: fallbackDriver.fullName,
                 phone: fallbackDriver.phone,
                 vehicle: 'Not specified',
-                ...profileData
+                ...profileData,
               },
             });
             break;
@@ -154,7 +162,9 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     if (!user.passwordHash) {
-      throw new BadRequestException('No local password is set for this account');
+      throw new BadRequestException(
+        'No local password is set for this account',
+      );
     }
 
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
