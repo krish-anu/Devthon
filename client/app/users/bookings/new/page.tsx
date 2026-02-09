@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/auth/auth-provider";
+import MapComponent from "@/components/shared/map";
 
 const weightOptions = [
   { label: "0-5 kg", min: 0, max: 5 },
@@ -79,17 +80,28 @@ export default function NewBookingPage() {
   const [locationPicked, setLocationPicked] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [terms, setTerms] = useState(false);
+  const [mapLat, setMapLat] = useState<number>(6.9271);
+  const [mapLng, setMapLng] = useState<number>(79.8612);
+
+  const isPaperCategory = useMemo(() => {
+    return selectedItems.some(
+      (item) => item.item.wasteCategory.name.toLowerCase().includes("paper") ||
+                item.item.wasteCategory.name.toLowerCase().includes("cardboard")
+    );
+  }, [selectedItems]);
 
   const estimate = useMemo(() => {
     if (selectedItems.length === 0) return { min: 0, max: 0 };
     let min = 0;
     let max = 0;
     for (const s of selectedItems) {
-      min += s.item.minPriceLkrPerKg * s.quantity;
-      max += s.item.maxPriceLkrPerKg * s.quantity;
+      const weight = isPaperCategory ? s.quantity : (weightRange?.min || 0);
+      const weightMax = isPaperCategory ? s.quantity : (weightRange?.max || 0);
+      min += s.item.minPriceLkrPerKg * weight;
+      max += s.item.maxPriceLkrPerKg * weightMax;
     }
     return { min, max };
-  }, [selectedItems]);
+  }, [selectedItems, isPaperCategory, weightRange]);
 
   const latestBooking = latestBookingData?.items?.[0];
 
@@ -333,7 +345,7 @@ export default function NewBookingPage() {
         body: JSON.stringify({
           items: selectedItems.map((s) => ({
             wasteCategoryId: s.item.wasteCategory.id,
-            quantityKg: s.quantity,
+            quantityKg: isPaperCategory ? s.quantity : (weightRange?.min || 0),
           })),
           addressLine1,
           city,
@@ -341,6 +353,8 @@ export default function NewBookingPage() {
           specialInstructions,
           scheduledDate,
           scheduledTimeSlot,
+          lat: mapLat,
+          lng: mapLng,
         }),
       });
       toast({
@@ -357,13 +371,6 @@ export default function NewBookingPage() {
       });
     }
   };
-
-  const isPaperCategory = useMemo(() => {
-    return selectedItems.some(
-      (item) => item.item.wasteCategory.name.toLowerCase().includes("paper") ||
-                item.item.wasteCategory.name.toLowerCase().includes("cardboard")
-    );
-  }, [selectedItems]);
 
   const steps = isPaperCategory
     ? [
@@ -668,7 +675,7 @@ export default function NewBookingPage() {
 
       {step === 2 && isPaperCategory && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Estimate Weight</h3>
+          <h3 className="text-lg font-semibold">Estimate Weight of the Papers</h3>
           <div className="grid gap-3 md:grid-cols-3">
             {weightOptions.map((option) => (
               <button
@@ -737,8 +744,16 @@ export default function NewBookingPage() {
               />
             </div>
           </div>
-          <div className="h-48 rounded-2xl border border-dashed border-(--border) bg-(--surface) p-4 text-sm text-(--muted)">
-            Map Placeholder
+          <div className="h-96 rounded-2xl border border-(--border) bg-(--surface) overflow-hidden">
+            <MapComponent
+              initialLat={mapLat}
+              initialLng={mapLng}
+              onLocationSelect={(lat, lng) => {
+                setMapLat(lat);
+                setMapLng(lng);
+                setLocationPicked(true);
+              }}
+            />
           </div>
           <div className="flex items-center gap-3 text-sm text-(--muted)">
             <Checkbox
@@ -811,11 +826,40 @@ export default function NewBookingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {/* Estimated Total */}
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted) mb-2">Estimated Total Earnings</p>
-              <p className="text-2xl font-bold text-(--brand)">
-                LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
-              </p>
-              <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
+              {isPaperCategory ? (
+                <>
+                  <p className="text-sm text-(--muted) mb-2">Estimated Total Earnings</p>
+                  <p className="text-2xl font-bold text-(--brand)">
+                    LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
+                  </p>
+                  <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-(--muted) mb-2">Pricing</p>
+                  <div className="flex items-start gap-2 mt-2">
+                    <svg
+                      className="mt-0.5 h-5 w-5 flex-shrink-0 text-(--brand)"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold">To be determined on-site</p>
+                      <p className="text-xs text-(--muted) mt-1">
+                        Final pricing will be determined after physical inspection based on the quality, condition, and actual weight of your recyclables.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Weight Range */}

@@ -177,6 +177,8 @@ model Booking {
   specialInstructions  String?
   scheduledDate        DateTime
   scheduledTimeSlot    String
+  lat                  Float?
+  lng                  Float?
   actualWeightKg       Float?
   finalAmountLkr       Float?
   driverId             String?

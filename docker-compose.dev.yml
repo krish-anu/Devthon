@@ -108,6 +108,7 @@ services:
       # Must use localhost since browser can't resolve Docker service names
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
       NODE_ENV: ${NODE_ENV:-development}
     volumes:
       # Mount source code for hot reload in development
