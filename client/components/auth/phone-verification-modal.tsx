@@ -32,7 +32,7 @@ const phoneSchema = z.object({
 type PhoneFormValues = z.infer<typeof phoneSchema>;
 
 export function PhoneVerificationModal() {
-  const { user, refreshProfile } = useAuth();
+  const { user, updateUser } = useAuth();
   const [open, setOpen] = useState(false);
 
   const form = useForm<PhoneFormValues>({
@@ -57,7 +57,7 @@ export function PhoneVerificationModal() {
 
   const onSubmit = async (values: PhoneFormValues) => {
     try {
-      await apiFetch("/me", {
+      const updatedUser = await apiFetch("/me", {
         method: "PATCH",
         body: JSON.stringify({ phone: values.phone }),
       });
@@ -66,7 +66,7 @@ export function PhoneVerificationModal() {
         description: "Phone number updated successfully.",
         variant: "success",
       });
-      await refreshProfile();
+      updateUser(updatedUser);
       setOpen(false);
     } catch (error) {
       toast({
