@@ -14,7 +14,7 @@ import { User } from "@/lib/types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string, recaptchaToken?: string) => Promise<User>;
   register: (payload: {
     fullName: string;
     email: string;
@@ -22,9 +22,11 @@ interface AuthContextValue {
     password: string;
     type: "HOUSEHOLD" | "BUSINESS";
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
+    recaptchaToken?: string;
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+<<<<<<< HEAD
   googleLogin: (
     token: string,
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
@@ -34,6 +36,10 @@ interface AuthContextValue {
     redirectUri?: string,
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
   ) => Promise<User>;
+=======
+  googleLogin: (token: string, signup?: boolean) => Promise<User>;
+  googleLoginWithCode: (code: string, redirectUri?: string, signup?: boolean) => Promise<User>;
+>>>>>>> 8b52e97 (feat: implement reCAPTCHA integration with badge and notice components)
   passkeyLogin: (email: string) => Promise<User>;
 }
 
@@ -82,8 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const data = await authApi.login({ email, password });
+  const login = async (email: string, password: string, recaptchaToken?: string) => {
+    const data = await authApi.login({ email, password, recaptchaToken });
     setAuth(data);
     setUser(data.user);
     return data.user;
@@ -96,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string;
     type: "HOUSEHOLD" | "BUSINESS";
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
+    recaptchaToken?: string;
   }) => {
     const data = await authApi.register(payload);
     setAuth(data);
@@ -118,22 +125,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
+<<<<<<< HEAD
   const googleLogin = async (
     token: string,
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
   ) => {
     const data = await authApi.googleLogin({ token, role });
+=======
+  const googleLogin = async (token: string, signup?: boolean) => {
+    const data = await authApi.googleLogin({ token, signup });
+>>>>>>> 8b52e97 (feat: implement reCAPTCHA integration with badge and notice components)
     setAuth(data);
     setUser(data.user);
     return data.user;
   };
 
+<<<<<<< HEAD
   const googleLoginWithCode = async (
     code: string,
     redirectUri?: string,
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER",
   ) => {
     const data = await authApi.googleLoginWithCode({ code, redirectUri, role });
+=======
+  const googleLoginWithCode = async (code: string, redirectUri?: string, signup?: boolean) => {
+    const data = await authApi.googleLoginWithCode({ code, redirectUri, signup });
+>>>>>>> 8b52e97 (feat: implement reCAPTCHA integration with badge and notice components)
     setAuth(data);
     setUser(data.user);
     return data.user;
