@@ -9,6 +9,8 @@ import {
   LogOut,
   MessageSquare,
   Settings,
+  ShieldCheck,
+  UserCog,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
@@ -66,6 +68,25 @@ export default function AdminLayout({
     },
   ];
 
+  // Super Admin exclusive items
+  const superAdminItems =
+    user?.role === "SUPER_ADMIN"
+      ? [
+          {
+            label: "Approvals",
+            href: "/admin/approvals",
+            icon: <ShieldCheck className="h-4 w-4" />,
+          },
+          {
+            label: "Manage Roles",
+            href: "/admin/manage-roles",
+            icon: <UserCog className="h-4 w-4" />,
+          },
+        ]
+      : [];
+
+  const allNavItems = [...navItems, ...superAdminItems];
+
   if (isPublicSignup) {
     return (
       <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
@@ -78,7 +99,7 @@ export default function AdminLayout({
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
       <RequireAuth roles={["ADMIN", "SUPER_ADMIN"]}>
         <AppShell
-          sidebar={<Sidebar title="Admin Portal" items={navItems} />}
+          sidebar={<Sidebar title="Admin Portal" items={allNavItems} />}
           header={<Header title="Admin Console" />}
         >
           {children}

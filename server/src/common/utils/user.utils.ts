@@ -52,6 +52,7 @@ export function flattenUser(user: any) {
           rating: driver.rating,
           pickupCount: driver.pickupCount,
           driverStatus: driver.status,
+          approved: driver.approved,
         }
       : {}),
   };

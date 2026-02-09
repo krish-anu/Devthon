@@ -108,4 +108,38 @@ export class AdminController {
   async getSmsBalance() {
     return this.smsService.getBalance();
   }
+
+  // ─────────────────────────────────────────────
+  // Super Admin Only endpoints
+  // ─────────────────────────────────────────────
+
+  @Roles(Role.SUPER_ADMIN)
+  @Get('pending-approvals')
+  listPendingApprovals() {
+    return this.adminService.listPendingApprovals();
+  }
+
+  @Roles(Role.SUPER_ADMIN)
+  @Patch('approve/:id')
+  approveUser(@Param('id') id: string) {
+    return this.adminService.approveUser(id);
+  }
+
+  @Roles(Role.SUPER_ADMIN)
+  @Delete('reject/:id')
+  rejectUser(@Param('id') id: string) {
+    return this.adminService.rejectUser(id);
+  }
+
+  @Roles(Role.SUPER_ADMIN)
+  @Get('all-users')
+  listAllUsersWithRoles() {
+    return this.adminService.listAllUsersWithRoles();
+  }
+
+  @Roles(Role.SUPER_ADMIN)
+  @Patch('change-role/:id')
+  changeUserRole(@Param('id') id: string, @Body('role') role: string) {
+    return this.adminService.changeUserRole(id, role);
+  }
 }
