@@ -25,6 +25,7 @@ model User {
   driver             Driver?
   bookings           Booking[]
   notifications      Notification[]
+  pushSubscriptions  PushSubscription[]
   passkeyCredentials PasskeyCredential[]
   userPermissions    UserPermission[]
   recycler           Recycler?
@@ -194,6 +195,7 @@ model Booking {
 model Notification {
   id        String            @id @default(uuid())
   userId    String?
+  bookingId String?
   title     String
   message   String
   isRead    Boolean           @default(false)
@@ -210,6 +212,19 @@ model PaymentTransaction {
   method    PaymentMethod
   status    PaymentStatus @default(PROCESSED)
   booking   Booking       @relation(fields: [bookingId], references: [id])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model LaunchNotify {

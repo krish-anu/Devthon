@@ -1,18 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma, CustomerType } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, CustomerType, NotificationLevel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../notifications/push.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
 import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
+import { AdminUpdateBookingDto } from './dto/admin-update-booking.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import * as bcrypt from 'bcrypt';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private pushService: PushService,
+  ) {}
 
   async getMetrics() {
     const [revenueAgg, totalUsers, activeDrivers, pendingPickups] =
@@ -465,103 +470,124 @@ export class AdminService {
     });
   }
 
-  // ─────────────────────────────────────────────
-  // Super Admin: Pending approvals & user management
-  // ─────────────────────────────────────────────
-
-  async listPendingApprovals() {
-    const pendingAdmins = await this.prisma.admin.findMany({
-      where: { approved: false },
-      include: { user: true },
-    });
-
-    const pendingDrivers = await this.prisma.driver.findMany({
-      where: { approved: false },
-      include: { user: true },
-    });
-
-    return [
-      ...pendingAdmins.map((a) => ({
-        id: a.id,
-        fullName: a.fullName,
-        phone: a.phone,
-        email: a.user?.email ?? '',
-        role: a.user?.role ?? 'ADMIN',
-        approved: a.approved,
-        createdAt: a.user?.createdAt,
-      })),
-      ...pendingDrivers.map((d) => ({
-        id: d.id,
-        fullName: d.fullName,
-        phone: d.phone,
-        email: d.user?.email ?? '',
-        role: d.user?.role ?? 'DRIVER',
-        approved: d.approved,
-        createdAt: d.createdAt,
-      })),
-    ];
-  }
-
-  async approveUser(id: string) {
-    const user = await this.prisma.user.findUnique({
+  /**
+   * Admin updates a booking (assign driver, change status, set final weight/amount).
+   * Sends push notifications to the customer (and driver if assigned).
+   */
+  async updateBooking(id: string, dto: AdminUpdateBookingDto) {
+    const existing = await this.prisma.booking.findUnique({
       where: { id },
-      include: { admin: true, driver: true },
+      include: { wasteCategory: true, driver: true },
+    });
+    if (!existing) throw new NotFoundException('Booking not found');
+
+    const data: any = {};
+    if (dto.status) data.status = dto.status;
+    if (dto.driverId) data.driverId = dto.driverId;
+    if (dto.actualWeightKg !== undefined) data.actualWeightKg = dto.actualWeightKg;
+    if (dto.finalAmountLkr !== undefined) data.finalAmountLkr = dto.finalAmountLkr;
+
+    const updated = await this.prisma.booking.update({
+      where: { id },
+      data,
+      include: { wasteCategory: true, driver: true },
     });
 
-    if (!user) throw new Error('User not found');
+    // ── Push notification triggers based on what changed ──
+    const catName = updated.wasteCategory?.name ?? 'waste';
+    const shortId = id.slice(0, 8);
 
-    if (user.role === 'ADMIN' && user.admin) {
-      await this.prisma.admin.update({
-        where: { id },
-        data: { approved: true },
-      });
-    } else if (user.role === 'DRIVER' && user.driver) {
-      await this.prisma.driver.update({
-        where: { id },
-        data: { approved: true },
-      });
+    // Driver was just assigned
+    if (dto.driverId && dto.driverId !== existing.driverId) {
+      const driver = await this.prisma.driver.findUnique({ where: { id: dto.driverId } });
+      // Notify customer
+      this.pushService
+        .notify(existing.userId, {
+          title: 'Driver assigned 🚚',
+          body: `Driver ${driver?.fullName ?? 'a driver'} will collect your ${catName}.`,
+          level: NotificationLevel.INFO,
+          bookingId: id,
+          url: `/users/bookings/${id}`,
+        })
+        .catch(() => {});
+      // Notify driver
+      if (driver) {
+        this.pushService
+          .notify(dto.driverId, {
+            title: 'New pickup assigned 📦',
+            body: `Pickup at ${existing.addressLine1}, ${existing.city} on ${new Date(existing.scheduledDate).toLocaleDateString()} (${existing.scheduledTimeSlot}).`,
+            level: NotificationLevel.INFO,
+            bookingId: id,
+            url: `/driver/bookings`,
+          })
+          .catch(() => {});
+      }
     }
 
-    return { success: true };
-  }
-
-  async rejectUser(id: string) {
-    // Remove the user entirely when rejected
-    await this.prisma.notification.deleteMany({ where: { userId: id } });
-    await this.prisma.paymentTransaction.deleteMany({
-      where: { booking: { userId: id } },
-    });
-    await this.prisma.booking.deleteMany({ where: { userId: id } });
-    await this.prisma.customer.deleteMany({ where: { id } });
-    await this.prisma.admin.deleteMany({ where: { id } });
-    await this.prisma.driver.deleteMany({ where: { id } });
-    await this.prisma.userPermission.deleteMany({ where: { userId: id } });
-    await this.prisma.passkeyCredential.deleteMany({ where: { userId: id } });
-    await this.prisma.user.delete({ where: { id } });
-    return { success: true };
-  }
-
-  async listAllUsersWithRoles() {
-    const users = await this.prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: USER_PROFILE_INCLUDE,
-    });
-    return users.map((u) => flattenUser(u));
-  }
-
-  async changeUserRole(id: string, newRole: string) {
-    const validRoles = ['CUSTOMER', 'ADMIN', 'SUPER_ADMIN', 'DRIVER'];
-    if (!validRoles.includes(newRole)) {
-      throw new Error('Invalid role');
+    // Status-based notifications to customer
+    if (dto.status && dto.status !== existing.status) {
+      switch (dto.status) {
+        case 'COLLECTED':
+          this.pushService
+            .notify(existing.userId, {
+              title: 'Pickup collected ✅',
+              body: `Your ${catName} pickup #${shortId} has been collected.`,
+              level: NotificationLevel.SUCCESS,
+              bookingId: id,
+              url: `/users/bookings/${id}`,
+            })
+            .catch(() => {});
+          break;
+        case 'PAID':
+          this.pushService
+            .notify(existing.userId, {
+              title: 'Payment processed 💰',
+              body: `Payment of LKR ${updated.finalAmountLkr?.toFixed(2) ?? '0.00'} for booking #${shortId} was processed.`,
+              level: NotificationLevel.SUCCESS,
+              bookingId: id,
+              url: `/users/bookings/${id}`,
+            })
+            .catch(() => {});
+          break;
+        case 'COMPLETED':
+          this.pushService
+            .notify(existing.userId, {
+              title: 'Booking completed 🎉',
+              body: `Your ${catName} pickup #${shortId} is complete. Final: LKR ${updated.finalAmountLkr?.toFixed(2) ?? '—'}.`,
+              level: NotificationLevel.SUCCESS,
+              bookingId: id,
+              url: `/users/bookings/${id}`,
+            })
+            .catch(() => {});
+          break;
+        case 'CANCELLED':
+          this.pushService
+            .notify(existing.userId, {
+              title: 'Booking cancelled ❌',
+              body: `Booking #${shortId} was cancelled by the admin.`,
+              level: NotificationLevel.WARNING,
+              bookingId: id,
+              url: `/users/bookings/${id}`,
+            })
+            .catch(() => {});
+          break;
+        case 'REFUNDED':
+          this.pushService
+            .notify(existing.userId, {
+              title: 'Refund issued 💸',
+              body: `Refund for booking #${shortId} has been processed.`,
+              level: NotificationLevel.WARNING,
+              bookingId: id,
+              url: `/users/bookings/${id}`,
+            })
+            .catch(() => {});
+          break;
+      }
     }
-    await this.prisma.user.update({
-      where: { id },
-      data: { role: newRole as any },
-    });
-    const updated = await this.prisma.user.findUnique({
-      where: { id },
-      include: USER_PROFILE_INCLUDE,
-    });
-    return flattenUser(updated);
+
+    return {
+      ...updated,
+      user: undefined, // Don't leak full user in admin response
+    };
   }
 }

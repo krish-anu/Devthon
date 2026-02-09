@@ -1,13 +1,13 @@
 import {
   ForbiddenException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, NotificationLevel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
+import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
@@ -17,6 +17,7 @@ export class BookingsService {
     private prisma: PrismaService,
     private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
+    private pushService: PushService,
   ) {}
 
   async list(userId: string, query: BookingsQueryDto) {
@@ -166,6 +167,23 @@ export class BookingsService {
           return booking;
         }),
       );
+
+      // Send push notification for each created booking
+      for (const booking of created) {
+        const category = await this.prisma.wasteCategory.findUnique({
+          where: { id: booking.wasteCategoryId },
+        });
+        this.pushService
+          .notify(userId, {
+            title: 'Booking confirmed ✅',
+            body: `Your ${category?.name ?? 'waste'} pickup on ${new Date(booking.scheduledDate).toLocaleDateString()} at ${booking.scheduledTimeSlot} is confirmed.`,
+            level: NotificationLevel.SUCCESS,
+            bookingId: booking.id,
+            url: `/users/bookings/${booking.id}`,
+          })
+          .catch(() => {});
+      }
+
       return created;
     } catch (err) {
       this.transactionLogger.logError('booking.create.failure', err as Error, {
@@ -199,6 +217,17 @@ export class BookingsService {
         id: updated.id,
         status: updated.status,
       });
+
+      // Send cancellation push notification
+      this.pushService
+        .notify(userId, {
+          title: 'Booking cancelled',
+          body: `Your booking #${id.slice(0, 8)} has been cancelled.`,
+          level: NotificationLevel.WARNING,
+          bookingId: id,
+          url: `/users/bookings/${id}`,
+        })
+        .catch(() => {});
 
       return updated;
     } catch (err) {

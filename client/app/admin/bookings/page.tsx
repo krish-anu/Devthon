@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,28 @@ export default function AdminBookingsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [dateFilter, setDateFilter] = useState<"all" | "thisMonth">("all");
+
+  const queryClient = useQueryClient();
+
+  // Mutation to delete booking
+  const deleteBookingMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/bookings/${id}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+    },
+    onError: () => {
+      alert("Failed to delete booking.");
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      deleteBookingMutation.mutate(id);
+    }
+  };
 
   const { data } = useQuery({
     queryKey: ["admin-bookings", status, search, dateFilter],
@@ -45,6 +68,7 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
+        {/* ... (existing filters) */}
         <div className="flex flex-wrap gap-2">
           <Button
             variant={
@@ -104,6 +128,7 @@ export default function AdminBookingsPage() {
               <TableHead>Driver</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -124,6 +149,17 @@ export default function AdminBookingsPage() {
                 </TableCell>
                 <TableCell>
                   {new Date(booking.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(booking.id)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    title="Delete Booking"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

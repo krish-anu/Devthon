@@ -67,5 +67,6 @@ export interface NotificationItem {
   message: string;
   level: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
   isRead: boolean;
+  bookingId?: string | null;
   createdAt: string;
 }

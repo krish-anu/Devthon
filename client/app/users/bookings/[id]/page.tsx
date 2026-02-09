@@ -92,9 +92,9 @@ export default function BookingDetailsPage() {
               Booking {booking?.id?.slice(0, 8) ?? ""}
             </h2>
           </div>
-          <div className="text-sm text-(--muted)">
-            Estimated Arrival 15 minutes
-          </div>
+            <div className="text-sm text-(--muted)">
+              Estimated Arrival 15 minutes
+            </div>
         </div>
         <div className="grid gap-4 md:grid-cols-4">
           {steps.map((step, index) => (

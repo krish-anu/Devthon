@@ -21,6 +21,7 @@ import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
 import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
+import { AdminUpdateBookingDto } from './dto/admin-update-booking.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import { AdminSendSmsDto } from './dto/admin-send-sms.dto';
 import { SmsService } from '../sms/sms.service';
@@ -85,6 +86,11 @@ export class AdminController {
   @Get('bookings')
   listBookings(@Query() query: AdminBookingsQueryDto) {
     return this.adminService.listBookings(query);
+  }
+
+  @Patch('bookings/:id')
+  updateBooking(@Param('id') id: string, @Body() dto: AdminUpdateBookingDto) {
+    return this.adminService.updateBooking(id, dto);
   }
 
   @Get('pricing')

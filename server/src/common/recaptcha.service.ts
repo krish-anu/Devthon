@@ -12,6 +12,12 @@ export class RecaptchaService {
   }
 
   async verify(token: string | undefined | null, action?: string) {
+    const enabled = this.configService.get<string>('RECAPTCHA_ENABLED');
+    if (enabled && enabled.toLowerCase() === 'false') {
+      this.logger.warn('RECAPTCHA disabled via RECAPTCHA_ENABLED=false — skipping verification');
+      return true;
+    }
+
     const secret = this.configService.get<string>('RECAPTCHA_SECRET');
 
     // If secret isn't configured, treat verification as passed (useful for local/dev)
