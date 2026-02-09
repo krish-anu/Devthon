@@ -8,6 +8,7 @@ import {
   Matches,
 } from 'class-validator';
 import { CustomerType } from '@prisma/client';
+import { IsEmailDomainDeliverable } from '../../common/validators/email-mx.validator';
 
 export class RegisterDto {
   @IsString()
@@ -15,6 +16,7 @@ export class RegisterDto {
   fullName: string;
 
   @IsEmail()
+  @IsEmailDomainDeliverable({ message: 'Email domain cannot receive mail' })
   email: string;
 
   @IsString()
@@ -35,4 +37,8 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   role?: string;
+
+  @IsOptional()
+  @IsString()
+  recaptchaToken?: string;
 }

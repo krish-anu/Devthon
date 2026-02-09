@@ -52,7 +52,7 @@ export class AuthController {
     @Body() dto: GoogleLoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.googleLogin(dto.token, dto.role);
+    const result = await this.authService.googleLogin(dto.token, dto.signup ?? false, dto.role);
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -72,6 +72,7 @@ export class AuthController {
     const result = await this.authService.googleLoginWithCode(
       dto.code,
       dto.redirectUri,
+      dto.signup ?? false,
       dto.role,
     );
     const cookieOptions = {

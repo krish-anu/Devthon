@@ -7,6 +7,8 @@ import { Booking, PricingItem } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/ui/phone-input";
+import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -318,6 +320,16 @@ export default function NewBookingPage() {
       });
       return;
     }
+
+    if (!isValidSriLankaPhone(phoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
+        variant: "warning",
+      });
+      return;
+    }
+
     if (!terms) {
       toast({
         title: "Accept terms",
@@ -341,6 +353,7 @@ export default function NewBookingPage() {
           specialInstructions,
           scheduledDate,
           scheduledTimeSlot,
+          phone: normalizeSriLankaPhone(phoneNumber),
         }),
       });
       toast({
@@ -817,42 +830,27 @@ export default function NewBookingPage() {
               </p>
               <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
             </div>
-
-            {/* Weight Range */}
-            {!isPaperCategory && weightRange && (
-              <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-                <p className="text-sm text-(--muted) mb-2">Estimated Weight</p>
-                <p className="text-lg font-semibold">{weightRange.label}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Pickup Details */}
-          <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-            <p className="text-sm font-semibold mb-3">Pickup Details</p>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <p className="text-xs text-(--muted)">Address</p>
-                <p className="text-sm font-medium">{addressLine1}</p>
-                <p className="text-sm text-(--muted)">{city}, {postalCode}</p>
-              </div>
-              <div>
-                <p className="text-xs text-(--muted)">Contact Number</p>
-                <p className="text-sm font-medium">{phoneNumber}</p>
-              </div>
-              <div>
-                <p className="text-xs text-(--muted)">Scheduled Date</p>
-                <p className="text-sm font-medium">{new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-              </div>
-              <div>
-                <p className="text-xs text-(--muted)">Time Slot</p>
-                <p className="text-sm font-medium">{scheduledTimeSlot}</p>
-              </div>
-              {specialInstructions && (
-                <div className="md:col-span-2">
-                  <p className="text-xs text-(--muted)">Special Instructions</p>
-                  <p className="text-sm font-medium">{specialInstructions}</p>
-                </div>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <p className="text-sm text-(--muted)">Pickup Address</p>
+              <p className="text-lg font-semibold">{addressLine1 || "--"}</p>
+              <p className="text-sm text-(--muted)">
+                {city} {postalCode}
+              </p>
+            </div>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <p className="text-sm text-(--muted)">Time Slot</p>
+              <p className="text-lg font-semibold">{scheduledTimeSlot}</p>
+            </div>
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+              <Label className="text-sm text-(--muted)">Phone Number</Label>
+              <Input
+                value={phoneNumber}
+                onChange={(event) => setPhoneNumber(event.target.value)}
+                placeholder="Enter phone number"
+                required
+              />
+              {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
+                <p className="text-xs text-rose-500">Enter a valid Sri Lanka phone number</p>
               )}
             </div>
           </div>

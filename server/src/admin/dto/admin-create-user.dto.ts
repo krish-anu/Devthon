@@ -7,6 +7,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Role, CustomerType, CustomerStatus } from '@prisma/client';
+import { IsEmailDomainDeliverable } from '../../common/validators/email-mx.validator';
 
 export class AdminCreateUserDto {
   @IsString()
@@ -14,6 +15,7 @@ export class AdminCreateUserDto {
   fullName: string;
 
   @IsEmail()
+  @IsEmailDomainDeliverable({ message: 'Email domain cannot receive mail' })
   email: string;
 
   @IsString()

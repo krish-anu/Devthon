@@ -53,6 +53,8 @@ GEMINI_API_KEY=your_key_here
 PORT=4000                              # Default: 4000
 NODE_ENV=development                   # Default: development
 CORS_ORIGIN=http://localhost:3000      # Default: http://localhost:3000
+# Email DNS validation
+EMAIL_DNS_CHECK=false                    # Default: false. Set to 'true' to enable MX/A DNS checks when validating email domains
 
 # JWT Expiration
 JWT_ACCESS_EXPIRES=15m                 # Default: 15m
@@ -60,6 +62,17 @@ JWT_REFRESH_EXPIRES=7d                 # Default: 7d
 
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:4000/api  # Default: http://localhost:4000/api
+# reCAPTCHA (v3) - optional for local development, required for protected signup/login flows
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
+RECAPTCHA_SECRET=your_recaptcha_secret_here
+# Minimum score threshold (0.0 - 1.0) for accepting a token. Default: 0.5
+RECAPTCHA_MIN_SCORE=0.5
+# Default action names
+RECAPTCHA_SIGNUP_ACTION=signup
+RECAPTCHA_LOGIN_ACTION=login
+# Admin-specific action overrides (optional)
+RECAPTCHA_ADMIN_SIGNUP_ACTION=admin_signup
+RECAPTCHA_ADMIN_LOGIN_ACTION=admin_login
 ```
 
 ## Common Issues & Solutions

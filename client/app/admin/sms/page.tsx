@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { formatPhoneForDisplay, normalizeSriLankaPhone } from "@/lib/phone";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -139,7 +140,11 @@ export default function AdminSmsPage() {
   );
 
   const allPhoneNumbers = [
-    ...new Set(uniqueBookingsWithPhones.map((b) => b.user!.phone)),
+    ...new Set(
+      uniqueBookingsWithPhones.map(
+        (b) => normalizeSriLankaPhone(b.user!.phone) ?? b.user!.phone,
+      ),
+    ),
   ];
 
   const handleSelectAll = () => {
@@ -373,16 +378,22 @@ export default function AdminSmsPage() {
                   <TableRow
                     key={booking.id}
                     className={
-                      selectedPhones.has(booking.user!.phone)
+                      selectedPhones.has(
+                        normalizeSriLankaPhone(booking.user!.phone) ?? booking.user!.phone,
+                      )
                         ? "bg-emerald-50 dark:bg-emerald-950/20"
                         : ""
                     }
                   >
                     <TableCell>
                       <Checkbox
-                        checked={selectedPhones.has(booking.user!.phone)}
+                        checked={selectedPhones.has(
+                          normalizeSriLankaPhone(booking.user!.phone) ?? booking.user!.phone,
+                        )}
                         onCheckedChange={() =>
-                          handleTogglePhone(booking.user!.phone)
+                          handleTogglePhone(
+                            normalizeSriLankaPhone(booking.user!.phone) ?? booking.user!.phone,
+                          )
                         }
                       />
                     </TableCell>
@@ -390,7 +401,7 @@ export default function AdminSmsPage() {
                       {booking.user?.fullName ?? "--"}
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {booking.user?.phone}
+                      {formatPhoneForDisplay(booking.user?.phone)}
                     </TableCell>
                     <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
                     <TableCell>
@@ -428,7 +439,7 @@ export default function AdminSmsPage() {
                 key={phone}
                 className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-300"
               >
-                {phone}
+                {formatPhoneForDisplay(phone)}
                 <button
                   onClick={() => handleTogglePhone(phone)}
                   className="ml-1 text-emerald-600 hover:text-red-500"

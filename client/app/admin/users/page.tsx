@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/ui/phone-input";
+import { formatPhoneForDisplay, isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -136,16 +138,23 @@ export default function AdminUsersPage() {
       return;
     }
 
+    if (!isValidSriLankaPhone(formData.phone)) {
+      alert("Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)");
+      return;
+    }
+
     if (editingUser) {
-      const updateData = { ...formData };
+      const updateData: Partial<typeof formData> = { ...formData };
       if (!updateData.password) delete (updateData as any).password;
+      updateData.phone = normalizeSriLankaPhone(updateData.phone) ?? updateData.phone;
       updateUserMutation.mutate(updateData);
     } else {
       if (!formData.password) {
         alert("Password is required for new users");
         return;
       }
-      createUserMutation.mutate(formData);
+      const createData = { ...formData, phone: normalizeSriLankaPhone(formData.phone) ?? formData.phone };
+      createUserMutation.mutate(createData);
     }
   };
 
@@ -189,7 +198,7 @@ export default function AdminUsersPage() {
               <TableRow key={user.id}>
                 <TableCell>{user.fullName}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phone}</TableCell>
+                <TableCell>{formatPhoneForDisplay(user.phone)}</TableCell>
                 <TableCell>{user.type}</TableCell>
                 <TableCell>{user._count?.bookings ?? "--"}</TableCell>
                 <TableCell>{user.status}</TableCell>

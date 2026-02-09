@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { formatPhoneForDisplay } from "@/lib/phone";
 import { Booking } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import {
@@ -158,7 +159,7 @@ export default function PendingPickupsPage() {
                 <TableCell>
                   {pickup.driver?.fullName ?? "Assigned soon"}
                 </TableCell>
-                <TableCell>{pickup.driver?.phone ?? "--"}</TableCell>
+                <TableCell>{pickup.driver?.phone ? formatPhoneForDisplay(pickup.driver.phone) : "--"}</TableCell>
                 <TableCell>{pickup.addressLine1}</TableCell>
                 <TableCell>
                   {new Date(pickup.scheduledDate).toLocaleDateString()}

@@ -150,6 +150,12 @@ export default function AssistantChatbox() {
   const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // Pulse state when a new assistant message arrives (shows subtle glow)
+  const [newMessagePulse, setNewMessagePulse] = useState(false);
+  // Track unread messages when the panel is closed
+  const [hasUnread, setHasUnread] = useState(false);
+  const prevMessagesCountRef = useRef(messages.length);
+
   useEffect(() => {
     const stored =
       typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
@@ -223,6 +229,33 @@ export default function AssistantChatbox() {
     if (!listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, isLoading]);
+
+  // Detect new assistant messages and animate a subtle glow on the chat list.
+  // If the panel is closed, mark as unread to show a ring on the chat button.
+  useEffect(() => {
+    const prev = prevMessagesCountRef.current;
+    const current = messages.length;
+    if (current > prev) {
+      const last = messages[messages.length - 1];
+      if (last?.role === "assistant") {
+        if (!isOpen) {
+          setHasUnread(true);
+        } else {
+          setNewMessagePulse(true);
+          const t = setTimeout(() => setNewMessagePulse(false), 2200);
+          return () => clearTimeout(t);
+        }
+      }
+    }
+    prevMessagesCountRef.current = current;
+  }, [messages, isOpen]);
+
+  // Clear unread state when the panel is opened by the user
+  useEffect(() => {
+    if (isOpen) {
+      setHasUnread(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -360,7 +393,10 @@ export default function AssistantChatbox() {
         <div className="flex h-[360px] max-h-[70vh] flex-col">
           <div
             ref={listRef}
-            className="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm"
+            className={cn(
+              "flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm assistant-scrollbar",
+              newMessagePulse && "assistant-scrollbar-pulse",
+            )}
             aria-live="polite"
           >
             {messages.map((message) => (
@@ -418,7 +454,7 @@ export default function AssistantChatbox() {
                 }}
                 rows={1}
                 placeholder="Ask about this page..."
-                className="min-h-[44px] flex-1 resize-none rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 py-2 text-sm text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)]"
+                className="min-h-[44px] flex-1 resize-none rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 py-2 text-sm text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)] assistant-input-scrollbar"
                 aria-label="Type your message"
                 disabled={isLoading}
               />
@@ -443,6 +479,7 @@ export default function AssistantChatbox() {
         className={cn(
           "relative flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-sm font-semibold text-white shadow-lg transition hover:bg-[color:var(--brand-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]",
           !isOpen && "assistant-bounce",
+          hasUnread && !isOpen && "assistant-notification",
         )}
         aria-expanded={isOpen}
         aria-controls="assistant-chat-panel"

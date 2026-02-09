@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseService } from '../common/supabase/supabase.service';
+import { RecaptchaService } from '../common/recaptcha.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -26,6 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private supabaseService: SupabaseService,
+    private recaptchaService: RecaptchaService,
   ) {}
 
   private async issueTokens(user: User) {
@@ -46,7 +48,28 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  private getRecaptchaAction(kind: 'signup' | 'login') {
+    if (kind === 'signup')
+      return (
+        this.configService.get<string>('RECAPTCHA_SIGNUP_ACTION') ??
+        this.configService.get<string>('RECAPTCHA_ADMIN_SIGNUP_ACTION') ??
+        'signup'
+      );
+    return (
+      this.configService.get<string>('RECAPTCHA_LOGIN_ACTION') ??
+      this.configService.get<string>('RECAPTCHA_ADMIN_LOGIN_ACTION') ??
+      'login'
+    );
+  }
+
   async register(dto: RegisterDto) {
+    // Verify reCAPTCHA for all registrations
+    const action = this.getRecaptchaAction('signup');
+    const ok = await this.recaptchaService.verify(dto.recaptchaToken, action);
+    if (!ok) {
+      throw new UnauthorizedException('reCAPTCHA verification failed');
+    }
+
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -128,6 +151,13 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    // Verify reCAPTCHA for all logins
+    const action = this.getRecaptchaAction('login');
+    const ok = await this.recaptchaService.verify(dto.recaptchaToken, action);
+    if (!ok) {
+      throw new UnauthorizedException('reCAPTCHA verification failed');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: USER_PROFILE_INCLUDE,
@@ -135,6 +165,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
     // Block login for users without password (e.g., Google-only users)
     if (!user.passwordHash) {
       throw new UnauthorizedException('Please sign in with Google');
@@ -207,7 +238,7 @@ export class AuthService {
   }
 
   // Public: accept access_token or id_token and authenticate/create user
-  async googleLogin(token: string, role?: string) {
+  async googleLogin(token: string, isSignup = false, role?: string) {
     let googleUser: any = null;
     const isJwt = token.split('.').length === 3;
 
@@ -241,11 +272,11 @@ export class AuthService {
       throw new UnauthorizedException('Google email not verified');
     }
 
-    return this.findOrCreateUserFromGoogle(googleUser, role);
+    return this.findOrCreateUserFromGoogle(googleUser, isSignup, role);
   }
 
   // Exchange authorization code server-side and authenticate
-  async googleLoginWithCode(code: string, redirectUri?: string, role?: string) {
+  async googleLoginWithCode(code: string, redirectUri?: string, isSignup = false, role?: string) {
     const client_id = this.getRequiredConfig('GOOGLE_CLIENT_ID');
     const client_secret = this.getRequiredConfig('GOOGLE_CLIENT_SECRET');
     const redirect_uri =
@@ -301,15 +332,20 @@ export class AuthService {
       throw new UnauthorizedException('Google email not verified');
     }
 
-    return this.findOrCreateUserFromGoogle(googleUser, role);
+    return this.findOrCreateUserFromGoogle(googleUser, isSignup, role);
   }
 
   // Shared logic to find or create app user from Google profile
-  private async findOrCreateUserFromGoogle(googleUser: any, role?: string) {
+  private async findOrCreateUserFromGoogle(googleUser: any, isSignup = false, role?: string) {
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
       include: USER_PROFILE_INCLUDE,
     });
+
+    if (user && isSignup) {
+      // When the client intends to sign up but the email already exists, prevent creating/overwriting
+      throw new ConflictException('Email already registered');
+    }
 
     if (!user) {
       // Try to create Supabase Auth user for Google users too

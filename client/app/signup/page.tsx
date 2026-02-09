@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,11 +16,17 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { toast } from "@/components/ui/use-toast";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { useGoogleLogin } from "@react-oauth/google";
+import PhoneInput from "@/components/ui/phone-input";
+import { isValidSriLankaPhone } from "@/lib/phone";
+import { executeRecaptcha } from "@/lib/recaptcha";
+import RecaptchaNotice from "@/components/recaptcha/RecaptchaNotice";
 
 const schema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(7, "Phone number must be at least 7 digits"),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), {
+    message: "Enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
+  }),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -28,10 +34,14 @@ const schema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       "Password must contain uppercase, lowercase, and a number",
     ),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
   type: z.enum(["HOUSEHOLD", "BUSINESS"]),
   terms: z.boolean().refine((v) => v === true, {
     message: "You must accept the terms.",
   }),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -49,6 +59,8 @@ export default function SignupPage() {
       defaultValues: { type: "HOUSEHOLD", terms: false },
     });
   const { errors, isSubmitting } = formState;
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
   const {
     register: registerUser,
@@ -85,11 +97,7 @@ export default function SignupPage() {
     onSuccess: async (tokenResponse) => {
       try {
         if ((tokenResponse as any).code) {
-          const user = await googleLoginWithCode(
-            (tokenResponse as any).code,
-            undefined,
-            role,
-          );
+          const user = await googleLoginWithCode((tokenResponse as any).code, undefined, true);
           toast({
             title: "Welcome!",
             description: "Signed up with Google successfully.",
@@ -99,10 +107,8 @@ export default function SignupPage() {
           return;
         }
 
-        const token =
-          (tokenResponse as any).access_token ||
-          (tokenResponse as any).credential;
-        const user = await googleLogin(token, role);
+        const token = (tokenResponse as any).access_token || (tokenResponse as any).credential;
+        const user = await googleLogin(token, true);
         toast({
           title: "Welcome!",
           description: "Signed up with Google successfully.",
@@ -110,9 +116,11 @@ export default function SignupPage() {
         });
         redirectToDashboard(user.role);
       } catch (error: any) {
+        const msg = error?.message ?? "Please try again.";
+        const description = msg === 'Email already registered' ? 'That email is already registered. Please log in instead.' : msg;
         toast({
           title: "Google sign-up failed",
-          description: error?.message ?? "Please try again.",
+          description,
           variant: "error",
         });
       }
@@ -128,11 +136,21 @@ export default function SignupPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const { terms, ...payload } = values;
+      const { terms, confirmPassword, ...payload } = values;
       // debug log before calling API
       // eslint-disable-next-line no-console
       console.debug("Signup onSubmit payload:", { ...payload, role });
-      const user = await registerUser({ ...payload, role });
+
+      let recaptchaToken: string | null = null;
+      try {
+        recaptchaToken = (await executeRecaptcha("signup")) as string | null;
+      } catch (err) {
+        console.error("reCAPTCHA failed:", err);
+        toast({ title: "reCAPTCHA", description: "Failed to run reCAPTCHA. Please try again.", variant: "error" });
+        return;
+      }
+
+      const user = await registerUser({ ...payload, role, recaptchaToken: recaptchaToken ?? undefined });
       // eslint-disable-next-line no-console
       console.debug("Signup success, user:", user);
       toast({
@@ -221,7 +239,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Phone Number</Label>
-                <Input placeholder="+94 77 123 4567" {...register("phone")} />
+                <PhoneInput placeholder="+94 77 123 4567" {...register("phone")} />
                 {errors.phone && (
                   <p className="text-xs text-rose-500">
                     {errors.phone.message}
@@ -230,14 +248,56 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
-                <Input
-                  type="password"
-                  placeholder="Choose a strong password"
-                  {...register("password")}
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Choose a strong password"
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-(--border) bg-(--surface-soft)"
+                  >
+                    {showPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.05-2.42 2.6-4.47 4.54-5.87"/><path d="M1 1l22 22"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-xs text-rose-500">
                     {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Confirm Password</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Re-enter password"
+                    {...register("confirmPassword")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((s) => !s)}
+                    aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-(--border) bg-(--surface-soft)"
+                  >
+                    {showConfirm ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.05-2.42 2.6-4.47 4.54-5.87"/><path d="M1 1l22 22"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-rose-500">
+                    {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
@@ -291,6 +351,11 @@ export default function SignupPage() {
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
+
+            <div className="mt-2">
+              <RecaptchaNotice />
+            </div>
+
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               Already have an account?{"   "}
               <Link
