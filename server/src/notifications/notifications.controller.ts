@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, ServiceUnavailableException } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 import { PushService } from './push.service';
+import { Public } from '../common/decorators/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('notifications')
@@ -23,8 +24,13 @@ export class NotificationsController {
 
   /** Returns the VAPID public key so the client can subscribe */
   @Get('push/public-key')
+  @Public()
   getPublicKey() {
-    return { publicKey: this.pushService.getPublicKey() };
+    const publicKey = this.pushService.getPublicKey();
+    if (!publicKey) {
+      throw new ServiceUnavailableException('VAPID public key not configured on server');
+    }
+    return { publicKey };
   }
 
   /** Save a push subscription for the current user */
