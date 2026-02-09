@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { Booking, PricingItem } from "@/lib/types";
+import { Booking, PricingItem, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import Loading from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
@@ -43,11 +44,31 @@ const getTodayInputValue = () => {
 
 export default function NewBookingPage() {
   const { user } = useAuth();
-  const { data } = useQuery({
+  const { data: pricingData, isLoading: pricingLoading } = useQuery({
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
   });
-  const { data: latestBookingData } = useQuery({
+
+  const { data: categories } = useQuery({
+    queryKey: ["public-waste-categories"],
+    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+  });
+
+  const combinedPricing = useMemo(() => {
+    const pricing = pricingData ?? [];
+    const existingCatIds = new Set(pricing.map((p) => p.wasteCategory.id));
+    const missing = (categories ?? [])
+      .filter((c) => !existingCatIds.has(c.id))
+      .map((c) => ({
+        id: `new-${c.id}`,
+        minPriceLkrPerKg: 0,
+        maxPriceLkrPerKg: 0,
+        isActive: false,
+        wasteCategory: c,
+      } as PricingItem));
+    return [...pricing, ...missing];
+  }, [pricingData, categories]);
+  const { data: latestBookingData, isLoading: latestLoading } = useQuery({
     queryKey: ["bookings", "latest"],
     queryFn: () =>
       apiFetch<{ items: Booking[] }>("/bookings?page=1&pageSize=1"),
@@ -107,6 +128,8 @@ export default function NewBookingPage() {
   }, [selectedItems, isPaperCategory, weightRange]);
 
   const latestBooking = latestBookingData?.items?.[0];
+
+  // Pricing loader moved below so hooks are always called in the same order
 
   useEffect(() => {
     if (!latestBooking) return;
@@ -261,7 +284,7 @@ export default function NewBookingPage() {
       const uniqueCategoryIds = [...new Set(detectedCategoryIds)];
 
       uniqueCategoryIds.forEach((categoryId) => {
-        const matchingItem = data?.find(
+        const matchingItem = combinedPricing.find(
           (item) => item.wasteCategory.id === categoryId
         );
 
@@ -406,6 +429,14 @@ export default function NewBookingPage() {
     if (currentStep <= 1) return currentStep;
     return currentStep + 1; // Skip step 2 for non-paper
   };
+
+  if (pricingLoading) {
+    return (
+      <div className="py-8">
+        <Loading message="Loading pricing..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -620,7 +651,7 @@ export default function NewBookingPage() {
                 : "Or Select Categories Manually:"}
             </Label>
             <div className="grid gap-4 md:grid-cols-3">
-              {(data ?? []).map((item) => (
+              {(combinedPricing ?? []).map((item) => (
                 <button
                   key={item.id}
                   className={`rounded-2xl border px-4 py-4 text-left ${

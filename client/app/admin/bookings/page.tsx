@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
+import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 
 export default function AdminBookingsPage() {
   const [search, setSearch] = useState("");
@@ -44,7 +45,7 @@ export default function AdminBookingsPage() {
     }
   };
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-bookings", status, search, dateFilter],
     queryFn: () => {
       const params = new URLSearchParams();
@@ -116,56 +117,62 @@ export default function AdminBookingsPage() {
         />
       </Card>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Weight</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Driver</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(data ?? []).map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>{booking.id.slice(0, 8)}</TableCell>
-                <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
-                <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
-                <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
-                <TableCell>
-                  LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                </TableCell>
-                <TableCell>
-                  {booking.driver?.fullName ?? "Unassigned"}
-                </TableCell>
-                <TableCell>
-                  <StatusPill status={booking.status} />
-                </TableCell>
-                <TableCell>
-                  {new Date(booking.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(booking.id)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    title="Delete Booking"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+      {isLoading ? (
+        <Card className="p-6">
+          <SkeletonTableRows columns={9} rows={6} />
+        </Card>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Booking ID</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Weight</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Driver</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {(data ?? []).map((booking) => (
+                <TableRow key={booking.id}>
+                  <TableCell>{booking.id.slice(0, 8)}</TableCell>
+                  <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
+                  <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
+                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                  <TableCell>
+                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                  </TableCell>
+                  <TableCell>
+                    {booking.driver?.fullName ?? "Unassigned"}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={booking.status} />
+                  </TableCell>
+                  <TableCell>
+                    {new Date(booking.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(booking.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      title="Delete Booking"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }
