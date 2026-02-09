@@ -42,6 +42,8 @@
   --scrollbar-track: transparent;
   --auth-text: #0f172a; /* text color for auth header in light mode */
   --auth-image-transition-duration: 20s;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-display: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 } 
 
 :root[data-theme="dark"] {

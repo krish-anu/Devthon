@@ -54,11 +54,18 @@ export async function apiFetch<T>(
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-    credentials: (options as any).credentials ?? "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+      credentials: (options as any).credentials ?? "include",
+    });
+  } catch (e: any) {
+    // Provide a clearer error when the network/socket is unavailable.
+    console.error("Network error while fetching", `${API_URL}${path}`, e);
+    throw new Error(`Network error connecting to ${API_URL}${path}: ${e?.message || e}`);
+  }
 
   if (response.status === 401 && auth && retry) {
     const refreshed = await refreshTokens();
@@ -79,7 +86,7 @@ export async function apiFetch<T>(
 }
 
 export const authApi = {
-  login: (payload: { email: string; password: string }) =>
+  login: (payload: { email: string; password: string; recaptchaToken?: string }) =>
     apiFetch<AuthResponse>(
       "/auth/login",
       {
@@ -95,6 +102,7 @@ export const authApi = {
     password: string;
     type: "HOUSEHOLD" | "BUSINESS";
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
+    recaptchaToken?: string;
   }) =>
     apiFetch<AuthResponse>(
       "/auth/register",
