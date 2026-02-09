@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS "PushSubscription" (
     "auth" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "PushSubscription_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "PushSubscription_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "PushSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Unique index on endpoint
@@ -15,8 +16,3 @@ CREATE UNIQUE INDEX IF NOT EXISTS "PushSubscription_endpoint_key" ON "PushSubscr
 
 -- Index on userId (for lookups)
 CREATE INDEX IF NOT EXISTS "PushSubscription_userId_idx" ON "PushSubscription"("userId");
-
--- Foreign key to User (user deletion cascades)
-ALTER TABLE "PushSubscription"
-  ADD CONSTRAINT IF NOT EXISTS "PushSubscription_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
