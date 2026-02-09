@@ -58,6 +58,7 @@ export default function DriverLayout({
   return (
     <RequireAuth roles={["DRIVER"]}>
       <AppShell
+        hasSidebar={!isPendingApproval}
         sidebar={isPendingApproval ? null : <Sidebar title="Driver Console" items={navItems} />}
         header={<Header title="Driver Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
       >

@@ -103,6 +103,7 @@ export default function AdminLayout({
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
       <RequireAuth roles={["ADMIN", "SUPER_ADMIN"]}>
         <AppShell
+          hasSidebar={!isPendingApproval}
           sidebar={isPendingApproval ? null : <Sidebar title="Admin Portal" items={allNavItems} />}
           header={<Header title="Admin Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
         >

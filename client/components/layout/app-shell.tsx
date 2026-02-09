@@ -8,11 +8,13 @@ export function AppShell({
   header,
   children,
   className,
+  hasSidebar = true,
 }: {
   sidebar: React.ReactNode;
   header?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  hasSidebar?: boolean;
 }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -61,7 +63,7 @@ export function AppShell({
       {/* Full-width header bar (fixed at top). Inner container keeps content aligned */}
       {header && (
         <header className="fixed top-0 left-0 right-0 border-b border-(--border) bg-(--surface-soft) h-16 z-20">
-          <div className="mx-auto h-16 flex items-center w-full max-w-7xl px-6 lg:pl-64">
+          <div className={cn("mx-auto h-16 flex items-center w-full max-w-7xl px-6", hasSidebar ? "lg:pl-64" : undefined)}>
             <button
               type="button"
               className="mr-3 flex h-10 w-10 items-center justify-center rounded-full border border-(--border) text-(--ink) lg:hidden"
@@ -109,7 +111,8 @@ export function AppShell({
       {/* Main content gets left padding on large screens and top padding when header exists to account for the fixed header */}
       <div
         className={cn(
-          "mx-auto w-full max-w-7xl lg:pl-64",
+          "mx-auto w-full max-w-7xl",
+          hasSidebar ? "lg:pl-64" : undefined,
           Boolean(header) ? "pt-16" : undefined,
         )}
       >
