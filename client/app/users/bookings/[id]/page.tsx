@@ -65,10 +65,12 @@ export default function BookingDetailsPage() {
   });
 
   // Handle map click to place marker
-  const handleMapClick = (event: google.maps.MapMouseEvent) => {
-    if (event.latLng) {
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
+  const handleMapClick = (event: any) => {
+    // event may be a React mouse event or a Google MapMouseEvent depending on context
+    const latLng = event?.latLng ?? event?.nativeEvent?.latLng;
+    if (latLng) {
+      const lat = latLng.lat();
+      const lng = latLng.lng();
       setMarkerPosition({ lat, lng });
     }
   };

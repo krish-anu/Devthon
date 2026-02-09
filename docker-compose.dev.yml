@@ -70,8 +70,10 @@ services:
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
 
-     
-      
+      # reCAPTCHA (server)
+      RECAPTCHA_SECRET: ${RECAPTCHA_SECRET}
+      RECAPTCHA_MIN_SCORE: ${RECAPTCHA_MIN_SCORE:-0.5}
+
       # Google OAuth (server-side auth-code exchange)
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
@@ -108,7 +110,11 @@ services:
       # Must use localhost since browser can't resolve Docker service names
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+<<<<<<< HEAD
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+=======
+      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+>>>>>>> origin
       NODE_ENV: ${NODE_ENV:-development}
     volumes:
       # Mount source code for hot reload in development

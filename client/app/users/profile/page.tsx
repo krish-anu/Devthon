@@ -6,11 +6,14 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch, passkeyApi } from "@/lib/api";
+import PhoneInput from "@/components/ui/phone-input";
+import { isValidSriLankaPhone } from "@/lib/phone";
 import { toast } from "@/components/ui/use-toast";
 import { authApi } from "@/lib/api";
 import { useForm as useForm2 } from "react-hook-form";
@@ -20,7 +23,7 @@ const schema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().min(7),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Invalid Sri Lanka phone number" }),
   address: z.string().min(3),
 });
 
@@ -233,17 +236,11 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-4">
         <div>
-          {user && (user as any).avatar ? (
-            <img
-              src={(user as any).avatar}
-              alt={user?.fullName ?? "User avatar"}
-              className="h-16 w-16 rounded-full object-cover border border-[color:var(--brand)] dark:border-[color:var(--brand)] p-1"
-            />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--brand)/20 text-xl font-semibold">
-              {user?.fullName?.[0] ?? "U"}
-            </div>
-          )}
+          <Avatar
+            src={(user as any)?.avatar ?? (user as any)?.avatarUrl ?? null}
+            alt={user?.fullName ?? "User"}
+            className="h-16 w-16"
+          />
         </div>
         <div>
           <h3 className="text-xl font-semibold">{user?.fullName ?? "User"}</h3>
@@ -299,7 +296,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
-                <Input {...register("phone")} />
+                <PhoneInput {...register("phone")} />
                 {errors.phone && (
                   <p className="text-xs text-rose-400">
                     {errors.phone.message}

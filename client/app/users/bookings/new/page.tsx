@@ -7,6 +7,8 @@ import { Booking, PricingItem } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/ui/phone-input";
+import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -330,6 +332,16 @@ export default function NewBookingPage() {
       });
       return;
     }
+
+    if (!isValidSriLankaPhone(phoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
+        variant: "warning",
+      });
+      return;
+    }
+
     if (!terms) {
       toast({
         title: "Accept terms",
@@ -353,6 +365,7 @@ export default function NewBookingPage() {
           specialInstructions,
           scheduledDate,
           scheduledTimeSlot,
+          phone: normalizeSriLankaPhone(phoneNumber),
           lat: mapLat,
           lng: mapLng,
         }),
@@ -734,6 +747,9 @@ export default function NewBookingPage() {
                 placeholder="Enter contact number"
                 required
               />
+              {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
+                <p className="text-xs text-rose-500">Enter a valid Sri Lanka phone number</p>
+              )}
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label>Special Instructions (Optional)</Label>
@@ -861,25 +877,25 @@ export default function NewBookingPage() {
                 </>
               )}
             </div>
-
+            
             {/* Weight Range */}
             {!isPaperCategory && weightRange && (
-              <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
                 <p className="text-sm text-(--muted) mb-2">Estimated Weight</p>
                 <p className="text-lg font-semibold">{weightRange.label}</p>
-              </div>
+            </div>
             )}
           </div>
 
           {/* Pickup Details */}
-          <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
             <p className="text-sm font-semibold mb-3">Pickup Details</p>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <p className="text-xs text-(--muted)">Address</p>
                 <p className="text-sm font-medium">{addressLine1}</p>
                 <p className="text-sm text-(--muted)">{city}, {postalCode}</p>
-              </div>
+            </div>
               <div>
                 <p className="text-xs text-(--muted)">Contact Number</p>
                 <p className="text-sm font-medium">{phoneNumber}</p>

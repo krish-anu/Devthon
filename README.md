@@ -41,7 +41,7 @@ Services started by the compose setup:
 - Frontend (default port 3000)
 
 Access:
-
+    
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000/api
 - API docs: http://localhost:4000/api/docs
@@ -133,10 +133,19 @@ JWT_REFRESH_EXPIRES=7d                 # Default: 7d
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
 # Server (for auth-code flow)
 GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 GOOGLE_REDIRECT_URI=http://localhost:3000
+# reCAPTCHA (for protected signup/login flows)
+# RECAPTCHA_SECRET=your_recaptcha_secret_here
+# RECAPTCHA_MIN_SCORE=0.5
+# RECAPTCHA_SIGNUP_ACTION=signup
+# RECAPTCHA_LOGIN_ACTION=login
+# RECAPTCHA_ADMIN_SIGNUP_ACTION=admin_signup
+# RECAPTCHA_ADMIN_LOGIN_ACTION=admin_login
+# Note: Signup and login flows require reCAPTCHA verification in production. Set both NEXT_PUBLIC_RECAPTCHA_SITE_KEY (client) and RECAPTCHA_SECRET (server). If RECAPTCHA_SECRET is not set, verification is skipped (useful for local development).
 ```
 
 If you need the full reference and troubleshooting tips, see `ENV_QUICK_REFERENCE.md`.

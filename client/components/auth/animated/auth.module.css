@@ -1,0 +1,166 @@
+/* Modern Authentication Animation Styles */
+/* Using Pure CSS + React State as requested */
+
+.auth-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll during animation */
+  background-color: var(--background);
+}
+
+/* --- Mobile / Default Layout (No Split) --- */
+.branding-panel {
+  display: none; /* Hidden on mobile by default, matching existing layout */
+}
+
+.form-panel {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  transition: all 0.8s ease-in-out;
+}
+
+/* --- Desktop Layout (Split & Animated) --- */
+@media (min-width: 1024px) {
+  .branding-panel {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    z-index: 10;
+    transition: transform 0.8s ease-in-out;
+  }
+
+  .form-panel {
+    position: absolute;
+    top: 0;
+    left: 50%; /* Starts on the right */
+    width: 50%;
+    height: 100%;
+    padding: 0;
+    z-index: 5;
+    transition: transform 0.8s ease-in-out;
+  }
+
+  /* Sign Up Mode: Swap Positions */
+  .auth-container.sign-up-mode .branding-panel {
+    transform: translateX(100%);
+  }
+
+  .auth-container.sign-up-mode .form-panel {
+    transform: translateX(-100%);
+  }
+}
+
+/* --- Form Content Transitions --- */
+/* These forms exist simultaneously in the form-panel */
+.form-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+  /* min-height needed to prevent collapse? forms have content */
+}
+
+.form-content-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: 
+    opacity 0.6s ease-in-out,
+    transform 0.6s ease-in-out;
+  opacity: 0;
+  pointer-events: none;
+  /* Centering in the relative parent if needed, but top:0 left:0 works if parent has height */
+}
+
+/* Helper to position them correctly in the flex container */
+/* Actually, absolute positioning removes them from flow, parent collapses. */
+/* We need to ensure the parent has height. JS might need to set height or we just set a min-height. */
+/* Better approach: Grid overlay. */
+.form-panel-inner {
+  display: grid;
+  grid-template-areas: "stack";
+  width: 100%;
+  max-width: 28rem;
+}
+
+.form-content-container {
+  grid-area: stack;
+  /* position: relative;  <-- If relative, they stack vertically. If absolute, they overlap. */
+  /* We want overlap. */
+  opacity: 0;
+  z-index: 0;
+  transform: translateX(50px);
+  pointer-events: none;
+  transition: all 0.6s ease-in-out;
+}
+
+/* Active State */
+.form-content-container.active {
+  opacity: 1;
+  z-index: 10;
+  transform: translateX(0);
+  pointer-events: auto;
+  position: relative; /* Take up flow space when active? No, that causes jump. */
+  /* If we want smooth transition, absolute is best, but height is issue. */
+  /* Let's keep them absolute and set a fixed min-height or use JS to height match? */
+  /* Or simply: The card has a background. If both are absolute, the container has 0 height. */
+  /* The User asked for "Login form slides out... Signup form slides in". */
+  /* If one is absolute and one relative, the layout jumps. */
+  /* Solution: Both absolute. Container has min-height: 600px (approx form height). */
+}
+
+.form-content-container {
+  position: absolute;
+  top: 50%; /* Center vertically attempt */
+  left: 50%;
+  transform: translate(-50%, -50%) translateX(50px); /* Centered + Offset */
+  width: 100%;
+}
+
+.form-content-container.active {
+  transform: translate(-50%, -50%) translateX(0);
+}
+
+/* Adjustments for the specific Login vs Signup animation directions */
+/* Setup specific entrance/exit transforms for "sliding across" feel */
+
+/* Login is Active (Default) */
+/* Login Form Style */
+.login-container {
+  /* Default state is active when !sign-up-mode */
+}
+
+/* Signup Form Style */
+.signup-container {
+  /* Default state is inactive */
+}
+
+/* Refined Transition Logic based on mode class on parent */
+/* But we are using a boolean prop passed to children or class? */
+/* Let's rely on .active class toggled by React */
+
+.form-content-container.enter-left {
+  transform: translate(-50%, -50%) translateX(-50px);
+}
+.form-content-container.exit-left {
+  transform: translate(-50%, -50%) translateX(-50px);
+  opacity: 0;
+}
+.form-content-container.enter-right {
+  transform: translate(-50%, -50%) translateX(50px);
+}
+.form-content-container.exit-right {
+  transform: translate(-50%, -50%) translateX(50px);
+  opacity: 0;
+}
+
+/* Override existing form styles if necessary */

@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString, IsPhoneNumber } from 'class-validator';
+import { IsEmailDomainDeliverable } from '../../common/validators/email-mx.validator';
 
 export class CreateRecyclerDto {
   @IsNotEmpty()
@@ -15,6 +16,7 @@ export class CreateRecyclerDto {
 
   @IsNotEmpty()
   @IsEmail()
+  @IsEmailDomainDeliverable({ message: 'Email domain cannot receive mail' })
   email: string;
 
   @IsNotEmpty()

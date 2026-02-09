@@ -213,47 +213,77 @@ export class AdminService {
       if (user) {
         switch (user.role) {
           case 'CUSTOMER':
-            await this.prisma.customer.upsert({
+            const existingCustomer = await this.prisma.customer.findUnique({
               where: { id },
-              update: profileData,
-              create: {
-                id,
-                fullName: dto.fullName ?? '',
-                phone: dto.phone ?? '',
-                ...profileData,
-              },
+              select: { id: true },
             });
+            if (existingCustomer) {
+              await this.prisma.customer.update({
+                where: { id },
+                data: profileData,
+              });
+            } else {
+              await this.prisma.customer.create({
+                data: {
+                  id,
+                  fullName: dto.fullName ?? '',
+                  phone: dto.phone ?? '',
+                  type: dto.type ?? 'HOUSEHOLD',
+                  status: dto.status ?? 'ACTIVE',
+                  ...profileData,
+                },
+              });
+            }
             break;
           case 'ADMIN':
           case 'SUPER_ADMIN':
-            await this.prisma.admin.upsert({
+            const existingAdmin = await this.prisma.admin.findUnique({
               where: { id },
-              update: {
-                fullName: profileData.fullName,
-                phone: profileData.phone,
-                address: profileData.address,
-              },
-              create: {
-                id,
-                fullName: dto.fullName ?? '',
-                phone: dto.phone ?? '',
-              },
+              select: { id: true },
             });
+            if (existingAdmin) {
+              await this.prisma.admin.update({
+                where: { id },
+                data: {
+                  fullName: profileData.fullName,
+                  phone: profileData.phone,
+                  address: profileData.address,
+                },
+              });
+            } else {
+              await this.prisma.admin.create({
+                data: {
+                  id,
+                  fullName: dto.fullName ?? '',
+                  phone: dto.phone ?? '',
+                  address: profileData.address,
+                },
+              });
+            }
             break;
           case 'DRIVER':
-            await this.prisma.driver.upsert({
+            const existingDriver = await this.prisma.driver.findUnique({
               where: { id },
-              update: {
-                fullName: profileData.fullName,
-                phone: profileData.phone,
-              },
-              create: {
-                id,
-                fullName: dto.fullName ?? '',
-                phone: dto.phone ?? '',
-                vehicle: '',
-              },
+              select: { id: true },
             });
+            if (existingDriver) {
+              await this.prisma.driver.update({
+                where: { id },
+                data: {
+                  fullName: profileData.fullName,
+                  phone: profileData.phone,
+                },
+              });
+            } else {
+              await this.prisma.driver.create({
+                data: {
+                  id,
+                  fullName: dto.fullName ?? '',
+                  phone: dto.phone ?? '',
+                  vehicle: '',
+                },
+              });
+            }
             break;
         }
       }
