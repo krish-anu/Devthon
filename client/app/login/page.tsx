@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { executeRecaptcha } from "@/lib/recaptcha";
+import RecaptchaNotice from "@/components/recaptcha/RecaptchaNotice";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,7 +110,16 @@ export default function LoginPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const user = await login(values.email, values.password);
+      let recaptchaToken: string | null = null;
+      try {
+        recaptchaToken = (await executeRecaptcha("login")) as string | null;
+      } catch (err) {
+        console.error("reCAPTCHA failed:", err);
+        toast({ title: "reCAPTCHA", description: "Failed to run reCAPTCHA. Please try again.", variant: "error" });
+        return;
+      }
+
+      const user = await login(values.email, values.password, recaptchaToken ?? undefined);
       toast({
         title: "Welcome back!",
         description: "Redirecting to your dashboard.",
@@ -290,6 +301,10 @@ export default function LoginPage() {
               </Button>
             </form>
 
+            <div className="mt-2">
+              <RecaptchaNotice />
+            </div>
+
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               Don&apos;t have an account?{"   "}
               <Link
@@ -302,9 +317,6 @@ export default function LoginPage() {
           </Card>
         </div>
       </div>
-      <p className="text-xs text-center text-muted-foreground mt-4">
-        v1.0.1 - Deployed
-      </p>
     </AuthLayout>
   );
 }

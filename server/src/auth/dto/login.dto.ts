@@ -1,7 +1,9 @@
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
+import { IsEmailDomainDeliverable } from '../../common/validators/email-mx.validator';
 
 export class LoginDto {
   @IsEmail()
+  @IsEmailDomainDeliverable({ message: 'Email domain cannot receive mail' })
   email: string;
 
   @IsString()
