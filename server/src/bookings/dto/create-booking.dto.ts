@@ -34,6 +34,9 @@ export class CreateBookingDto {
   @IsString()
   postalCode: string;
 
+  @IsString()
+  phone: string;
+
   @IsOptional()
   @IsString()
   specialInstructions?: string;
