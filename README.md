@@ -41,7 +41,7 @@ Services started by the compose setup:
 - Frontend (default port 3000)
 
 Access:
-
+    
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000/api
 - API docs: http://localhost:4000/api/docs

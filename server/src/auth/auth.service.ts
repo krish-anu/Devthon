@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -258,11 +259,22 @@ export class AuthService {
       grant_type: 'authorization_code',
     });
 
-    const r = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
+    let r: Response;
+    try {
+      r = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+    } catch (error: any) {
+      this.logger.error(
+        'Google OAuth token exchange failed',
+        error?.message ?? error,
+      );
+      throw new BadRequestException(
+        'Google OAuth exchange failed. Check GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI and network access.',
+      );
+    }
 
     if (!r.ok) {
       const txt = await r.text();

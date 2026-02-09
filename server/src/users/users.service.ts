@@ -52,21 +52,22 @@ export class UsersService {
 
     if (Object.keys(profileData).length > 0) {
       // Helper to clean up conflicting profiles if they exist (handling inconsistent DB states)
+      // Use deleteMany to avoid relying on potentially stale relation data.
       const cleanConflictingProfiles = async (tx: any, role: string) => {
-        if (role !== 'CUSTOMER' && (user as any).customer) {
-          await tx.customer.delete({ where: { id: userId } });
+        if (role !== 'CUSTOMER') {
+          await tx.customer.deleteMany({ where: { id: userId } });
         }
-        if (!['ADMIN', 'SUPER_ADMIN'].includes(role) && (user as any).admin) {
-          await tx.admin.delete({ where: { id: userId } });
+        if (!['ADMIN', 'SUPER_ADMIN'].includes(role)) {
+          await tx.admin.deleteMany({ where: { id: userId } });
         }
-        if (role !== 'DRIVER' && (user as any).driver) {
-          await tx.driver.delete({ where: { id: userId } });
+        if (role !== 'DRIVER') {
+          await tx.driver.deleteMany({ where: { id: userId } });
         }
-        if (role !== 'RECYCLER' && (user as any).recycler) {
-          await tx.recycler.delete({ where: { id: userId } });
+        if (role !== 'RECYCLER') {
+          await tx.recycler.deleteMany({ where: { id: userId } });
         }
-        if (role !== 'CORPORATE' && (user as any).corporate) {
-          await tx.corporate.delete({ where: { id: userId } });
+        if (role !== 'CORPORATE') {
+          await tx.corporate.deleteMany({ where: { id: userId } });
         }
       };
 
@@ -97,49 +98,76 @@ export class UsersService {
           case 'CUSTOMER':
             await cleanConflictingProfiles(tx, user.role);
             const fallbackCust = getFallbackData();
-            await tx.customer.upsert({
+            const existingCustomer = await tx.customer.findUnique({
               where: { id: userId },
-              update: profileData,
-              create: {
-                id: userId,
-                fullName: fallbackCust.fullName,
-                phone: fallbackCust.phone,
-                type: 'HOUSEHOLD',
-                ...profileData,
-              },
+              select: { id: true },
             });
+            if (existingCustomer) {
+              await tx.customer.update({
+                where: { id: userId },
+                data: profileData,
+              });
+            } else {
+              await tx.customer.create({
+                data: {
+                  id: userId,
+                  fullName: fallbackCust.fullName,
+                  phone: fallbackCust.phone,
+                  type: 'HOUSEHOLD',
+                  ...profileData,
+                },
+              });
+            }
             break;
 
           case 'ADMIN':
           case 'SUPER_ADMIN':
             await cleanConflictingProfiles(tx, user.role);
             const fallbackAdmin = getFallbackData();
-            await tx.admin.upsert({
+            const existingAdmin = await tx.admin.findUnique({
               where: { id: userId },
-              update: profileData,
-              create: {
-                id: userId,
-                fullName: fallbackAdmin.fullName,
-                phone: fallbackAdmin.phone,
-                ...profileData,
-              },
+              select: { id: true },
             });
+            if (existingAdmin) {
+              await tx.admin.update({
+                where: { id: userId },
+                data: profileData,
+              });
+            } else {
+              await tx.admin.create({
+                data: {
+                  id: userId,
+                  fullName: fallbackAdmin.fullName,
+                  phone: fallbackAdmin.phone,
+                  ...profileData,
+                },
+              });
+            }
             break;
 
           case 'DRIVER':
             await cleanConflictingProfiles(tx, user.role);
             const fallbackDriver = getFallbackData();
-            await tx.driver.upsert({
+            const existingDriver = await tx.driver.findUnique({
               where: { id: userId },
-              update: profileData,
-              create: {
-                id: userId,
-                fullName: fallbackDriver.fullName,
-                phone: fallbackDriver.phone,
-                vehicle: 'Not specified',
-                ...profileData,
-              },
+              select: { id: true },
             });
+            if (existingDriver) {
+              await tx.driver.update({
+                where: { id: userId },
+                data: profileData,
+              });
+            } else {
+              await tx.driver.create({
+                data: {
+                  id: userId,
+                  fullName: fallbackDriver.fullName,
+                  phone: fallbackDriver.phone,
+                  vehicle: 'Not specified',
+                  ...profileData,
+                },
+              });
+            }
             break;
         }
       });
