@@ -11,23 +11,6 @@ export default function NotFound() {
       >
         Go Home
       </Link>
-      <Card className="w-full max-w-md space-y-6 text-center">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
-            Page Not Found
-          </p>
-          <h1 className="text-3xl font-semibold">We can't find that page.</h1>
-          <p className="mt-2 text-sm text-(--muted)">
-            The page you are looking for might have moved or never existed.
-          </p>
-        </div>
-        <Button
-          asChild
-          className="bg-(--brand-strong) text-white hover:bg-(--brand)"
-        >
-          <Link href="/">Go Home</Link>
-        </Button>
-      </Card>
 
       {/* Content */}
       <div className="flex flex-1 items-center justify-center px-6 py-12">

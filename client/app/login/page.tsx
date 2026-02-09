@@ -195,11 +195,9 @@ export default function LoginPage() {
             </div>
 
             <Button
-              asChild
               variant="outline"
               className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              <a href="/api/auth/google/start?signup=false&redirect=/auth/callback">
+              onClick={() => handleGoogleLogin()}>
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -219,7 +217,6 @@ export default function LoginPage() {
                 />
               </svg>
               Continue with Google
-            </a>
             </Button>
 
             {passkeySupported && (
