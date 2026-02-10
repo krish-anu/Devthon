@@ -8,7 +8,9 @@ import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, MessageSquare } from "lucide-react";
+import Loading from "@/components/shared/Loading";
+import { Phone, MessageSquare, Trash2, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const steps = [
   "Booking Confirmed",
@@ -37,7 +39,7 @@ export default function BookingDetailsPage() {
     googleMapsApiKey: "AIzaSyBSvWSJfQMojEZpNYrq9c6pW4yQXg8k5AY",
   });
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["booking", id],
     queryFn: () => apiFetch<Booking>(`/bookings/${id}`),
     enabled: Boolean(id),
@@ -47,6 +49,7 @@ export default function BookingDetailsPage() {
 
   // State for map marker position
   const [markerPosition, setMarkerPosition] = useState(defaultCenter);
+  const { toast } = useToast();
 
   // Mutation to save location
   const saveLocationMutation = useMutation({
@@ -57,12 +60,57 @@ export default function BookingDetailsPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["booking", id] });
-      alert("Location saved successfully!");
+      toast({ title: "Location saved", variant: "success" });
     },
     onError: () => {
-      alert("Failed to save location. Please try again.");
+      toast({ title: "Save failed", description: "Failed to save location. Please try again.", variant: "error" });
     },
   });
+
+  const deleteBookingMutation = useMutation({
+    mutationFn: () =>
+      apiFetch(`/bookings/${id}`, {
+        method: "DELETE",
+      }),
+    onMutate: async () => {
+      // optimistic removal from bookings list cache
+      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      const previous = queryClient.getQueryData<{ items: Booking[] }>(["bookings"]);
+      if (previous) {
+        queryClient.setQueryData(["bookings"], {
+          ...previous,
+          items: previous.items.filter((b) => b.id !== id),
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context: any) => {
+      queryClient.setQueryData(["bookings"], context?.previous);
+      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+    },
+    onSuccess: () => {
+      toast({ title: "Booking deleted", variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      window.location.href = "/users/bookings";
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="py-8">
+        <Loading message="Loading booking details..." />
+      </div>
+    );
+  }
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      deleteBookingMutation.mutate();
+    }
+  };
 
   // Handle map click to place marker
   const handleMapClick = (event: any) => {
@@ -92,8 +140,26 @@ export default function BookingDetailsPage() {
               Booking {booking?.id?.slice(0, 8) ?? ""}
             </h2>
           </div>
-          <div className="text-sm text-(--muted)">
-            Estimated Arrival 15 minutes
+          <div className="flex items-center gap-3 text-sm text-(--muted)">
+            <span>Estimated Arrival 15 minutes</span>
+            {booking?.status === "SCHEDULED" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDelete}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                disabled={deleteBookingMutation.isPending}
+              >
+                {deleteBookingMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-4">

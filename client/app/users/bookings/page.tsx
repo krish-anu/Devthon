@@ -1,13 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import { Booking } from "@/lib/types";
+import { Booking, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/shared/kpi-card";
+import { Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,19 +25,66 @@ import { StatusPill } from "@/components/shared/status-pill";
 export default function BookingHistoryPage() {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
 
-  const { data } = useQuery({
-    queryKey: ["bookings", status, search],
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ["public-waste-categories"],
+    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["bookings", status, search, category],
     queryFn: () =>
       apiFetch<{ items: Booking[] }>(
         `/bookings?${new URLSearchParams({
           ...(status ? { status } : {}),
           ...(search ? { search } : {}),
+          ...(category ? { category } : {}),
         }).toString()}`,
       ),
   });
 
   const bookings = data?.items ?? [];
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteBookingMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/bookings/${id}`, {
+        method: "DELETE",
+      }),
+    onMutate: async (id: string) => {
+      setDeletingId(id);
+      await queryClient.cancelQueries({ queryKey: ["bookings", status, search, category] });
+      const previous = queryClient.getQueryData<{ items: Booking[] }>(["bookings", status, search, category]);
+      if (previous) {
+        queryClient.setQueryData(["bookings", status, search, category], {
+          ...previous,
+          items: previous.items.filter((b) => b.id !== id),
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _id, context: any) => {
+      queryClient.setQueryData(["bookings", status, search, category], context?.previous);
+      setDeletingId(null);
+      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+    },
+    onSettled: () => {
+      setDeletingId(null);
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onSuccess: () => {
+      toast({ title: "Booking deleted", variant: "success" });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      deleteBookingMutation.mutate(id);
+    }
+  };
 
   const metrics = useMemo(() => {
     const completed = bookings.filter((b) => b.status === "COMPLETED").length;
@@ -79,19 +130,33 @@ export default function BookingHistoryPage() {
     <div className="space-y-6">
       <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
+          <select className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)">
             <option>Last 30 Days</option>
             <option>Last 90 Days</option>
           </select>
-          <select className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]">
-            <option>All Types</option>
-            <option>Plastic</option>
-            <option>Metal</option>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
+            disabled={categoriesLoading}
+          >
+            {categoriesLoading ? (
+              <option>Loading categories...</option>
+            ) : (
+              <>
+                <option value="">All Categories</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="h-11 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--muted)]"
+            className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)"
           >
             <option value="">All Status</option>
             <option value="COMPLETED">Completed</option>
@@ -101,7 +166,7 @@ export default function BookingHistoryPage() {
         </div>
         <div className="flex items-center gap-2">
           <Input
-            className="min-w-[180px]"
+            className="min-w-45"
             placeholder="Search bookings"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -125,68 +190,91 @@ export default function BookingHistoryPage() {
         />
       </div>
 
-      <Card className="overflow-x-auto">
-        <Table className="min-w-[720px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>Waste Type</TableHead>
-              <TableHead>Weight</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {bookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>
-                  <a
-                    href={`/users/bookings/${booking.id}`}
-                    className="text-[color:var(--brand)] hover:underline"
-                  >
-                    {booking.id.slice(0, 8)}
-                  </a>
-                </TableCell>
-                <TableCell>
-                  {booking.wasteCategory?.name ?? "Unknown"}
-                </TableCell>
-                <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
-                <TableCell>
-                  LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                </TableCell>
-                <TableCell>
-                  <StatusPill status={booking.status} />
-                </TableCell>
-                <TableCell>
-                  {new Date(booking.createdAt).toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            ))}
-            {!bookings.length && (
+      {isLoading ? (
+        <Card className="p-6">
+          <SkeletonTableRows columns={7} rows={6} />
+        </Card>
+      ) : (
+        <Card className="overflow-x-auto">
+          <Table className="min-w-180">
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-[color:var(--muted)]"
-                >
-                  No bookings found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <div className="mt-4 flex items-center justify-between text-sm text-[color:var(--muted)]">
-          <span>Page 1 of 1</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              Prev
-            </Button>
-            <Button variant="outline" size="sm">
-              Next
-            </Button>
+                <TableHead>Booking ID</TableHead>
+                <TableHead>Waste Type</TableHead>
+                <TableHead>Weight</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>                <TableHead>Actions</TableHead>              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bookings.map((booking) => (
+                <TableRow key={booking.id}>
+                  <TableCell>
+                    <a
+                      href={`/users/bookings/${booking.id}`}
+                      className="text-(--brand) hover:underline"
+                    >
+                      {booking.id.slice(0, 8)}
+                    </a>
+                  </TableCell>
+                  <TableCell>
+                    {booking.wasteCategory?.name ?? "Unknown"}
+                  </TableCell>
+                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                  <TableCell>
+                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={booking.status} />
+                  </TableCell>
+                  <TableCell>
+                    {new Date(booking.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {booking.status === "SCHEDULED" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(booking.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Delete Booking"
+                        disabled={deletingId === booking.id}
+                      >
+                        {deletingId === booking.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!bookings.length && (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-(--muted)"
+                  >
+                    No bookings found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <div className="mt-4 flex items-center justify-between text-sm text-(--muted)">
+            <span>Page 1 of 1</span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                Prev
+              </Button>
+              <Button variant="outline" size="sm">
+                Next
+              </Button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { Booking, PricingItem } from "@/lib/types";
+import { Booking, PricingItem, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import Loading from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
@@ -14,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/auth/auth-provider";
+import MapComponent from "@/components/shared/map";
 
 const weightOptions = [
   { label: "0-5 kg", min: 0, max: 5 },
@@ -41,11 +45,31 @@ const getTodayInputValue = () => {
 
 export default function NewBookingPage() {
   const { user } = useAuth();
-  const { data } = useQuery({
+  const { data: pricingData, isLoading: pricingLoading } = useQuery({
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
   });
-  const { data: latestBookingData } = useQuery({
+
+  const { data: categories } = useQuery({
+    queryKey: ["public-waste-categories"],
+    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+  });
+
+  const combinedPricing = useMemo(() => {
+    const pricing = pricingData ?? [];
+    const existingCatIds = new Set(pricing.map((p) => p.wasteCategory.id));
+    const missing = (categories ?? [])
+      .filter((c) => !existingCatIds.has(c.id))
+      .map((c) => ({
+        id: `new-${c.id}`,
+        minPriceLkrPerKg: 0,
+        maxPriceLkrPerKg: 0,
+        isActive: false,
+        wasteCategory: c,
+      } as PricingItem));
+    return [...pricing, ...missing];
+  }, [pricingData, categories]);
+  const { data: latestBookingData, isLoading: latestLoading } = useQuery({
     queryKey: ["bookings", "latest"],
     queryFn: () =>
       apiFetch<{ items: Booking[] }>("/bookings?page=1&pageSize=1"),
@@ -81,19 +105,33 @@ export default function NewBookingPage() {
   const [locationPicked, setLocationPicked] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [terms, setTerms] = useState(false);
+  const [mapLat, setMapLat] = useState<number>(6.9271);
+  const [mapLng, setMapLng] = useState<number>(79.8612);
+
+  const isPaperCategory = useMemo(() => {
+    return selectedItems.some(
+      (item) => item.item.wasteCategory.name.toLowerCase().includes("paper") ||
+                item.item.wasteCategory.name.toLowerCase().includes("cardboard")
+    );
+  }, [selectedItems]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const estimate = useMemo(() => {
     if (selectedItems.length === 0) return { min: 0, max: 0 };
     let min = 0;
     let max = 0;
     for (const s of selectedItems) {
-      min += s.item.minPriceLkrPerKg * s.quantity;
-      max += s.item.maxPriceLkrPerKg * s.quantity;
+      const weight = isPaperCategory ? s.quantity : (weightRange?.min || 0);
+      const weightMax = isPaperCategory ? s.quantity : (weightRange?.max || 0);
+      min += s.item.minPriceLkrPerKg * weight;
+      max += s.item.maxPriceLkrPerKg * weightMax;
     }
     return { min, max };
-  }, [selectedItems]);
+  }, [selectedItems, isPaperCategory, weightRange]);
 
   const latestBooking = latestBookingData?.items?.[0];
+
+  // Pricing loader moved below so hooks are always called in the same order
 
   useEffect(() => {
     if (!latestBooking) return;
@@ -248,7 +286,7 @@ export default function NewBookingPage() {
       const uniqueCategoryIds = [...new Set(detectedCategoryIds)];
 
       uniqueCategoryIds.forEach((categoryId) => {
-        const matchingItem = data?.find(
+        const matchingItem = combinedPricing.find(
           (item) => item.wasteCategory.id === categoryId
         );
 
@@ -339,13 +377,14 @@ export default function NewBookingPage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await apiFetch("/bookings", {
         method: "POST",
         body: JSON.stringify({
           items: selectedItems.map((s) => ({
             wasteCategoryId: s.item.wasteCategory.id,
-            quantityKg: s.quantity,
+            quantityKg: isPaperCategory ? s.quantity : (weightRange?.min || 0),
           })),
           addressLine1,
           city,
@@ -354,6 +393,8 @@ export default function NewBookingPage() {
           scheduledDate,
           scheduledTimeSlot,
           phone: normalizeSriLankaPhone(phoneNumber),
+          lat: mapLat,
+          lng: mapLng,
         }),
       });
       toast({
@@ -368,15 +409,10 @@ export default function NewBookingPage() {
         description: error?.message,
         variant: "error",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const isPaperCategory = useMemo(() => {
-    return selectedItems.some(
-      (item) => item.item.wasteCategory.name.toLowerCase().includes("paper") ||
-                item.item.wasteCategory.name.toLowerCase().includes("cardboard")
-    );
-  }, [selectedItems]);
 
   const steps = isPaperCategory
     ? [
@@ -398,6 +434,14 @@ export default function NewBookingPage() {
     if (currentStep <= 1) return currentStep;
     return currentStep + 1; // Skip step 2 for non-paper
   };
+
+  if (pricingLoading) {
+    return (
+      <div className="py-8">
+        <Loading message="Loading pricing..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -612,7 +656,7 @@ export default function NewBookingPage() {
                 : "Or Select Categories Manually:"}
             </Label>
             <div className="grid gap-4 md:grid-cols-3">
-              {(data ?? []).map((item) => (
+              {(combinedPricing ?? []).map((item) => (
                 <button
                   key={item.id}
                   className={`rounded-2xl border px-4 py-4 text-left ${
@@ -681,7 +725,7 @@ export default function NewBookingPage() {
 
       {step === 2 && isPaperCategory && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Estimate Weight</h3>
+          <h3 className="text-lg font-semibold">Estimate Weight of the Papers</h3>
           <div className="grid gap-3 md:grid-cols-3">
             {weightOptions.map((option) => (
               <button
@@ -734,12 +778,15 @@ export default function NewBookingPage() {
             </div>
             <div className="space-y-2">
               <Label>Phone Number *</Label>
-              <Input
+              <PhoneInput
                 value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="Enter contact number"
+                onChange={(e: any) => setPhoneNumber(e.target.value)}
+                placeholder="+94 77 123 4567"
                 required
               />
+              {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
+                <p className="text-xs text-rose-500">Enter a valid Sri Lanka phone number</p>
+              )}
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label>Special Instructions (Optional)</Label>
@@ -750,8 +797,16 @@ export default function NewBookingPage() {
               />
             </div>
           </div>
-          <div className="h-48 rounded-2xl border border-dashed border-(--border) bg-(--surface) p-4 text-sm text-(--muted)">
-            Map Placeholder
+          <div className="h-96 rounded-2xl border border-(--border) bg-(--surface) overflow-hidden">
+            <MapComponent
+              initialLat={mapLat}
+              initialLng={mapLng}
+              onLocationSelect={(lat, lng) => {
+                setMapLat(lat);
+                setMapLng(lng);
+                setLocationPicked(true);
+              }}
+            />
           </div>
           <div className="flex items-center gap-3 text-sm text-(--muted)">
             <Checkbox
@@ -824,42 +879,97 @@ export default function NewBookingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {/* Estimated Total */}
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted) mb-2">Estimated Total Earnings</p>
-              <p className="text-2xl font-bold text-(--brand)">
-                LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
-              </p>
-              <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
+              {isPaperCategory ? (
+                <>
+                  <p className="text-sm text-(--muted) mb-2">Estimated Total Earnings</p>
+                  <p className="text-2xl font-bold text-(--brand)">
+                    LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
+                  </p>
+                  <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-(--muted) mb-2">Pricing</p>
+                  <div className="flex items-start gap-2 mt-2">
+                    <svg
+                      className="mt-0.5 h-5 w-5 flex-shrink-0 text-(--brand)"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold">To be determined on-site</p>
+                      <p className="text-xs text-(--muted) mt-1">
+                        Final pricing will be determined after physical inspection based on the quality, condition, and actual weight of your recyclables.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+            
+            {/* Weight Range */}
+            {!isPaperCategory && weightRange && (
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Pickup Address</p>
-              <p className="text-lg font-semibold">{addressLine1 || "--"}</p>
-              <p className="text-sm text-(--muted)">
-                {city} {postalCode}
-              </p>
+                <p className="text-sm text-(--muted) mb-2">Estimated Weight</p>
+                <p className="text-lg font-semibold">{weightRange.label}</p>
             </div>
+            )}
+          </div>
+
+          {/* Pickup Details */}
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <p className="text-sm text-(--muted)">Time Slot</p>
-              <p className="text-lg font-semibold">{scheduledTimeSlot}</p>
+            <p className="text-sm font-semibold mb-3">Pickup Details</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <p className="text-xs text-(--muted)">Address</p>
+                <p className="text-sm font-medium">{addressLine1}</p>
+                <p className="text-sm text-(--muted)">{city}, {postalCode}</p>
             </div>
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
-              <Label className="text-sm text-(--muted)">Phone Number</Label>
-              <Input
-                value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="Enter phone number"
-                required
-              />
-              {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
-                <p className="text-xs text-rose-500">Enter a valid Sri Lanka phone number</p>
+              <div>
+                <p className="text-xs text-(--muted)">Contact Number</p>
+                <p className="text-sm font-medium">{phoneNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs text-(--muted)">Scheduled Date</p>
+                <p className="text-sm font-medium">{new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+              <div>
+                <p className="text-xs text-(--muted)">Time Slot</p>
+                <p className="text-sm font-medium">{scheduledTimeSlot}</p>
+              </div>
+              {specialInstructions && (
+                <div className="md:col-span-2">
+                  <p className="text-xs text-(--muted)">Special Instructions</p>
+                  <p className="text-sm font-medium">{specialInstructions}</p>
+                </div>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm text-(--muted)">
+          <div className="flex items-start gap-3 text-sm text-(--muted)">
             <Checkbox
               checked={terms}
               onCheckedChange={(checked) => setTerms(Boolean(checked))}
+              className="mt-0.5"
             />
-            I agree to the pickup terms and quality inspection policy.
+            <span className="leading-relaxed">
+              I agree to the{" "}
+              <Link href="/terms" target="_blank" className="text-(--brand) hover:underline">
+                Terms and Conditions
+              </Link>
+              {" "}and{" "}
+              <Link href="/privacy" target="_blank" className="text-(--brand) hover:underline">
+                Privacy Policy
+              </Link>
+              {" "}for waste pickup and recycling services.
+            </span>
           </div>
         </Card>
       )}
@@ -925,7 +1035,16 @@ export default function NewBookingPage() {
             Next
           </Button>
         ) : (
-          <Button onClick={handleSubmit}>Confirm Booking</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Confirming...
+              </>
+            ) : (
+              "Confirm Booking"
+            )}
+          </Button>
         )}
       </div>
     </div>

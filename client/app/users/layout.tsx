@@ -12,7 +12,8 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
-import { UserHeaderRight } from "@/components/layout/user-header-right";
+import { UserMenu } from "@/components/layout/user-menu";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
@@ -52,9 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <RequireAuth roles={["CUSTOMER", "ADMIN", "SUPER_ADMIN"]}>
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
-        header={
-          <Header title="User Portal" right={<UserHeaderRight />} showThemeToggle />
-        }
+        header={<Header title="User Portal" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
       >
         {children}
       </AppShell>

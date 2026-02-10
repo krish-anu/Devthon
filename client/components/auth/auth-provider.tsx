@@ -14,7 +14,11 @@ import { User } from "@/lib/types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, recaptchaToken?: string) => Promise<User>;
+  login: (
+    email: string,
+    password: string,
+    recaptchaToken?: string,
+  ) => Promise<User>;
   register: (payload: {
     fullName: string;
     email: string;
@@ -26,8 +30,13 @@ interface AuthContextValue {
   }) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updateUser: (user: User) => void;
   googleLogin: (token: string, signup?: boolean) => Promise<User>;
-  googleLoginWithCode: (code: string, redirectUri?: string, signup?: boolean) => Promise<User>;
+  googleLoginWithCode: (
+    code: string,
+    redirectUri?: string,
+    signup?: boolean,
+  ) => Promise<User>;
   passkeyLogin: (email: string) => Promise<User>;
 }
 
@@ -76,7 +85,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
-  const login = async (email: string, password: string, recaptchaToken?: string) => {
+  const login = async (
+    email: string,
+    password: string,
+    recaptchaToken?: string,
+  ) => {
     const data = await authApi.login({ email, password, recaptchaToken });
     setAuth(data);
     setUser(data.user);
@@ -113,6 +126,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
+  const updateUser = (user: User) => {
+    updateStoredUser(user);
+    setUser(user);
+  };
+
   const googleLogin = async (token: string, signup?: boolean) => {
     const data = await authApi.googleLogin({ token, signup });
     setAuth(data);
@@ -120,8 +138,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data.user;
   };
 
-  const googleLoginWithCode = async (code: string, redirectUri?: string, signup?: boolean) => {
-    const data = await authApi.googleLoginWithCode({ code, redirectUri, signup });
+  const googleLoginWithCode = async (
+    code: string,
+    redirectUri?: string,
+    signup?: boolean,
+  ) => {
+    const data = await authApi.googleLoginWithCode({
+      code,
+      redirectUri,
+      signup,
+    });
     setAuth(data);
     setUser(data.user);
     return data.user;
@@ -152,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshProfile,
+      updateUser,
       googleLogin,
       googleLoginWithCode,
       passkeyLogin,

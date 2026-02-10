@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,10 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch, passkeyApi } from "@/lib/api";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
 import { toast } from "@/components/ui/use-toast";
 import { authApi } from "@/lib/api";
+import supabase, { getBucketName } from "@/lib/supabase";
 import { useForm as useForm2 } from "react-hook-form";
 import { usePasskey } from "@/hooks/usePasskey";
 import { RewardsSummary } from "@/lib/types";
@@ -32,9 +35,69 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function ProfilePage() {
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, logout } = useAuth();
   const [twoStepEnabled, setTwoStepEnabled] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+
+  // Avatar upload helpers
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleChoosePhoto = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please choose an image.", variant: "warning" });
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // Create a path: avatars/<userId>/<timestamp>_<name>
+      const filename = `${Date.now()}_${file.name}`;
+      const path = `avatars/${user?.id ?? 'unknown'}/${filename}`;
+      const bucket = getBucketName();
+      if (!supabase) throw new Error('Supabase not configured');
+
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from(bucket)
+        .upload(path, file as File, { upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      // Build public URL (requires bucket to have public policy) – fall back to signed URL when needed
+      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+      let url = (publicData as any)?.publicUrl ?? null;
+
+      // If bucket is private or getPublicUrl returned no public URL, create a signed URL (24h)
+      if (!url) {
+        const { data: signedData, error: signedErr } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(path, 60 * 60 * 24);
+        if (signedErr) throw signedErr;
+        url = (signedData as any)?.signedUrl ?? null;
+      }
+
+      // Persist avatar URL to our server profile
+      await apiFetch('/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+
+      await refreshProfile();
+      toast({ title: 'Profile photo updated', variant: 'success' });
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err?.message ?? 'Unable to upload image', variant: 'error' });
+    } finally {
+      setUploading(false);
+      // clear input value so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
   const {
     supported: passkeySupported,
     loading: passkeyBusy,
@@ -238,6 +301,46 @@ export default function ProfilePage() {
     }
   };
 
+  // Delete account UI state
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (deleteConfirmText !== user.email) {
+      return toast({ title: "Confirmation mismatch", description: "Please type your email to confirm.", variant: "warning" });
+    }
+
+    try {
+      setDeleting(true);
+      await apiFetch(`/me`, {
+        method: "DELETE",
+        body: JSON.stringify({ currentPassword: deletePassword }),
+      });
+      // log out and navigate away
+      try {
+        await logout();
+      } catch {
+        try {
+          const { clearAuth } = await import("@/lib/auth");
+          clearAuth();
+        } catch {}
+      }
+      toast({ title: "Account deleted", description: "Your account has been deleted.", variant: "success" });
+      router.push("/");
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err?.message ?? "Could not delete account", variant: "error" });
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+      setDeleteConfirmText("");
+      setDeletePassword("");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-4">
@@ -257,6 +360,40 @@ export default function ProfilePage() {
               ? new Date(user.createdAt).toLocaleDateString()
               : "--"}
           </p>
+
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+            <Button onClick={handleChoosePhoto} disabled={uploading}>
+              {uploading ? "Uploading..." : "Change Photo"}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                try {
+                  await apiFetch("/me", {
+                    method: "PATCH",
+                    body: JSON.stringify({ avatarUrl: null }),
+                  });
+                  await refreshProfile();
+                  toast({ title: "Profile photo removed", variant: "success" });
+                } catch (err: any) {
+                  toast({
+                    title: "Remove failed",
+                    description: err?.message,
+                    variant: "error",
+                  });
+                }
+              }}
+            >
+              Remove
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -462,6 +599,54 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Danger zone: Delete account */}
+          <Card className="mt-4 border border-rose-200/40">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold">Delete account</h4>
+                <p className="text-xs text-(--muted)">
+                  Permanently delete your account. This will remove personal
+                  information from your profile and disable access. Bookings and
+                  transactions will be retained for accounting purposes but will
+                  be anonymized.
+                </p>
+              </div>
+              <div>
+                <Dialog open={showDeleteDialog} onOpenChange={(v)=>setShowDeleteDialog(v)}>
+                  <DialogTrigger asChild>
+                    <Button variant="danger" size="sm">Delete account</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Delete your account</DialogTitle>
+                      <DialogDescription>
+                        This action is permanent. To confirm, type your email
+                        below and optionally enter your password if you use a
+                        local password for authentication.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-3">
+                      <div className="space-y-2">
+                        <Label>Type your email to confirm</Label>
+                        <Input value={deleteConfirmText} onChange={(e)=>setDeleteConfirmText(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Current password (if set)</Label>
+                        <Input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+                      <Button variant="danger" onClick={handleDeleteAccount} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete account'}</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </Card>

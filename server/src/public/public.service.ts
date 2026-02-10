@@ -19,6 +19,17 @@ export class PublicService {
     });
   }
 
+  /**
+   * Publicly list active waste categories for client UIs.
+   */
+  async getWasteCategories() {
+    return this.prisma.wasteCategory.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, description: true },
+    });
+  }
+
   async launchNotify(email: string) {
     try {
       return await this.prisma.launchNotify.create({ data: { email } });

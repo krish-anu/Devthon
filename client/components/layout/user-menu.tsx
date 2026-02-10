@@ -11,9 +11,17 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/components/auth/auth-provider";
 
-export function UserMenu() {
+export function UserMenu({ onlySettings }: { onlySettings?: boolean }) {
   const { user, logout } = useAuth();
   const avatarSrc = (user as any)?.avatar ?? (user as any)?.avatarUrl ?? null;
+
+  // Resolve a sensible settings/profile link depending on role
+  const settingsHref =
+    user?.role === "SUPER_ADMIN" || user?.role === "ADMIN"
+      ? "/admin/settings"
+      : user?.role === "DRIVER"
+      ? "/driver/settings"
+      : "/users/profile";
 
   return (
     <DropdownMenu>
@@ -29,13 +37,16 @@ export function UserMenu() {
           {user?.email && <div className="text-sm text-(--muted)">{user.email}</div>}
         </div>
         <div className="border-t border-(--border)" />
+        {!onlySettings && (
+          <DropdownMenuItem asChild>
+            <Link href="/" className="flex items-center gap-2">
+              <HomeIcon className="h-4 w-4" /> Home
+            </Link>
+          </DropdownMenuItem>
+        )}
+
         <DropdownMenuItem asChild>
-          <Link href="/" className="flex items-center gap-2">
-            <HomeIcon className="h-4 w-4" /> Home
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/users/profile" className="flex items-center gap-2">
+          <Link href={settingsHref} className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" /> Profile
           </Link>
         </DropdownMenuItem>

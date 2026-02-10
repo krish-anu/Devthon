@@ -34,6 +34,9 @@ export class CreateBookingDto {
   @IsString()
   postalCode: string;
 
+  @IsString()
+  phone: string;
+
   @IsOptional()
   @IsString()
   specialInstructions?: string;
@@ -43,4 +46,14 @@ export class CreateBookingDto {
 
   @IsString()
   scheduledTimeSlot: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  lng?: number;
 }

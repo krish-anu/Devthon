@@ -12,6 +12,11 @@ export class PublicController {
     return this.publicService.getPricing();
   }
 
+  @Get('waste-categories')
+  getWasteCategories() {
+    return this.publicService.getWasteCategories();
+  }
+
   @Post('launch-notify')
   launchNotify(@Body() dto: LaunchNotifyDto) {
     return this.publicService.launchNotify(dto.email);

@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { PricingItem } from "@/lib/types";
+import Loading from "@/components/shared/Loading";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
@@ -32,7 +33,7 @@ const fallbackPricing = [
 ];
 
 export default function HomePage() {
-  const { data } = useQuery({
+  const { data, isLoading: pricingLoading } = useQuery({
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
   });
@@ -308,28 +309,36 @@ export default function HomePage() {
             description="Final prices determined after quality inspection."
           />
         </ScrollAnimatedSection>
-        <div className="grid gap-6 md:grid-cols-4">
-          {pricingCards.map((item, index) => (
-            <ScrollAnimatedSection key={item.name} delay={index * 100}>
-              <Card className="bg-(--brand)/10 text-center shadow-md">
-                <div className="flex flex-col items-center gap-2">
-                  <h4 className="text-base font-semibold text-(--brand)">
-                    {item.name}
-                  </h4>
-                  <div className="text-sm text-(--muted)">
-                    Min: LKR {item.min} / kg
+        {pricingLoading ? (
+          <div className="grid gap-6 md:grid-cols-4">
+            <Card className="bg-(--brand)/10 text-center shadow-md p-6">
+              <Loading message="Loading prices..." />
+            </Card>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-4">
+            {pricingCards.map((item, index) => (
+              <ScrollAnimatedSection key={item.name} delay={index * 100}>
+                <Card className="bg-(--brand)/10 text-center shadow-md">
+                  <div className="flex flex-col items-center gap-2">
+                    <h4 className="text-base font-semibold text-(--brand)">
+                      {item.name}
+                    </h4>
+                    <div className="text-sm text-(--muted)">
+                      Min: LKR {item.min} / kg
+                    </div>
+                    <div className="text-sm text-(--muted)">
+                      Max: LKR {item.max} / kg
+                    </div>
+                    <p className="text-xs text-(--muted)">
+                      Final prices determined after quality inspection.
+                    </p>
                   </div>
-                  <div className="text-sm text-(--muted)">
-                    Max: LKR {item.max} / kg
-                  </div>
-                  <p className="text-xs text-(--muted)">
-                    Final prices determined after quality inspection.
-                  </p>
-                </div>
-              </Card>
-            </ScrollAnimatedSection>
-          ))}
-        </div>
+                </Card>
+              </ScrollAnimatedSection>
+            ))}
+          </div>
+        )}
       </section>
 
       <section

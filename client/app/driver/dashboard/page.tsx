@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/shared/kpi-card";
+import Loading from "@/components/shared/Loading";
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/table";
 
 export default function DriverDashboardPage() {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["driver-bookings"],
     queryFn: () => apiFetch<any[]>("/driver/bookings"),
   });
@@ -41,41 +42,47 @@ export default function DriverDashboardPage() {
         <KpiCard label="Completed" value={`${stats.completed}`} />
       </div>
 
-      <Card>
-        <div className="mt-2">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Booking</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Weight</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Scheduled</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bookings.map((b) => (
-                <TableRow key={b.id}>
-                  <TableCell>{b.id.slice(0, 8)}</TableCell>
-                  <TableCell>{b.addressLine1}</TableCell>
-                  <TableCell>{b.actualWeightKg ?? "-"} kg</TableCell>
-                  <TableCell>{b.status}</TableCell>
-                  <TableCell>
-                    {new Date(b.scheduledDate || b.createdAt).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!bookings.length && (
+      {isLoading ? (
+        <Card className="p-6">
+          <Loading message="Loading dashboard..." />
+        </Card>
+      ) : (
+        <Card>
+          <div className="mt-2">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-(--muted)">
-                    No assigned pickups.
-                  </TableCell>
+                  <TableHead>Booking</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Weight</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Scheduled</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {bookings.map((b) => (
+                  <TableRow key={b.id}>
+                    <TableCell>{b.id.slice(0, 8)}</TableCell>
+                    <TableCell>{b.addressLine1}</TableCell>
+                    <TableCell>{b.actualWeightKg ?? "-"} kg</TableCell>
+                    <TableCell>{b.status}</TableCell>
+                    <TableCell>
+                      {new Date(b.scheduledDate || b.createdAt).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!bookings.length && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-(--muted)">
+                      No assigned pickups.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

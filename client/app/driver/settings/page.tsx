@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatPhoneForDisplay } from "@/lib/phone";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 
@@ -90,7 +91,7 @@ export default function DriverSettingsPage() {
             <Label htmlFor="driver-phone">Phone</Label>
             <Input
               id="driver-phone"
-              value={user?.phone ?? ""}
+              value={formatPhoneForDisplay(user?.phone) ?? ""}
               readOnly
               aria-readonly
             />

@@ -404,7 +404,6 @@ export class AuthService {
               id: newUser.id,
               fullName: googleUser.name || 'Google User',
               phone: '',
-              avatarUrl: googleUser.picture ?? null,
             },
           });
         } else if (inputRole === 'DRIVER') {
@@ -414,16 +413,17 @@ export class AuthService {
               fullName: googleUser.name || 'Google User',
               phone: '',
               vehicle: 'Not specified',
-              avatarUrl: googleUser.picture ?? null,
             },
           });
         } else {
+          // Avoid setting avatarUrl at creation to be compatible with databases that
+          // may not have the avatarUrl column yet (pre-migration). Update avatar
+          // later in a safe, separate operation.
           await tx.customer.create({
             data: {
               id: newUser.id,
               fullName: googleUser.name || 'Google User',
               phone: '',
-              avatarUrl: googleUser.picture ?? null,
               type: 'HOUSEHOLD',
             } as any,
           });

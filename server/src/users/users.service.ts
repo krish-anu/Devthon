@@ -49,6 +49,7 @@ export class UsersService {
     if (dto.fullName !== undefined) profileData.fullName = dto.fullName;
     if (dto.phone !== undefined) profileData.phone = dto.phone;
     if (dto.address !== undefined) profileData.address = dto.address;
+    if (dto.avatarUrl !== undefined) profileData.avatarUrl = dto.avatarUrl;
 
     if (Object.keys(profileData).length > 0) {
       // Helper to clean up conflicting profiles if they exist (handling inconsistent DB states)
@@ -205,5 +206,75 @@ export class UsersService {
     });
 
     return { success: true };
+  }
+
+  async deleteMe(userId: string, dto: any) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // If the user has a local password, require confirmation
+    if (user.passwordHash) {
+      if (!dto?.currentPassword) {
+        throw new BadRequestException('Current password is required to delete this account');
+      }
+      const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+      if (!ok) throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Snapshot the current user/profile for server logs (avoids adding schema changes in this patch)
+    try {
+      console.info(`Deleting/anonymizing user ${userId}`, {
+        user: { id: user.id, email: user.email, role: user.role, createdAt: user.createdAt },
+      });
+
+      // Anonymize PII but keep domain data (bookings/payments) for accounting.
+      await this.prisma.$transaction(async (tx) => {
+        // Update user: anonymize email, clear hashes and refresh tokens, downgrade role to CUSTOMER for safety
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            email: `deleted+${userId}@deleted.trash2cash`,
+            passwordHash: null,
+            refreshTokenHash: null,
+            role: 'CUSTOMER',
+          },
+        });
+
+        // Clear / anonymize role-specific profile tables
+        await tx.customer.updateMany({
+          where: { id: userId },
+          data: { fullName: 'Deleted user', phone: '', address: null, avatarUrl: null, status: 'INACTIVE' },
+        });
+        await tx.admin.updateMany({
+          where: { id: userId },
+          data: { fullName: 'Deleted user', phone: '', address: null, avatarUrl: null, approved: false },
+        });
+        await tx.driver.updateMany({
+          where: { id: userId },
+          data: { fullName: 'Deleted user', phone: '', avatarUrl: null, status: 'OFFLINE', approved: false },
+        });
+        await tx.recycler.updateMany({
+          where: { id: userId },
+          data: { companyName: 'Deleted user', contactPerson: '', phone: '' },
+        });
+        await tx.corporate.updateMany({
+          where: { id: userId },
+          data: { organizationName: 'Deleted user', contactName: '', phone: '' },
+        });
+
+        // Remove sensitive related records
+        await tx.passkeyCredential.deleteMany({ where: { userId } });
+        await tx.pushSubscription.deleteMany({ where: { userId } });
+        await tx.userPermission.deleteMany({ where: { userId } });
+
+        // Disassociate notifications from this user (keep messages for analytics/audit)
+        await tx.notification.updateMany({ where: { userId }, data: { userId: null } });
+      });
+
+      return { success: true };
+    } catch (err) {
+      console.error('Error while deleting user', userId, err);
+      throw err;
+    }
   }
 }

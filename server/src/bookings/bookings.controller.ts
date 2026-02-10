@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -45,5 +46,12 @@ export class BookingsController {
     @Body() body: { lng: number; lat: number },
   ) {
     return this.bookingsService.updateLocation(req.user.sub, id, body.lng, body.lat);
+  }
+
+  @Delete(':id')
+  delete(@Req() req: any, @Param('id') id: string) {
+    // Pass role through so admins can delete any booking
+    const role = req.user?.role ?? 'CUSTOMER';
+    return this.bookingsService.delete(req.user.sub, id, role);
   }
 }

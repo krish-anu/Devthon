@@ -16,12 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
+import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["bookings", "recent"],
     queryFn: () => apiFetch<{ items: Booking[] }>("/bookings"),
   });
@@ -104,52 +105,56 @@ export default function DashboardPage() {
           </Button>
         </div>
         <div className="mt-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Booking ID</TableHead>
-                <TableHead>Waste Type</TableHead>
-                <TableHead>Weight</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bookings.slice(0, 5).map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell>
-                    <Link
-                      href={`/users/bookings/${booking.id}`}
-                      className="text-(--brand)"
-                    >
-                      {booking.id.slice(0, 8)}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    {booking.wasteCategory?.name ?? "Unknown"}
-                  </TableCell>
-                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
-                  <TableCell>
-                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                  </TableCell>
-                  <TableCell>
-                    <StatusPill status={booking.status} />
-                  </TableCell>
-                  <TableCell>
-                    {new Date(booking.createdAt).toLocaleDateString()}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!bookings.length && (
+          {isLoading ? (
+            <div className="p-6"><SkeletonTableRows columns={6} rows={5} /></div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-(--muted)">
-                    No bookings yet.
-                  </TableCell>
+                  <TableHead>Booking ID</TableHead>
+                  <TableHead>Waste Type</TableHead>
+                  <TableHead>Weight</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {bookings.slice(0, 5).map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell>
+                      <Link
+                        href={`/users/bookings/${booking.id}`}
+                        className="text-(--brand)"
+                      >
+                        {booking.id.slice(0, 8)}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {booking.wasteCategory?.name ?? "Unknown"}
+                    </TableCell>
+                    <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                    <TableCell>
+                      LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill status={booking.status} />
+                    </TableCell>
+                    <TableCell>
+                      {new Date(booking.createdAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!bookings.length && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-(--muted)">
+                      No bookings yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </Card>
     </div>
