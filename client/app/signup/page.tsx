@@ -199,9 +199,9 @@ export default function SignupPage() {
       subtitle="Join thousands of users earning money by recycling their waste responsibly."
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-center w-full h-full bg-background px-6 py-6 lg:py-12">
+        <div className="flex items-center justify-center w-full min-h-screen bg-background px-6 py-6 lg:py-12">
           <ThemeToggle className="fixed right-6 top-6" />
-          <Card className="w-full max-w-md space-y-6">
+          <Card className="w-full max-w-md space-y-6 p-4 sm:p-6">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
                 Join the Green Revolution
@@ -267,6 +267,7 @@ export default function SignupPage() {
               <div className="space-y-2">
                 <Label>Phone Number</Label>
                 <PhoneInput
+                  className="w-full"
                   placeholder="+94 77 123 4567"
                   {...register("phone")}
                 />
@@ -280,6 +281,7 @@ export default function SignupPage() {
                 <Label>Password</Label>
                 <div className="flex items-center gap-2">
                   <Input
+                    className="flex-1"
                     type={showPassword ? "text" : "password"}
                     placeholder="Choose a strong password"
                     {...register("password")}
@@ -334,6 +336,7 @@ export default function SignupPage() {
                 <Label>Confirm Password</Label>
                 <div className="flex items-center gap-2">
                   <Input
+                    className="flex-1"
                     type={showConfirm ? "text" : "password"}
                     placeholder="Re-enter password"
                     {...register("confirmPassword")}
@@ -387,7 +390,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Account Type</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {["HOUSEHOLD", "BUSINESS"].map((type) => (
                     <button
                       type="button"
