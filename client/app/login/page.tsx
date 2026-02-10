@@ -205,9 +205,9 @@ export default function LoginPage() {
       subtitle="Join thousands of users earning money by recycling their waste responsibly."
     >
       <div className="space-y-4 sm:space-y-6">
-        <div className="flex items-center justify-center w-full h-full bg-background px-4 sm:px-6 py-4 sm:py-6 lg:py-12">
+        <div className="flex items-center justify-center w-full min-h-screen bg-background px-4 sm:px-6 py-4 sm:py-6 lg:py-12">
           <ThemeToggle className="fixed right-4 sm:right-6 top-4 sm:top-6 z-50" />
-          <Card className="w-full max-w-md space-y-4 sm:space-y-6">
+          <Card className="w-full max-w-md space-y-4 sm:space-y-6 p-4 sm:p-6">
             <div className="space-y-1.5 sm:space-y-2">
               <p className="text-[0.65rem] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-(--brand)">
                 Turn Your Waste Into Wealth

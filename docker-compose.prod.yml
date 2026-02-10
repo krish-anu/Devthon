@@ -49,6 +49,10 @@ services:
 
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
+      # Passkey / WebAuthn (set these in your environment or .env)
+      PASSKEY_RP_NAME: ${PASSKEY_RP_NAME:-Trash2Cash}
+      PASSKEY_RP_ID: ${PASSKEY_RP_ID}
+      PASSKEY_ORIGIN: ${PASSKEY_ORIGIN}
       # Google OAuth (server-side auth-code exchange)
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
