@@ -4,12 +4,63 @@
  */
 
 /** Prisma `include` object to fetch all profile relations */
+// Explicitly select profile fields to avoid runtime failures on databases
+// that may be missing newer optional columns (e.g. `avatarUrl`). Selecting
+// fields explicitly prevents Prisma from requesting non-existent columns.
 export const USER_PROFILE_INCLUDE = {
-  customer: true,
-  admin: true,
-  driver: true,
-  recycler: true,
-  corporate: true,
+  customer: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      address: true,
+      type: true,
+      status: true,
+      createdAt: true,
+    },
+  },
+  admin: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      address: true,
+      approved: true,
+    },
+  },
+  driver: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      rating: true,
+      pickupCount: true,
+      vehicle: true,
+      status: true,
+      approved: true,
+      createdAt: true,
+    },
+  },
+  recycler: {
+    select: {
+      id: true,
+      companyName: true,
+      contactPerson: true,
+      phone: true,
+      materialTypes: true,
+      createdAt: true,
+    },
+  },
+  corporate: {
+    select: {
+      id: true,
+      organizationName: true,
+      contactName: true,
+      phone: true,
+      requirements: true,
+      createdAt: true,
+    },
+  },
 } as const;
 
 /**
