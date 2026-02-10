@@ -37,7 +37,7 @@
     "@nestjs/swagger": "^11.2.5",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^6.2.1",
-    "@simplewebauthn/server": "^11.0.0",
+    "@simplewebauthn/server": "^13.2.2",
     "@supabase/supabase-js": "^2.95.1",
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.2.8",
