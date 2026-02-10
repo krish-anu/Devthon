@@ -10,6 +10,8 @@ import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import { RewardsService } from '../rewards/rewards.service';
 
 @Injectable()
 export class BookingsService {
@@ -17,6 +19,7 @@ export class BookingsService {
     private prisma: PrismaService,
     private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
+    private rewardsService: RewardsService,
   ) {}
 
   async list(userId: string, query: BookingsQueryDto) {
@@ -254,6 +257,61 @@ export class BookingsService {
         lng,
         lat,
       });
+      throw err;
+    }
+  }
+
+  async updateStatus(id: string, dto: UpdateBookingStatusDto) {
+    this.transactionLogger.logTransaction('booking.status.update.start', {
+      bookingId: id,
+      status: dto.status,
+    });
+    try {
+      const booking = await this.prisma.booking.findUnique({ where: { id } });
+      if (!booking) throw new NotFoundException('Booking not found');
+
+      const shouldConfirm = dto.status === BookingStatus.COMPLETED;
+      const data: any = { status: dto.status };
+
+      if (dto.actualWeightKg !== undefined) {
+        data.actualWeightKg = dto.actualWeightKg;
+      }
+      if (dto.finalAmountLkr !== undefined) {
+        data.finalAmountLkr = dto.finalAmountLkr;
+      }
+      if (shouldConfirm && !booking.confirmedAt) {
+        data.confirmedAt = new Date();
+      }
+
+      const updated = await this.prisma.booking.update({
+        where: { id },
+        data,
+      });
+
+      await this.supabaseService.upsertRow('bookings', {
+        id: updated.id,
+        status: updated.status,
+        actualWeightKg: updated.actualWeightKg,
+        finalAmountLkr: updated.finalAmountLkr,
+        confirmedAt: updated.confirmedAt,
+      });
+
+      if (shouldConfirm) {
+        await this.rewardsService.awardPointsForBooking(updated.id);
+      }
+
+      this.transactionLogger.logTransaction('booking.status.update.success', {
+        bookingId: id,
+        status: updated.status,
+      });
+
+      return updated;
+    } catch (err) {
+      this.transactionLogger.logError(
+        'booking.status.update.failure',
+        err as Error,
+        { bookingId: id, status: dto.status },
+      );
       throw err;
     }
   }

@@ -19,6 +19,7 @@ model User {
   refreshTokenHash   String?
   role               Role                @default(CUSTOMER)
   createdAt          DateTime            @default(now())
+  totalPoints        Int                 @default(0)
 
   customer           Customer?
   admin              Admin?
@@ -29,6 +30,7 @@ model User {
   userPermissions    UserPermission[]
   recycler           Recycler?
   corporate          Corporate?
+  pointsTransactions PointsTransaction[]
 }
 
 model Recycler {
@@ -180,6 +182,7 @@ model Booking {
   scheduledTimeSlot    String
   actualWeightKg       Float?
   finalAmountLkr       Float?
+  confirmedAt          DateTime?
   driverId             String?
   createdAt            DateTime             @default(now())
   status               BookingStatus        @default(SCHEDULED)
@@ -187,6 +190,7 @@ model Booking {
   user                 User                 @relation(fields: [userId], references: [id])
   wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
   transactions         PaymentTransaction[]
+  pointsTransaction    PointsTransaction?
 }
 
 model Notification {
@@ -208,6 +212,24 @@ model PaymentTransaction {
   method    PaymentMethod
   status    PaymentStatus @default(PROCESSED)
   booking   Booking       @relation(fields: [bookingId], references: [id])
+}
+
+model PointsTransaction {
+  id            String   @id @default(uuid())
+  userId        String
+  bookingId     String   @unique
+  pointsAwarded Int
+  basePoints    Int
+  bonusPoints   Int
+  multiplier    Float
+  reason        Json?
+  awardedAt     DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([userId, awardedAt])
+  @@index([awardedAt])
 }
 
 model LaunchNotify {

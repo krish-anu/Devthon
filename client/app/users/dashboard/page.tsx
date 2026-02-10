@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { Booking } from "@/lib/types";
+import { Booking, RewardsSummary } from "@/lib/types";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,10 @@ export default function DashboardPage() {
   const { data } = useQuery({
     queryKey: ["bookings", "recent"],
     queryFn: () => apiFetch<{ items: Booking[] }>("/bookings"),
+  });
+  const { data: rewards } = useQuery({
+    queryKey: ["rewards", "me"],
+    queryFn: () => apiFetch<RewardsSummary>("/rewards/me"),
   });
 
   const bookings = data?.items ?? [];
@@ -52,7 +56,7 @@ export default function DashboardPage() {
           Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}!
         </h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <KpiCard
           label="Total Earned"
           value={`LKR ${metrics.totalEarned.toFixed(0)}`}
@@ -62,6 +66,11 @@ export default function DashboardPage() {
           label="Total Waste"
           value={`${metrics.totalWeight.toFixed(1)} kg`}
           helper="Collected to date"
+        />
+        <KpiCard
+          label="Reward Points"
+          value={`${rewards?.totalPoints ?? 0}`}
+          helper="Lifetime points"
         />
         <KpiCard
           label="Pending Pickups"

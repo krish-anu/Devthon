@@ -6,17 +6,15 @@ import {
   Truck,
   Bell,
   Settings,
-  LogOut,
+  Trophy,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
-import { useAuth } from "@/components/auth/auth-provider";
 import { Header } from "@/components/layout/header";
-import { UserMenu } from "@/components/layout/user-menu";
+import { UserHeaderRight } from "@/components/layout/user-header-right";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
   const navItems = [
     {
       label: "Dashboard",
@@ -34,6 +32,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       icon: <Truck className="h-4 w-4" />,
     },
     {
+      label: "Rewards",
+      href: "/users/rewards",
+      icon: <Trophy className="h-4 w-4" />,
+    },
+    {
       label: "Notifications",
       href: "/users/notifications",
       icon: <Bell className="h-4 w-4" />,
@@ -49,7 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <RequireAuth roles={["CUSTOMER", "ADMIN", "SUPER_ADMIN"]}>
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
-        header={<Header title="User Portal" right={<UserMenu />} showThemeToggle />}
+        header={
+          <Header title="User Portal" right={<UserHeaderRight />} showThemeToggle />
+        }
       >
         {children}
       </AppShell>

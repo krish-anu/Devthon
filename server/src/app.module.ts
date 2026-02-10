@@ -26,6 +26,7 @@ import { ChatModule } from './chat/chat.module';
 import { SupabaseModule } from './common/supabase/supabase.module';
 import { PartnersModule } from './partners/partners.module';
 import { DriverModule } from './driver/driver.module';
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { DriverModule } from './driver/driver.module';
     LoggingModule,
     ChatModule,
     PartnersModule,
+    RewardsModule,
   ],
   controllers: [AppController],
   providers: [
