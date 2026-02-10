@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -38,7 +38,7 @@ export default function MapComponent({
         onLocationSelect?.(lat, lng);
       }
     },
-    [onLocationSelect]
+    [onLocationSelect],
   );
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -51,16 +51,32 @@ export default function MapComponent({
     );
   }
 
+  const { isLoaded, loadError } = useLoadScript({ googleMapsApiKey: apiKey });
+
+  if (loadError) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-red-500">
+        Failed to load Google Maps
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-gray-500">
+        Loading map...
+      </div>
+    );
+  }
+
   return (
-    <LoadScript googleMapsApiKey={apiKey}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={markerPosition}
-        zoom={13}
-        onClick={handleMapClick}
-      >
-        <Marker position={markerPosition} />
-      </GoogleMap>
-    </LoadScript>
+    <GoogleMap
+      mapContainerStyle={containerStyle}
+      center={markerPosition}
+      zoom={13}
+      onClick={handleMapClick}
+    >
+      <Marker position={markerPosition} />
+    </GoogleMap>
   );
 }
