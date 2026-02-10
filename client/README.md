@@ -44,6 +44,6 @@ If you plan to use Firebase client SDKs (Auth, Firestore, Storage, Analytics), a
 - NEXT_PUBLIC_FIREBASE_APP_ID
 - NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID (optional)
 
-Add these to `.env.local` or your deployment provider's environment settings and restart the dev server. See `client/lib/firebase.ts` for an initialization helper and usage notes.
+Add these to the root `.env` (project root) or your deployment provider's environment settings and restart the dev server. See `client/lib/firebase.ts` for an initialization helper and usage notes.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

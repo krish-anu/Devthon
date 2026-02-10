@@ -36,6 +36,9 @@ export default function AdminBookingsPage() {
       }),
     onMutate: async (id: string) => {
       setDeletingId(id);
+      // Show a loading toast while deletion is in progress
+      const toastHandle = toast({ title: 'Deleting booking...', variant: 'loading' });
+
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ["admin-bookings"] });
 
@@ -57,7 +60,7 @@ export default function AdminBookingsPage() {
         ], previous.filter((b) => b.id !== id));
       }
 
-      return { previous };
+      return { previous, toastHandle };
     },
     onError: (_err, _id, context: any) => {
       // rollback
@@ -66,11 +69,13 @@ export default function AdminBookingsPage() {
         context?.previous,
       );
       setDeletingId(null);
-      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+      // Update the loading toast into an error toast
+      context?.toastHandle?.update?.({ title: 'Delete failed', description: 'Failed to delete booking.', variant: 'error' });
     },
-    onSuccess: () => {
+    onSuccess: (_data, _id, context: any) => {
       setDeletingId(null);
-      toast({ title: "Booking deleted", variant: "success" });
+      // Update the loading toast into a success toast
+      context?.toastHandle?.update?.({ title: 'Booking deleted', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
     },
     onSettled: () => {

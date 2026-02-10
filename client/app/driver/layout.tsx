@@ -54,6 +54,8 @@ export default function DriverLayout({
   }
 
   const isPendingApproval = user && user.role === "DRIVER" && !user.approved;
+  const isProfileRoute = pathname && (pathname.startsWith("/driver/settings") || pathname.startsWith("/driver/profile"));
+  const isRestricted = isPendingApproval && !isProfileRoute;
 
   return (
     <RequireAuth roles={["DRIVER"]}>
@@ -62,7 +64,7 @@ export default function DriverLayout({
         sidebar={isPendingApproval ? null : <Sidebar title="Driver Console" items={navItems} />}
         header={<Header title="Driver Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
       >
-        {isPendingApproval ? (
+        {isRestricted ? (
           <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
             <div className="max-w-2xl text-center">
               <h2 className="text-2xl font-semibold">Account pending approval</h2>

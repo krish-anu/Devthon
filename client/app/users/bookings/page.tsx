@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Booking, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
@@ -9,6 +11,7 @@ import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/shared/kpi-card";
+import { Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -42,6 +45,46 @@ export default function BookingHistoryPage() {
   });
 
   const bookings = data?.items ?? [];
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteBookingMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/bookings/${id}`, {
+        method: "DELETE",
+      }),
+    onMutate: async (id: string) => {
+      setDeletingId(id);
+      await queryClient.cancelQueries({ queryKey: ["bookings", status, search, category] });
+      const previous = queryClient.getQueryData<{ items: Booking[] }>(["bookings", status, search, category]);
+      if (previous) {
+        queryClient.setQueryData(["bookings", status, search, category], {
+          ...previous,
+          items: previous.items.filter((b) => b.id !== id),
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _id, context: any) => {
+      queryClient.setQueryData(["bookings", status, search, category], context?.previous);
+      setDeletingId(null);
+      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+    },
+    onSettled: () => {
+      setDeletingId(null);
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onSuccess: () => {
+      toast({ title: "Booking deleted", variant: "success" });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      deleteBookingMutation.mutate(id);
+    }
+  };
 
   const metrics = useMemo(() => {
     const completed = bookings.filter((b) => b.status === "COMPLETED").length;
@@ -149,7 +192,7 @@ export default function BookingHistoryPage() {
 
       {isLoading ? (
         <Card className="p-6">
-          <SkeletonTableRows columns={6} rows={6} />
+          <SkeletonTableRows columns={7} rows={6} />
         </Card>
       ) : (
         <Card className="overflow-x-auto">
@@ -161,8 +204,7 @@ export default function BookingHistoryPage() {
                 <TableHead>Weight</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
+                <TableHead>Date</TableHead>                <TableHead>Actions</TableHead>              </TableRow>
             </TableHeader>
             <TableBody>
               {bookings.map((booking) => (
@@ -188,12 +230,30 @@ export default function BookingHistoryPage() {
                   <TableCell>
                     {new Date(booking.createdAt).toLocaleDateString()}
                   </TableCell>
+                  <TableCell>
+                    {booking.status === "SCHEDULED" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(booking.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Delete Booking"
+                        disabled={deletingId === booking.id}
+                      >
+                        {deletingId === booking.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
               {!bookings.length && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-(--muted)"
                   >
                     No bookings found.

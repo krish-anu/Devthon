@@ -1,6 +1,6 @@
 Quick notes for Firebase setup
 
-- Add your Firebase web config values to `.env.local` (or your environment):
+- Add your Firebase web config values to the project root `.env` (or your environment):
   - NEXT_PUBLIC_FIREBASE_API_KEY
   - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
   - NEXT_PUBLIC_FIREBASE_PROJECT_ID
