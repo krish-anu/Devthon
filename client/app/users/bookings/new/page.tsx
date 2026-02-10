@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Booking, PricingItem } from "@/lib/types";
@@ -916,12 +917,23 @@ export default function NewBookingPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm text-(--muted)">
+          <div className="flex items-start gap-3 text-sm text-(--muted)">
             <Checkbox
               checked={terms}
               onCheckedChange={(checked) => setTerms(Boolean(checked))}
+              className="mt-0.5"
             />
-            I agree to the pickup terms and quality inspection policy.
+            <span className="leading-relaxed">
+              I agree to the{" "}
+              <Link href="/terms" target="_blank" className="text-(--brand) hover:underline">
+                Terms and Conditions
+              </Link>
+              {" "}and{" "}
+              <Link href="/privacy" target="_blank" className="text-(--brand) hover:underline">
+                Privacy Policy
+              </Link>
+              {" "}for waste pickup and recycling services.
+            </span>
           </div>
         </Card>
       )}

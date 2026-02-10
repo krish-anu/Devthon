@@ -314,6 +314,25 @@ export default function LoginPage() {
                 Sign Up
               </Link>
             </p>
+
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+              By signing in, you agree to our{" "}
+              <Link
+                href="/terms"
+                className="font-medium text-(--brand) hover:text-(--brand-strong) underline"
+                target="_blank"
+              >
+                Terms and Conditions
+              </Link>
+              {" "}and{" "}
+              <Link
+                href="/privacy"
+                className="font-medium text-(--brand) hover:text-(--brand-strong) underline"
+                target="_blank"
+              >
+                Privacy Policy
+              </Link>
+            </p>
           </Card>
         </div>
       </div>
