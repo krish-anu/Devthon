@@ -14,10 +14,12 @@ export function Sidebar({
   title,
   items,
   footer,
+  onNavigate,
 }: {
   title: string;
   items: NavItem[];
   footer?: React.ReactNode;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
 
@@ -49,6 +51,7 @@ export function Sidebar({
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-2 sm:gap-3 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white/90 transition-colors hover:bg-white/10",
                 active && "bg-white/20 font-semibold",

@@ -177,7 +177,7 @@ export default function BookingHistoryPage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <KpiCard label="Total Bookings" value={`${metrics.total}`} />
         <KpiCard label="Completed" value={`${metrics.completed}`} />
         <KpiCard

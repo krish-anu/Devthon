@@ -168,8 +168,8 @@ export default function AdminBookingsPage() {
           <SkeletonTableRows columns={9} rows={6} />
         </Card>
       ) : (
-        <Card>
-          <Table>
+        <Card className="overflow-x-auto">
+          <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking ID</TableHead>
