@@ -125,6 +125,8 @@ export class BookingsService {
               specialInstructions: dto.specialInstructions,
               scheduledDate: new Date(dto.scheduledDate),
               scheduledTimeSlot: dto.scheduledTimeSlot,
+              lat: dto.lat,
+              lng: dto.lng,
               status: BookingStatus.SCHEDULED,
             },
           });
@@ -139,7 +141,7 @@ export class BookingsService {
           });
 
           // Sync booking to Supabase DB
-          await this.supabaseService.upsertRow('bookings', {
+          const supabaseData: any = {
             id: booking.id,
             userId: booking.userId,
             wasteCategoryId: booking.wasteCategoryId,
@@ -152,7 +154,14 @@ export class BookingsService {
             scheduledDate: booking.scheduledDate,
             scheduledTimeSlot: booking.scheduledTimeSlot,
             status: booking.status,
-          });
+          };
+
+          // Add location if lat/lng provided
+          if (dto.lat !== undefined && dto.lng !== undefined) {
+            supabaseData.location = `SRID=4326;POINT(${dto.lng} ${dto.lat})`;
+          }
+
+          await this.supabaseService.upsertRow('bookings', supabaseData);
 
           return booking;
         }),
