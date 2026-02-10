@@ -30,6 +30,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -97,6 +98,8 @@ export default function LoginPage() {
             error instanceof Error ? error.message : "Please try again.",
           variant: "error",
         });
+      } finally {
+        setGoogleLoading(false);
       }
     },
     onError: () => {
@@ -105,6 +108,7 @@ export default function LoginPage() {
         description: "Please try again.",
         variant: "error",
       });
+      setGoogleLoading(false);
     },
   });
 
@@ -197,7 +201,11 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-              onClick={() => handleGoogleLogin()}>
+              loading={googleLoading}
+              onClick={() => {
+                setGoogleLoading(true);
+                handleGoogleLogin();
+              }}>
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -224,7 +232,7 @@ export default function LoginPage() {
                 variant="outline"
                 className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                 onClick={handlePasskeyLogin}
-                disabled={passkeyLoading}
+                loading={passkeyLoading}
               >
                 <svg
                   className="h-5 w-5"
@@ -294,7 +302,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full bg-(--brand) hover:bg-(--brand-strong) text-white h-11"
-                disabled={isSubmitting}
+                loading={isSubmitting}
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
