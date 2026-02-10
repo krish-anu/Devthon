@@ -181,7 +181,7 @@ export default function SignupPage() {
         description: "Welcome to Trash2Treasure.",
         variant: "success",
       });
-      window.location.href = "/verify";
+      window.location.href = "/";
     } catch (error: any) {
       // eslint-disable-next-line no-console
       console.error("Signup error:", error);
