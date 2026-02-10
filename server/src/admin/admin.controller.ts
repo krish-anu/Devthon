@@ -177,4 +177,5 @@ export class AdminController {
   changeUserRole(@Param('id') id: string, @Body('role') role: string) {
     return this.adminService.changeUserRole(id, role);
   }
+
 }

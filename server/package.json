@@ -23,7 +23,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "logs:tail": "node scripts/pretty-logs.js logs/trash2cash-$(date +%F).log",
-    "logs:watch": "tail -f logs/trash2cash-$(date +%F).log | node scripts/pretty-logs.js -"
+    "logs:watch": "tail -f logs/trash2cash-$(date +%F).log | node scripts/pretty-logs.js -",
+    "notifications:check": "ts-node src/scripts/check-notifications.ts",
+    "notifications:create-for-booking": "ts-node src/scripts/create-notification-for-booking.ts"
   },
   "dependencies": {
     "@google-cloud/vision": "^5.3.4",

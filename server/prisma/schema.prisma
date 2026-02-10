@@ -233,6 +233,14 @@ model LaunchNotify {
   createdAt DateTime @default(now())
 }
 
+// Application configuration (key/value) – used to store deploy-time settings such as storage bucket
+model AppConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+}
+
 // ─────────────────────────────────────────────
 // Enums
 // ─────────────────────────────────────────────
