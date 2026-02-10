@@ -21,6 +21,19 @@ if (fs.existsSync(rootEnv)) {
 const nextConfig: NextConfig = {
   output: "standalone",
   devIndicators: false,
+  turbopack: {
+    // Ensure Turbopack resolves the client workspace root (avoids picking the repo root)
+    root: path.resolve(__dirname),
+  },
+  webpack: (config) => {
+    // Force resolve @supabase/supabase-js to the client's node_modules so webpack also resolves it properly
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@supabase/supabase-js': path.resolve(__dirname, 'node_modules/@supabase/supabase-js'),
+    };
+    return config;
+  },
   async headers() {
     return [
       // Disable COOP on auth pages (login/signup) so popup-based OAuth can access window.closed

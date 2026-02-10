@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 /* Prevent flash while theme is unresolved (keep page hidden until data-theme is set) */
 html:not([data-theme]) { visibility: hidden; }
 
