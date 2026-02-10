@@ -99,8 +99,8 @@ export default function AdminLayout({
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
       <RequireAuth roles={["ADMIN", "SUPER_ADMIN"]}>
         <AppShell
-          sidebar={<Sidebar title="Admin Portal" items={allNavItems} />}
-          header={<Header title="Admin Console" />}
+          sidebar={<Sidebar title="Super Admin Portal" items={allNavItems} />}
+          header={<Header title="Super Admin Console" />}
         >
           {children}
         </AppShell>
