@@ -34,8 +34,8 @@ export default function DriverDashboardPage() {
   }, [bookings]);
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Assigned" value={`${stats.assigned}`} />
         <KpiCard label="Scheduled" value={`${stats.scheduled}`} />
         <KpiCard label="On Pickup" value={`${stats.onPickup}`} />
@@ -48,8 +48,8 @@ export default function DriverDashboardPage() {
         </Card>
       ) : (
         <Card>
-          <div className="mt-2">
-            <Table>
+          <div className="mt-2 overflow-x-auto -mx-6 sm:mx-0">
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking</TableHead>
@@ -67,13 +67,18 @@ export default function DriverDashboardPage() {
                     <TableCell>{b.actualWeightKg ?? "-"} kg</TableCell>
                     <TableCell>{b.status}</TableCell>
                     <TableCell>
-                      {new Date(b.scheduledDate || b.createdAt).toLocaleString()}
+                      {new Date(
+                        b.scheduledDate || b.createdAt,
+                      ).toLocaleString()}
                     </TableCell>
                   </TableRow>
                 ))}
                 {!bookings.length && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-(--muted)">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-(--muted)"
+                    >
                       No assigned pickups.
                     </TableCell>
                   </TableRow>

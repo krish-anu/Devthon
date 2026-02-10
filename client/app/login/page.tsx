@@ -26,7 +26,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const { login, googleLogin, googleLoginWithCode, passkeyLogin, user, loading: authLoading } = useAuth();
+  const {
+    login,
+    googleLogin,
+    googleLoginWithCode,
+    passkeyLogin,
+    user,
+    loading: authLoading,
+  } = useAuth();
   const router = useRouter();
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -83,7 +90,9 @@ export default function LoginPage() {
           return;
         }
 
-        const token = (tokenResponse as any).access_token || (tokenResponse as any).credential;
+        const token =
+          (tokenResponse as any).access_token ||
+          (tokenResponse as any).credential;
         const user = await googleLogin(token);
         toast({
           title: "Welcome!",
@@ -119,11 +128,19 @@ export default function LoginPage() {
         recaptchaToken = (await executeRecaptcha("login")) as string | null;
       } catch (err) {
         console.error("reCAPTCHA failed:", err);
-        toast({ title: "reCAPTCHA", description: "Failed to run reCAPTCHA. Please try again.", variant: "error" });
+        toast({
+          title: "reCAPTCHA",
+          description: "Failed to run reCAPTCHA. Please try again.",
+          variant: "error",
+        });
         return;
       }
 
-      const user = await login(values.email, values.password, recaptchaToken ?? undefined);
+      const user = await login(
+        values.email,
+        values.password,
+        recaptchaToken ?? undefined,
+      );
       toast({
         title: "Welcome back!",
         description: "Redirecting to your dashboard.",
@@ -187,26 +204,29 @@ export default function LoginPage() {
       title="Turn Your Waste Into Wealth"
       subtitle="Join thousands of users earning money by recycling their waste responsibly."
     >
-      <div className="space-y-6">
-        <div className="flex items-center justify-center w-full h-full bg-background px-6 py-6 lg:py-12">
-          <ThemeToggle className="fixed right-6 top-6" />
-          <Card className="w-full max-w-md space-y-6">
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center justify-center w-full h-full bg-background px-4 sm:px-6 py-4 sm:py-6 lg:py-12">
+          <ThemeToggle className="fixed right-4 sm:right-6 top-4 sm:top-6 z-50" />
+          <Card className="w-full max-w-md space-y-4 sm:space-y-6">
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-[0.65rem] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-(--brand)">
                 Turn Your Waste Into Wealth
               </p>
-              <h1 className="text-2xl font-semibold">Welcome Back</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold">
+                Welcome Back
+              </h1>
             </div>
 
             <Button
               variant="outline"
-              className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+              className="w-full h-10 sm:h-11 gap-2 text-xs sm:text-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
               loading={googleLoading}
               onClick={() => {
                 setGoogleLoading(true);
                 handleGoogleLogin();
-              }}>
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
+              }}
+            >
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -230,12 +250,12 @@ export default function LoginPage() {
             {passkeySupported && (
               <Button
                 variant="outline"
-                className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+                className="w-full h-10 sm:h-11 gap-2 text-xs sm:text-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                 onClick={handlePasskeyLogin}
                 loading={passkeyLoading}
               >
                 <svg
-                  className="h-5 w-5"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -261,14 +281,17 @@ export default function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-slate-200 dark:border-slate-700" />
               </div>
-              <div className="relative flex justify-center text-xs">
+              <div className="relative flex justify-center text-[0.65rem] sm:text-xs">
                 <span className="bg-white dark:bg-slate-900 px-2 text-slate-500">
                   or continue with email
                 </span>
               </div>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <form
+              className="space-y-3 sm:space-y-4"
+              onSubmit={handleSubmit(onSubmit)}
+            >
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input placeholder="you@email.com" {...register("email")} />
@@ -291,38 +314,44 @@ export default function LoginPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center justify-between text-xs text-(--muted)">
-                <button type="button" className="hover:text-foreground">
+              <div className="flex items-center justify-between text-[0.65rem] sm:text-xs text-(--muted)">
+                <button
+                  type="button"
+                  className="hover:text-foreground transition-colors"
+                >
                   Forgot password?
                 </button>
-                <Link href="/signup" className="text-(--brand)">
+                <Link
+                  href="/signup"
+                  className="text-(--brand) hover:text-(--brand-strong) transition-colors"
+                >
                   Create account
                 </Link>
               </div>
               <Button
                 type="submit"
-                className="w-full bg-(--brand) hover:bg-(--brand-strong) text-white h-11"
+                className="w-full bg-(--brand) hover:bg-(--brand-strong) text-white h-10 sm:h-11 text-xs sm:text-sm"
                 loading={isSubmitting}
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
             </form>
 
-            <div className="mt-2">
+            <div className="mt-1.5 sm:mt-2">
               <RecaptchaNotice />
             </div>
 
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Don&apos;t have an account?{"   "}
               <Link
                 href="/signup"
-                className="font-medium text-(--brand) hover:text-(--brand-strong) ml-2"
+                className="font-medium text-(--brand) hover:text-(--brand-strong) ml-1 sm:ml-2 transition-colors"
               >
                 Sign Up
               </Link>
             </p>
 
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+            <p className="text-center text-[0.65rem] sm:text-xs text-slate-500 dark:text-slate-400 mt-3 sm:mt-4">
               By signing in, you agree to our{" "}
               <Link
                 href="/terms"
@@ -330,8 +359,8 @@ export default function LoginPage() {
                 target="_blank"
               >
                 Terms and Conditions
-              </Link>
-              {" "}and{" "}
+              </Link>{" "}
+              and{" "}
               <Link
                 href="/privacy"
                 className="font-medium text-(--brand) hover:text-(--brand-strong) underline"

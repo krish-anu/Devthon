@@ -19,24 +19,31 @@ export function Header({
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex items-center justify-between w-full gap-3">
-      <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">{title}</p>
-        <h2 className="text-lg font-semibold">Welcome, {user?.fullName ?? "Admin"}</h2>
+    <div className="flex items-center justify-between w-full gap-2 sm:gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.65rem] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-(--brand) truncate">
+          {title}
+        </p>
+        <h2 className="text-base sm:text-lg font-semibold truncate">
+          Welcome, {user?.fullName?.split(" ")[0] ?? "Admin"}
+        </h2>
       </div>
 
-      <div className="flex items-center gap-2 right">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {showThemeToggle && <ThemeToggle />}
-        {right ? (
-          right
-        ) : (
-          showLogout && (
-            <Button variant="outline" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          )
-        )}
+        {right
+          ? right
+          : showLogout && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => logout()}
+                className="text-xs sm:text-sm"
+              >
+                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            )}
       </div>
     </div>
   );

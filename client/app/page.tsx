@@ -54,78 +54,99 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground section-grid">
-      <header className="w-full bg-(--card)">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-          <div className="flex items-center gap-3 text-lg font-semibold">
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
+      <header className="w-full bg-(--card) sticky top-0 z-50 border-b border-(--border)">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg font-semibold">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
               <img
                 src="/recycle%20logo.png"
                 alt="Trash2Treasure logo"
-                className="h-8 w-8 object-contain"
+                className="h-6 w-6 sm:h-8 sm:w-8 object-contain"
               />
             </div>
-            Trash2Treasure
+            <span className="hidden sm:inline">Trash2Treasure</span>
           </div>
-          <nav className="hidden items-center gap-6 text-sm text-(--muted) md:flex">
-            <a href="#how" className="hover:text-foreground">
+          <nav className="hidden lg:flex items-center gap-6 text-sm text-(--muted)">
+            <a href="#how" className="hover:text-foreground transition-colors">
               How it works
             </a>
-            <a href="#impact" className="hover:text-foreground">
+            <a
+              href="#impact"
+              className="hover:text-foreground transition-colors"
+            >
               Impact
             </a>
-            <a href="#pricing" className="hover:text-foreground">
+            <a
+              href="#pricing"
+              className="hover:text-foreground transition-colors"
+            >
               Pricing
             </a>
-            <a href="#contact" className="hover:text-foreground">
+            <a
+              href="#contact"
+              className="hover:text-foreground transition-colors"
+            >
               Contact
             </a>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Button variant="ghost" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:inline-flex"
+              asChild
+            >
               <Link href="/login">Login</Link>
             </Button>
-            <Button asChild>
-              <Link href="/signup">Get Started</Link>
+            <Button size="sm" asChild>
+              <Link href="/signup" className="text-xs sm:text-sm">
+                Get Started
+              </Link>
             </Button>
           </div>
         </div>
       </header>
 
       <div className="">
-        <section className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10 px-6 pb-20 pt-10 md:flex-row md:items-center">
-          <div className="flex-1 space-y-6">
+        <section className="mx-auto flex w-full max-w-6xl flex-col items-start gap-6 sm:gap-10 px-4 sm:px-6 pb-12 sm:pb-20 pt-6 sm:pt-10 md:flex-row md:items-center">
+          <div className="flex-1 space-y-4 sm:space-y-6">
             <ScrollAnimatedSection>
-              <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-brand">
+              <div className="inline-flex items-center gap-2 rounded-full border border-(--brand)/30 bg-(--brand)/10 px-3 sm:px-4 py-1.5 sm:py-2 text-[0.65rem] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-brand">
                 Sri Lanka&apos;s #1 Waste Marketplace
               </div>
             </ScrollAnimatedSection>
             <ScrollAnimatedSection delay={100}>
-              <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight">
                 Turn Your Waste into Cash
               </h1>
             </ScrollAnimatedSection>
             {/* Built for households */}
             <ScrollAnimatedSection delay={200}>
-              <p className="text-base text-muted md:text-lg">
+              <p className="text-sm sm:text-base md:text-lg text-muted">
                 and businesses across Sri Lanka. Schedule pickups, track impact,
                 and get paid instantly through mobile wallets or bank transfers.
               </p>
             </ScrollAnimatedSection>
             <ScrollAnimatedSection delay={300}>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" asChild>
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+                <Button size="lg" className="w-full sm:w-auto" asChild>
                   <Link href={bookingHref}>Book a Pickup</Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  asChild
+                >
                   <a href="#pricing">Check Prices</a>
                 </Button>
               </div>
             </ScrollAnimatedSection>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <ScrollAnimatedSection delay={400}>
-              <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg aspect-[16/9]">
+              <div className="overflow-hidden rounded-2xl border border-(--brand) shadow-lg aspect-[16/9] w-full">
                 <img
                   src="/recycling-bins.png"
                   alt="Colorful recycling bins for waste segregation"
@@ -139,7 +160,7 @@ export default function HomePage() {
 
       <section
         id="impact"
-        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
+        className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-10 px-4 sm:px-6 py-12 sm:py-16"
       >
         <ScrollAnimatedSection>
           <SectionHeading
@@ -148,8 +169,8 @@ export default function HomePage() {
             description="Together with our community, we are transforming waste management in Sri Lanka."
           />
         </ScrollAnimatedSection>
-        <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-4">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-3 sm:p-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {[
               {
                 icon: <Recycle className="h-5 w-5" />,
@@ -192,7 +213,7 @@ export default function HomePage() {
 
       <section
         id="how"
-        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
+        className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-10 px-4 sm:px-6 py-12 sm:py-16"
       >
         <ScrollAnimatedSection>
           <SectionHeading
@@ -201,7 +222,7 @@ export default function HomePage() {
             description="Book once, relax, and earn. We handle the pickup, sorting, and instant payout."
           />
         </ScrollAnimatedSection>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
           {[
             {
               step: "1",
@@ -244,26 +265,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="w-full bg-transparent py-16">
-        <div className="mx-auto w-full max-w-6xl space-y-8 px-6">
+      <section className="w-full bg-transparent py-12 sm:py-16">
+        <div className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-8 px-4 sm:px-6">
           <ScrollAnimatedSection>
-            <div className="space-y-4">
-              <span className="text-xs font-semibold uppercase tracking-[0.35em] text-(--brand)">
+            <div className="space-y-3 sm:space-y-4">
+              <span className="text-[0.65rem] sm:text-xs font-semibold uppercase tracking-[0.25em] sm:tracking-[0.35em] text-(--brand)">
                 Features
               </span>
-              <h2 className="text-4xl font-bold text-foreground md:text-5xl">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
                 A marketplace built for every
-                <br />
-                Sri Lankan household
+                <br className="hidden sm:block" />
+                <span className="sm:hidden"> </span>Sri Lankan household
               </h2>
-              <p className="text-lg text-(--muted)">
+              <p className="text-sm sm:text-base md:text-lg text-(--muted)">
                 From transparent pricing to carbon tracking, Trash2Treasure
                 keeps the cycle circular.
               </p>
             </div>
           </ScrollAnimatedSection>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 title: "Verified Recyclers",
@@ -302,7 +323,7 @@ export default function HomePage() {
 
       <section
         id="pricing"
-        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
+        className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-10 px-4 sm:px-6 py-12 sm:py-16"
       >
         <ScrollAnimatedSection>
           <SectionHeading
@@ -312,13 +333,13 @@ export default function HomePage() {
           />
         </ScrollAnimatedSection>
         {pricingLoading ? (
-          <div className="grid gap-6 md:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-(--brand)/10 text-center shadow-md p-6">
               <Loading message="Loading prices..." />
             </Card>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {pricingCards.map((item, index) => (
               <ScrollAnimatedSection key={item.name} delay={index * 100}>
                 <Card className="bg-(--brand)/10 text-center shadow-md">
@@ -345,7 +366,7 @@ export default function HomePage() {
 
       <section
         id="contact"
-        className="mx-auto w-full max-w-6xl space-y-10 px-6 py-16"
+        className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-10 px-4 sm:px-6 py-12 sm:py-16"
       >
         <ScrollAnimatedSection>
           <SectionHeading
@@ -354,7 +375,7 @@ export default function HomePage() {
             description="Have questions? We're here to help you get started with sustainable waste management."
           />
         </ScrollAnimatedSection>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {[
             {
               title: "General Inquiries",
@@ -395,18 +416,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-6 py-16">
+      <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
         <ScrollAnimatedSection>
-          <Card className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-            <div>
-              <h3 className="text-2xl font-semibold">
+          <Card className="flex flex-col items-start justify-between gap-4 sm:gap-6 md:flex-row md:items-center">
+            <div className="space-y-2">
+              <h3 className="text-xl sm:text-2xl font-semibold">
                 Ready to Start Earning from Your Waste?
               </h3>
-              <p className="text-sm text-(--muted)">
+              <p className="text-xs sm:text-sm text-(--muted)">
                 Create a free account and schedule your first pickup today.
               </p>
             </div>
-            <Button size="lg" asChild>
+            <Button size="lg" className="w-full sm:w-auto shrink-0" asChild>
               <Link href="/signup">Create Free Account</Link>
             </Button>
           </Card>
@@ -414,7 +435,7 @@ export default function HomePage() {
       </section>
 
       <footer className="bg-(--card) text-foreground border-t border-(--border)">
-        <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
+        <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 px-4 sm:px-6 py-8 sm:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">

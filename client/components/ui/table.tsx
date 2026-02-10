@@ -69,7 +69,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide",
+      "px-2 sm:px-4 py-2 sm:py-3 text-left text-[0.65rem] sm:text-xs font-semibold uppercase tracking-wide whitespace-nowrap",
       className,
     )}
     {...props}
@@ -83,7 +83,10 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("px-4 py-3 text-sm text-foreground", className)}
+    className={cn(
+      "px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground",
+      className,
+    )}
     {...props}
   />
 ));
