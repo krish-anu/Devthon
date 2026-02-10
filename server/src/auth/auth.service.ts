@@ -174,6 +174,19 @@ export class AuthService {
     if (!valid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Block unapproved admins and drivers
+    if (user.role === 'ADMIN' && user.admin && !user.admin.approved) {
+      throw new UnauthorizedException(
+        'Your account is pending approval by a Super Admin.',
+      );
+    }
+    if (user.role === 'DRIVER' && user.driver && !user.driver.approved) {
+      throw new UnauthorizedException(
+        'Your account is pending approval by a Super Admin.',
+      );
+    }
+
     const tokens = await this.issueTokens(user);
     return { user: flattenUser(user), ...tokens };
   }
@@ -276,7 +289,12 @@ export class AuthService {
   }
 
   // Exchange authorization code server-side and authenticate
-  async googleLoginWithCode(code: string, redirectUri?: string, isSignup = false, role?: string) {
+  async googleLoginWithCode(
+    code: string,
+    redirectUri?: string,
+    isSignup = false,
+    role?: string,
+  ) {
     const client_id = this.getRequiredConfig('GOOGLE_CLIENT_ID');
     const client_secret = this.getRequiredConfig('GOOGLE_CLIENT_SECRET');
     const redirect_uri =
@@ -336,7 +354,11 @@ export class AuthService {
   }
 
   // Shared logic to find or create app user from Google profile
-  private async findOrCreateUserFromGoogle(googleUser: any, isSignup = false, role?: string) {
+  private async findOrCreateUserFromGoogle(
+    googleUser: any,
+    isSignup = false,
+    role?: string,
+  ) {
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
       include: USER_PROFILE_INCLUDE,
@@ -450,6 +472,27 @@ export class AuthService {
           );
         }
       }
+    }
+
+    // Block unapproved admins and drivers
+    const freshUser = user as any;
+    if (
+      freshUser!.role === 'ADMIN' &&
+      freshUser!.admin &&
+      !freshUser!.admin.approved
+    ) {
+      throw new UnauthorizedException(
+        'Your account is pending approval by a Super Admin.',
+      );
+    }
+    if (
+      freshUser!.role === 'DRIVER' &&
+      freshUser!.driver &&
+      !freshUser!.driver.approved
+    ) {
+      throw new UnauthorizedException(
+        'Your account is pending approval by a Super Admin.',
+      );
     }
 
     const tokens = await this.issueTokens(user!);

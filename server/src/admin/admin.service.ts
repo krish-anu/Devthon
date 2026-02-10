@@ -464,4 +464,104 @@ export class AdminService {
       orderBy: { updatedAt: 'desc' },
     });
   }
+
+  // ─────────────────────────────────────────────
+  // Super Admin: Pending approvals & user management
+  // ─────────────────────────────────────────────
+
+  async listPendingApprovals() {
+    const pendingAdmins = await this.prisma.admin.findMany({
+      where: { approved: false },
+      include: { user: true },
+    });
+
+    const pendingDrivers = await this.prisma.driver.findMany({
+      where: { approved: false },
+      include: { user: true },
+    });
+
+    return [
+      ...pendingAdmins.map((a) => ({
+        id: a.id,
+        fullName: a.fullName,
+        phone: a.phone,
+        email: a.user?.email ?? '',
+        role: a.user?.role ?? 'ADMIN',
+        approved: a.approved,
+        createdAt: a.user?.createdAt,
+      })),
+      ...pendingDrivers.map((d) => ({
+        id: d.id,
+        fullName: d.fullName,
+        phone: d.phone,
+        email: d.user?.email ?? '',
+        role: d.user?.role ?? 'DRIVER',
+        approved: d.approved,
+        createdAt: d.createdAt,
+      })),
+    ];
+  }
+
+  async approveUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { admin: true, driver: true },
+    });
+
+    if (!user) throw new Error('User not found');
+
+    if (user.role === 'ADMIN' && user.admin) {
+      await this.prisma.admin.update({
+        where: { id },
+        data: { approved: true },
+      });
+    } else if (user.role === 'DRIVER' && user.driver) {
+      await this.prisma.driver.update({
+        where: { id },
+        data: { approved: true },
+      });
+    }
+
+    return { success: true };
+  }
+
+  async rejectUser(id: string) {
+    // Remove the user entirely when rejected
+    await this.prisma.notification.deleteMany({ where: { userId: id } });
+    await this.prisma.paymentTransaction.deleteMany({
+      where: { booking: { userId: id } },
+    });
+    await this.prisma.booking.deleteMany({ where: { userId: id } });
+    await this.prisma.customer.deleteMany({ where: { id } });
+    await this.prisma.admin.deleteMany({ where: { id } });
+    await this.prisma.driver.deleteMany({ where: { id } });
+    await this.prisma.userPermission.deleteMany({ where: { userId: id } });
+    await this.prisma.passkeyCredential.deleteMany({ where: { userId: id } });
+    await this.prisma.user.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async listAllUsersWithRoles() {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: USER_PROFILE_INCLUDE,
+    });
+    return users.map((u) => flattenUser(u));
+  }
+
+  async changeUserRole(id: string, newRole: string) {
+    const validRoles = ['CUSTOMER', 'ADMIN', 'SUPER_ADMIN', 'DRIVER'];
+    if (!validRoles.includes(newRole)) {
+      throw new Error('Invalid role');
+    }
+    await this.prisma.user.update({
+      where: { id },
+      data: { role: newRole as any },
+    });
+    const updated = await this.prisma.user.findUnique({
+      where: { id },
+      include: USER_PROFILE_INCLUDE,
+    });
+    return flattenUser(updated);
+  }
 }
