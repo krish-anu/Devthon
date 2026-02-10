@@ -119,7 +119,7 @@ export default function DashboardPage() {
               <SkeletonTableRows columns={6} rows={5} />
             </div>
           ) : (
-            <Table>
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking ID</TableHead>
