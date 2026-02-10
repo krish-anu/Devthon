@@ -417,7 +417,14 @@ export default function SignupPage() {
                   }
                 />
                 <span>
-                  I agree to the terms and privacy policy.
+                  I agree to the{" "}
+                  <Link href="/terms" target="_blank" className="text-(--brand) hover:text-(--brand-strong) underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="text-(--brand) hover:text-(--brand-strong) underline">
+                    Privacy Policy
+                  </Link>.
                   {errors.terms && (
                     <span className="block text-rose-400">
                       {errors.terms.message}
