@@ -25,6 +25,7 @@ model User {
   driver             Driver?
   bookings           Booking[]
   notifications      Notification[]
+  pushSubscriptions  PushSubscription[]
   passkeyCredentials PasskeyCredential[]
   userPermissions    UserPermission[]
   recycler           Recycler?
@@ -194,6 +195,7 @@ model Booking {
 model Notification {
   id        String            @id @default(uuid())
   userId    String?
+  bookingId String?
   title     String
   message   String
   isRead    Boolean           @default(false)
@@ -212,9 +214,30 @@ model PaymentTransaction {
   booking   Booking       @relation(fields: [bookingId], references: [id])
 }
 
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model LaunchNotify {
   id        String   @id @default(uuid())
   email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+// Application configuration (key/value) – used to store deploy-time settings such as storage bucket
+model AppConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
   createdAt DateTime @default(now())
 }
 

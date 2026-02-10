@@ -17,8 +17,9 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Header } from "@/components/layout/header";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { usePathname } from "next/navigation";
 
@@ -52,8 +53,8 @@ export default function AdminLayout({
       icon: <ClipboardList className="h-4 w-4" />,
     },
     {
-      label: "Pricing",
-      href: "/admin/pricing",
+      label: "Waste Management",
+      href: "/admin/waste",
       icon: <Tag className="h-4 w-4" />,
     },
     {
@@ -95,14 +96,29 @@ export default function AdminLayout({
     );
   }
 
+  const isPendingApproval =
+    user && (user.role === "ADMIN" || user.role === "DRIVER") && !user.approved;
+  const isProfileRoute = pathname && (pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/profile"));
+  const isRestricted = isPendingApproval && !isProfileRoute;
+
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
       <RequireAuth roles={["ADMIN", "SUPER_ADMIN"]}>
         <AppShell
-          sidebar={<Sidebar title="Super Admin Portal" items={allNavItems} />}
-          header={<Header title="Super Admin Console" />}
+          hasSidebar={!isPendingApproval}
+          sidebar={isPendingApproval ? null : <Sidebar title="Admin Portal" items={allNavItems} />}
+          header={<Header title="Admin Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
         >
-          {children}
+          {isRestricted ? (
+            <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+              <div className="max-w-2xl text-center">
+                <h2 className="text-2xl font-semibold">Account pending approval</h2>
+                <p className="mt-4 text-(--muted)">Your account is pending approval by a Super Admin. Please wait for acceptance.</p>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </AppShell>
       </RequireAuth>
     </GoogleOAuthProvider>

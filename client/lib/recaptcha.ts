@@ -15,6 +15,13 @@ export async function loadRecaptcha(siteKey: string) {
 
 export async function executeRecaptcha(action: string) {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  const enabled = process.env.NEXT_PUBLIC_RECAPTCHA_ENABLED;
+
+  // Allow explicit env toggle to disable reCAPTCHA in local/dev environments
+  if (enabled && enabled.toLowerCase() === 'false') {
+    return null;
+  }
+
   if (!siteKey) {
     // If no site key is configured, skip gracefully (useful for local/dev)
     // Return null to indicate no token was generated

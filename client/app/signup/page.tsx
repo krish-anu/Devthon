@@ -21,30 +21,28 @@ import { isValidSriLankaPhone } from "@/lib/phone";
 import { executeRecaptcha } from "@/lib/recaptcha";
 import RecaptchaNotice from "@/components/recaptcha/RecaptchaNotice";
 
-const schema = z
-  .object({
-    fullName: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    phone: z.string().refine((v) => isValidSriLankaPhone(v), {
-      message: "Enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
-    }),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain uppercase, lowercase, and a number",
-      ),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-    type: z.enum(["HOUSEHOLD", "BUSINESS"]),
-    terms: z.boolean().refine((v) => v === true, {
-      message: "You must accept the terms.",
-    }),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const schema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), {
+    message: "Enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
+  }),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain uppercase, lowercase, and a number",
+    ),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+  type: z.enum(["HOUSEHOLD", "BUSINESS"]),
+  terms: z.boolean().refine((v) => v === true, {
+    message: "You must accept the terms.",
+  }),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 type FormValues = z.infer<typeof schema>;
 
@@ -63,14 +61,9 @@ export default function SignupPage() {
   const { errors, isSubmitting } = formState;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
-  const {
-    register: registerUser,
-    googleLogin,
-    googleLoginWithCode,
-    user,
-    loading: authLoading,
-  } = useAuth();
+  const { register: registerUser, googleLogin, googleLoginWithCode, user, loading: authLoading } = useAuth();
   const termsChecked = watch("terms");
 
   const redirectToDashboard = (userRole: string) => {
@@ -99,21 +92,7 @@ export default function SignupPage() {
     onSuccess: async (tokenResponse) => {
       try {
         if ((tokenResponse as any).code) {
-          const user = await googleLoginWithCode(
-            (tokenResponse as any).code,
-            undefined,
-            true,
-          );
-          if (role === "DRIVER" || role === "ADMIN") {
-            toast({
-              title: "Account created — pending approval",
-              description:
-                "Your account has been created but requires Super Admin approval before you can log in.",
-              variant: "warning",
-            });
-            window.location.href = "/login";
-            return;
-          }
+          const user = await googleLoginWithCode((tokenResponse as any).code, undefined, true);
           toast({
             title: "Welcome!",
             description: "Signed up with Google successfully.",
@@ -123,20 +102,8 @@ export default function SignupPage() {
           return;
         }
 
-        const token =
-          (tokenResponse as any).access_token ||
-          (tokenResponse as any).credential;
+        const token = (tokenResponse as any).access_token || (tokenResponse as any).credential;
         const user = await googleLogin(token, true);
-        if (role === "DRIVER" || role === "ADMIN") {
-          toast({
-            title: "Account created — pending approval",
-            description:
-              "Your account has been created but requires Super Admin approval before you can log in.",
-            variant: "warning",
-          });
-          window.location.href = "/login";
-          return;
-        }
         toast({
           title: "Welcome!",
           description: "Signed up with Google successfully.",
@@ -145,15 +112,14 @@ export default function SignupPage() {
         redirectToDashboard(user.role);
       } catch (error: any) {
         const msg = error?.message ?? "Please try again.";
-        const description =
-          msg === "Email already registered"
-            ? "That email is already registered. Please log in instead."
-            : msg;
+        const description = msg === 'Email already registered' ? 'That email is already registered. Please log in instead.' : msg;
         toast({
           title: "Google sign-up failed",
           description,
           variant: "error",
         });
+      } finally {
+        setGoogleLoading(false);
       }
     },
     onError: () => {
@@ -162,6 +128,7 @@ export default function SignupPage() {
         description: "Please try again.",
         variant: "error",
       });
+      setGoogleLoading(false);
     },
   });
 
@@ -177,35 +144,13 @@ export default function SignupPage() {
         recaptchaToken = (await executeRecaptcha("signup")) as string | null;
       } catch (err) {
         console.error("reCAPTCHA failed:", err);
-        toast({
-          title: "reCAPTCHA",
-          description: "Failed to run reCAPTCHA. Please try again.",
-          variant: "error",
-        });
+        toast({ title: "reCAPTCHA", description: "Failed to run reCAPTCHA. Please try again.", variant: "error" });
         return;
       }
 
-      const user = await registerUser({
-        ...payload,
-        role,
-        recaptchaToken: recaptchaToken ?? undefined,
-      });
+      const user = await registerUser({ ...payload, role, recaptchaToken: recaptchaToken ?? undefined });
       // eslint-disable-next-line no-console
       console.debug("Signup success, user:", user);
-
-      // Drivers & Admins need Super Admin approval before they can log in
-      if (role === "DRIVER" || role === "ADMIN") {
-        toast({
-          title: "Account created — pending approval",
-          description:
-            "Your account has been created but requires Super Admin approval before you can log in.",
-          variant: "warning",
-        });
-        // Log them out so they can't access the dashboard
-        window.location.href = "/login";
-        return;
-      }
-
       toast({
         title: "Account created",
         description: "Welcome to Trash2Cash.",
@@ -242,7 +187,11 @@ export default function SignupPage() {
             <Button
               variant="outline"
               className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-              onClick={() => handleGoogleSignup()}
+              loading={googleLoading}
+              onClick={() => {
+                setGoogleLoading(true);
+                handleGoogleSignup();
+              }}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
@@ -292,10 +241,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Phone Number</Label>
-                <PhoneInput
-                  placeholder="+94 77 123 4567"
-                  {...register("phone")}
-                />
+                <PhoneInput placeholder="+94 77 123 4567" {...register("phone")} />
                 {errors.phone && (
                   <p className="text-xs text-rose-500">
                     {errors.phone.message}
@@ -313,39 +259,13 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-(--border) bg-(--surface-soft)"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)]"
                   >
                     {showPassword ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.05-2.42 2.6-4.47 4.54-5.87" />
-                        <path d="M1 1l22 22" />
-                      </svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.05-2.42 2.6-4.47 4.54-5.87"/><path d="M1 1l22 22"/></svg>
                     ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     )}
                   </button>
                 </div>
@@ -367,41 +287,13 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirm((s) => !s)}
-                    aria-label={
-                      showConfirm
-                        ? "Hide confirm password"
-                        : "Show confirm password"
-                    }
-                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-(--border) bg-(--surface-soft)"
+                    aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)]"
                   >
                     {showConfirm ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.05-2.42 2.6-4.47 4.54-5.87" />
-                        <path d="M1 1l22 22" />
-                      </svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.05-2.42 2.6-4.47 4.54-5.87"/><path d="M1 1l22 22"/></svg>
                     ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     )}
                   </button>
                 </div>
@@ -452,7 +344,7 @@ export default function SignupPage() {
               <Button
                 type="submit"
                 className="w-full h-11 bg-(--brand) hover:bg-(--brand-strong) text-white"
-                disabled={isSubmitting}
+                loading={isSubmitting}
                 onClick={() => {
                   // eslint-disable-next-line no-console
                   console.debug("Create Account button clicked");

@@ -14,7 +14,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { usePathname } from "next/navigation";
 
 export default function DriverLayout({
@@ -52,13 +53,27 @@ export default function DriverLayout({
     return <>{children}</>;
   }
 
+  const isPendingApproval = user && user.role === "DRIVER" && !user.approved;
+  const isProfileRoute = pathname && (pathname.startsWith("/driver/settings") || pathname.startsWith("/driver/profile"));
+  const isRestricted = isPendingApproval && !isProfileRoute;
+
   return (
     <RequireAuth roles={["DRIVER"]}>
       <AppShell
-        sidebar={<Sidebar title="Driver Console" items={navItems} />}
-        header={<Header title="Driver Console" />}
+        hasSidebar={!isPendingApproval}
+        sidebar={isPendingApproval ? null : <Sidebar title="Driver Console" items={navItems} />}
+        header={<Header title="Driver Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
       >
-        {children}
+        {isRestricted ? (
+          <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+            <div className="max-w-2xl text-center">
+              <h2 className="text-2xl font-semibold">Account pending approval</h2>
+              <p className="mt-4 text-(--muted)">Your account is pending approval by a Super Admin. Please wait for acceptance.</p>
+            </div>
+          </div>
+        ) : (
+          children
+        )}
       </AppShell>
     </RequireAuth>
   );

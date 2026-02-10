@@ -287,11 +287,27 @@ async function main() {
     data: { email: 'hello@trash2cash.lk' },
   });
 
+  // Insert application config values (e.g. storage bucket) if provided via env
+  const bucket =
+    process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ??
+    process.env.SUPABASE_STORAGE_BUCKET ??
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
+    process.env.FIREBASE_STORAGE_BUCKET ??
+    null;
+  if (bucket) {
+    await prisma.appConfig.upsert({
+      where: { key: 'storageBucket' },
+      update: { value: bucket },
+      create: { key: 'storageBucket', value: bucket },
+    });
+  }
+
   console.log('Seed data created:', {
     admin: adminUser.email,
     rajesh: rajeshUser.email,
     samantha: samanthaUser.email,
     drivers: drivers.map((d) => d.fullName),
+    storageBucket: bucket ?? 'none',
   });
 
   // Supabase syncing removed to avoid depending on external credentials during seeding.

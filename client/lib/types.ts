@@ -28,6 +28,7 @@ export interface WasteCategory {
   id: string;
   name: string;
   description?: string | null;
+  isActive?: boolean;
 }
 
 export interface Booking {
@@ -67,5 +68,6 @@ export interface NotificationItem {
   message: string;
   level: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
   isRead: boolean;
+  bookingId?: string | null;
   createdAt: string;
 }

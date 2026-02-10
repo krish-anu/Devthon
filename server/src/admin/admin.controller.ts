@@ -21,8 +21,11 @@ import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
 import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { AdminUpdatePricingDto } from './dto/admin-update-pricing.dto';
+import { AdminUpdateBookingDto } from './dto/admin-update-booking.dto';
 import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import { AdminSendSmsDto } from './dto/admin-send-sms.dto';
+import { AdminCreateWasteCategoryDto } from './dto/admin-create-waste-category.dto';
+import { AdminUpdateWasteCategoryDto } from './dto/admin-update-waste-category.dto';
 import { SmsService } from '../sms/sms.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -87,6 +90,17 @@ export class AdminController {
     return this.adminService.listBookings(query);
   }
 
+  @Patch('bookings/:id')
+  updateBooking(@Param('id') id: string, @Body() dto: AdminUpdateBookingDto) {
+    return this.adminService.updateBooking(id, dto);
+  }
+
+  /** Admin-only debug endpoint: trigger a test 'completed' notification */
+  @Post('bookings/:id/notify-complete')
+  triggerBooking(@Param('id') id: string) {
+    return this.adminService.triggerBookingCompletedNotification(id);
+  }
+
   @Get('pricing')
   listPricing() {
     return this.adminService.listPricing();
@@ -95,6 +109,27 @@ export class AdminController {
   @Patch('pricing')
   updatePricing(@Body() dto: AdminUpdatePricingDto) {
     return this.adminService.updatePricing(dto);
+  }
+
+  // Waste Category management
+  @Get('waste-categories')
+  listWasteCategories() {
+    return this.adminService.listWasteCategories();
+  }
+
+  @Post('waste-categories')
+  createWasteCategory(@Body() dto: AdminCreateWasteCategoryDto) {
+    return this.adminService.createWasteCategory(dto);
+  }
+
+  @Patch('waste-categories/:id')
+  updateWasteCategory(@Param('id') id: string, @Body() dto: AdminUpdateWasteCategoryDto) {
+    return this.adminService.updateWasteCategory(id, dto);
+  }
+
+  @Delete('waste-categories/:id')
+  deleteWasteCategory(@Param('id') id: string) {
+    return this.adminService.deleteWasteCategory(id);
   }
 
   @Post('sms/send')
@@ -142,4 +177,5 @@ export class AdminController {
   changeUserRole(@Param('id') id: string, @Body('role') role: string) {
     return this.adminService.changeUserRole(id, role);
   }
+
 }

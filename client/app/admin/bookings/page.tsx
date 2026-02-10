@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Trash2, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,13 +17,81 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
+import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 
 export default function AdminBookingsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [dateFilter, setDateFilter] = useState<"all" | "thisMonth">("all");
 
-  const { data } = useQuery({
+  const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Mutation to delete booking with optimistic update + spinner
+  const deleteBookingMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/bookings/${id}`, {
+        method: "DELETE",
+      }),
+    onMutate: async (id: string) => {
+      setDeletingId(id);
+      // Show a loading toast while deletion is in progress
+      const toastHandle = toast({ title: 'Deleting booking...', variant: 'loading' });
+
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["admin-bookings"] });
+
+      // Snapshot current data for rollback
+      const previous = queryClient.getQueryData<any[]>([
+        "admin-bookings",
+        status,
+        search,
+        dateFilter,
+      ]);
+
+      // Optimistically remove the booking from the cached lists that match the current filters
+      if (previous) {
+        queryClient.setQueryData([
+          "admin-bookings",
+          status,
+          search,
+          dateFilter,
+        ], previous.filter((b) => b.id !== id));
+      }
+
+      return { previous, toastHandle };
+    },
+    onError: (_err, _id, context: any) => {
+      // rollback
+      queryClient.setQueryData(
+        ["admin-bookings", status, search, dateFilter],
+        context?.previous,
+      );
+      setDeletingId(null);
+      // Update the loading toast into an error toast
+      context?.toastHandle?.update?.({ title: 'Delete failed', description: 'Failed to delete booking.', variant: 'error' });
+    },
+    onSuccess: (_data, _id, context: any) => {
+      setDeletingId(null);
+      // Update the loading toast into a success toast
+      context?.toastHandle?.update?.({ title: 'Booking deleted', variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+    },
+    onSettled: () => {
+      setDeletingId(null);
+      // Ensure all admin-bookings queries are refreshed
+      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      deleteBookingMutation.mutate(id);
+    }
+  };
+
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-bookings", status, search, dateFilter],
     queryFn: () => {
       const params = new URLSearchParams();
@@ -45,6 +115,7 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
+        {/* ... (existing filters) */}
         <div className="flex flex-wrap gap-2">
           <Button
             variant={
@@ -92,44 +163,67 @@ export default function AdminBookingsPage() {
         />
       </Card>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Weight</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Driver</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(data ?? []).map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>{booking.id.slice(0, 8)}</TableCell>
-                <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
-                <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
-                <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
-                <TableCell>
-                  LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                </TableCell>
-                <TableCell>
-                  {booking.driver?.fullName ?? "Unassigned"}
-                </TableCell>
-                <TableCell>
-                  <StatusPill status={booking.status} />
-                </TableCell>
-                <TableCell>
-                  {new Date(booking.createdAt).toLocaleDateString()}
-                </TableCell>
+      {isLoading ? (
+        <Card className="p-6">
+          <SkeletonTableRows columns={9} rows={6} />
+        </Card>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Booking ID</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Weight</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Driver</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {(data ?? []).map((booking) => (
+                <TableRow key={booking.id}>
+                  <TableCell>{booking.id.slice(0, 8)}</TableCell>
+                  <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
+                  <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
+                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                  <TableCell>
+                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                  </TableCell>
+                  <TableCell>
+                    {booking.driver?.fullName ?? "Unassigned"}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={booking.status} />
+                  </TableCell>
+                  <TableCell>
+                    {new Date(booking.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(booking.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      title="Delete Booking"
+                      disabled={deletingId === booking.id}
+                    >
+                      {deletingId === booking.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }

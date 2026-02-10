@@ -31,11 +31,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="auto">
       <head>
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `html:not([data-theme]) { visibility: hidden; }`,
-          }}
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

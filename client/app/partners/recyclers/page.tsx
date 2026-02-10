@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
+import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +27,7 @@ import { useState } from "react";
 const recyclerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
   contactPerson: z.string().min(2, "Contact person is required"),
-  phone: z.string().min(9, "Valid phone number is required"),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Enter a valid Sri Lanka phone number" }),
   email: z.string().email("Invalid email address"),
   materialTypes: z.string().min(3, "Please specify material types"),
 });
@@ -47,11 +49,12 @@ export default function RecyclersPage() {
   const onSubmit = async (data: RecyclerFormValues) => {
     setIsSubmitting(true);
     try {
+      const payload = { ...data, phone: normalizeSriLankaPhone(data.phone) ?? data.phone };
       await apiFetch(
         "/partners/recycler",
         {
           method: "POST",
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         },
         false,
       ); // Public-auth false
@@ -192,10 +195,10 @@ export default function RecyclersPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input
+                    <PhoneInput
                       id="phone"
                       {...register("phone")}
-                      placeholder="+94 77 ..."
+                      placeholder="+94 77 123 4567"
                     />
                     {errors.phone && (
                       <p className="text-xs text-red-500">

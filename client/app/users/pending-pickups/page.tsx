@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { formatPhoneForDisplay } from "@/lib/phone";
+import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Booking } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import {
@@ -16,12 +17,12 @@ import {
 } from "@/components/ui/table";
 
 export default function PendingPickupsPage() {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["pending-pickups"],
     queryFn: () => apiFetch<Booking[]>("/pickups/pending"),
   });
 
-  const pickups = data ?? [];
+  const pickups = data ?? []; 
 
   // Filter state
   const [fromDate, setFromDate] = useState<string>("");
@@ -140,43 +141,49 @@ export default function PendingPickupsPage() {
         </div>
       </Card>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Pickup ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Time Slot</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((pickup) => (
-              <TableRow key={pickup.id}>
-                <TableCell>{pickup.id.slice(0, 8)}</TableCell>
-                <TableCell>
-                  {pickup.driver?.fullName ?? "Assigned soon"}
-                </TableCell>
-                <TableCell>{pickup.driver?.phone ? formatPhoneForDisplay(pickup.driver.phone) : "--"}</TableCell>
-                <TableCell>{pickup.addressLine1}</TableCell>
-                <TableCell>
-                  {new Date(pickup.scheduledDate).toLocaleDateString()}
-                </TableCell>
-                <TableCell>{pickup.scheduledTimeSlot}</TableCell>
-              </TableRow>
-            ))}
-            {!pickups.length && (
+      {isLoading ? (
+        <Card className="p-6">
+          <SkeletonTableRows columns={6} rows={5} />
+        </Card>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-(--muted)">
-                  No pending pickups.
-                </TableCell>
+                <TableHead>Pickup ID</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Address</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Time Slot</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((pickup) => (
+                <TableRow key={pickup.id}>
+                  <TableCell>{pickup.id.slice(0, 8)}</TableCell>
+                  <TableCell>
+                    {pickup.driver?.fullName ?? "Assigned soon"}
+                  </TableCell>
+                  <TableCell>{pickup.driver?.phone ? formatPhoneForDisplay(pickup.driver.phone) : "--"}</TableCell>
+                  <TableCell>{pickup.addressLine1}</TableCell>
+                  <TableCell>
+                    {new Date(pickup.scheduledDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{pickup.scheduledTimeSlot}</TableCell>
+                </TableRow>
+              ))}
+              {!pickups.length && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-(--muted)">
+                    No pending pickups.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }

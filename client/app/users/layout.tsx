@@ -14,6 +14,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Header } from "@/components/layout/header";
 import { UserMenu } from "@/components/layout/user-menu";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -49,7 +50,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <RequireAuth roles={["CUSTOMER", "ADMIN", "SUPER_ADMIN"]}>
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
-        header={<Header title="User Portal" right={<UserMenu />} showThemeToggle />}
+        header={<Header title="User Portal" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
       >
         {children}
       </AppShell>

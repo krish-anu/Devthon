@@ -1,13 +1,13 @@
 import {
   ForbiddenException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, NotificationLevel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
+import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
@@ -17,6 +17,7 @@ export class BookingsService {
     private prisma: PrismaService,
     private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
+    private pushService: PushService,
   ) {}
 
   async list(userId: string, query: BookingsQueryDto) {
@@ -166,6 +167,23 @@ export class BookingsService {
           return booking;
         }),
       );
+
+      // Send push notification for each created booking
+      for (const booking of created) {
+        const category = await this.prisma.wasteCategory.findUnique({
+          where: { id: booking.wasteCategoryId },
+        });
+        this.pushService
+          .notify(userId, {
+            title: 'Booking confirmed ✅',
+            body: `Your ${category?.name ?? 'waste'} pickup on ${new Date(booking.scheduledDate).toLocaleDateString()} at ${booking.scheduledTimeSlot} is confirmed.`,
+            level: NotificationLevel.SUCCESS,
+            bookingId: booking.id,
+            url: `/users/bookings/${booking.id}`,
+          })
+          .catch(() => {});
+      }
+
       return created;
     } catch (err) {
       this.transactionLogger.logError('booking.create.failure', err as Error, {
@@ -200,9 +218,64 @@ export class BookingsService {
         status: updated.status,
       });
 
+      // Send cancellation push notification
+      this.pushService
+        .notify(userId, {
+          title: 'Booking cancelled',
+          body: `Your booking #${id.slice(0, 8)} has been cancelled.`,
+          level: NotificationLevel.WARNING,
+          bookingId: id,
+          url: `/users/bookings/${id}`,
+        })
+        .catch(() => {});
+
       return updated;
     } catch (err) {
       this.transactionLogger.logError('booking.cancel.failure', err as Error, {
+        userId,
+        bookingId: id,
+      });
+      throw err;
+    }
+  }
+
+  async delete(userId: string, id: string, role: string) {
+    this.transactionLogger.logTransaction('booking.delete.start', {
+      userId,
+      bookingId: id,
+      role,
+    });
+
+    try {
+      const booking = await this.prisma.booking.findUnique({ where: { id } });
+      if (!booking) throw new NotFoundException('Booking not found');
+
+      // Only the owner or admins can delete a booking
+      if (booking.userId !== userId && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+        throw new ForbiddenException();
+      }
+
+      await this.prisma.booking.delete({ where: { id } });
+
+      this.transactionLogger.logTransaction('booking.delete.success', {
+        userId,
+        bookingId: id,
+      });
+
+      // Send deletion push notification
+      this.pushService
+        .notify(booking.userId, {
+          title: 'Booking removed',
+          body: `Your booking #${id.slice(0, 8)} has been removed.`,
+          level: NotificationLevel.WARNING,
+          bookingId: id,
+          url: `/users/bookings/${id}`,
+        })
+        .catch(() => {});
+
+      return { message: 'Booking deleted' };
+    } catch (err) {
+      this.transactionLogger.logError('booking.delete.failure', err as Error, {
         userId,
         bookingId: id,
       });

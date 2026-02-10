@@ -11,8 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import PhoneInput from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
+import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
 import {
   Form,
   FormControl,
@@ -27,7 +28,7 @@ import { User } from "@/lib/types";
 import { toast } from "@/components/ui/use-toast";
 
 const phoneSchema = z.object({
-  phone: z.string().min(7, "Phone number must be at least 7 digits"),
+  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Enter a valid Sri Lanka phone number" }),
 });
 
 type PhoneFormValues = z.infer<typeof phoneSchema>;
@@ -60,7 +61,7 @@ export function PhoneVerificationModal() {
     try {
       const updatedUser = await apiFetch<User>("/me", {
         method: "PATCH",
-        body: JSON.stringify({ phone: values.phone }),
+        body: JSON.stringify({ phone: normalizeSriLankaPhone(values.phone) ?? values.phone }),
       });
       toast({
         title: "Success",
@@ -76,7 +77,7 @@ export function PhoneVerificationModal() {
         variant: "error",
       });
     }
-  };
+  }; 
 
   if (!open) return null;
 
@@ -124,7 +125,7 @@ export function PhoneVerificationModal() {
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="+1234567890" {...field} />
+                    <PhoneInput placeholder="+94 77 123 4567" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
