@@ -83,11 +83,6 @@ export default function AdminLayout({
             href: "/admin/manage-roles",
             icon: <UserCog className="h-4 w-4" />,
           },
-          {
-            label: "Admin Management",
-            href: "/admin/admins",
-            icon: <UserCog className="h-4 w-4" />,
-          },
         ]
       : [];
 
@@ -103,6 +98,8 @@ export default function AdminLayout({
 
   const isPendingApproval =
     user && (user.role === "ADMIN" || user.role === "DRIVER") && !user.approved;
+  const isProfileRoute = pathname && (pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/profile"));
+  const isRestricted = isPendingApproval && !isProfileRoute;
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
@@ -112,7 +109,7 @@ export default function AdminLayout({
           sidebar={isPendingApproval ? null : <Sidebar title="Admin Portal" items={allNavItems} />}
           header={<Header title="Admin Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
         >
-          {isPendingApproval ? (
+          {isRestricted ? (
             <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
               <div className="max-w-2xl text-center">
                 <h2 className="text-2xl font-semibold">Account pending approval</h2>

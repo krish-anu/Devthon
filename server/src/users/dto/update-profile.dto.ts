@@ -17,4 +17,9 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  // Optional avatar image URL (public URL e.g. Firebase Storage)
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string | null;
 }
