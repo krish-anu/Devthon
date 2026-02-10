@@ -31,7 +31,7 @@ export default function FAQPage() {
           <SectionHeading
             eyebrow="FAQs"
             title="Frequently Asked Questions"
-            description="Find answers to common questions about Trash2Cash."
+            description="Find answers to common questions about Trash2Treasure."
           />
         </ScrollAnimatedSection>
 

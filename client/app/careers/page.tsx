@@ -25,7 +25,7 @@ export default function CareersPage() {
         <ScrollAnimatedSection>
           <SectionHeading
             eyebrow="Join Us"
-            title="Careers at Trash2Cash"
+            title="Careers at Trash2Treasure"
             description="Help us build a cleaner, greener future for Sri Lanka."
           />
         </ScrollAnimatedSection>

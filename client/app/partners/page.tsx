@@ -25,7 +25,7 @@ export default function PartnersPage() {
         <ScrollAnimatedSection>
           <SectionHeading
             eyebrow="Partnerships"
-            title="Partner with Trash2Cash"
+            title="Partner with Trash2Treasure"
             description="Join our network of recyclers, businesses, and municipalities."
           />
         </ScrollAnimatedSection>

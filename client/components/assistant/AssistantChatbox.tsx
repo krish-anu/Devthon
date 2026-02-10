@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const STORAGE_KEY = "t2c-assistant-chat";
 const MAX_MESSAGES = 20;
 const WELCOME_MESSAGE =
-  "Hi 👋 I'm your Trash2Cash AI assistant. How can I help you?";
+  "Hi 👋 I'm your Trash2Treasure AI assistant. How can I help you?";
 const BLOCKED_PROTOCOLS = new Set([
   "chrome-extension:",
   "about:",
@@ -357,7 +357,11 @@ export default function AssistantChatbox() {
   };
 
   return (
-    <div ref={containerRef} className="fixed bottom-5 right-5 z-500" data-assistant-chatbox>
+    <div
+      ref={containerRef}
+      className="fixed bottom-5 right-5 z-500"
+      data-assistant-chatbox
+    >
       <div
         className={cn(
           "pointer-events-none fixed bottom-20 right-5 w-[320px] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:w-[360px]",
@@ -375,7 +379,7 @@ export default function AssistantChatbox() {
           <div className="flex items-center gap-3">
             <BotAvatar className="h-9 w-9" iconClassName="h-4 w-4" />
             <div>
-              <p className="text-sm font-semibold">Trash2Cash AI</p>
+              <p className="text-sm font-semibold">Trash2Treasure AI</p>
               <p className="text-xs text-[color:var(--muted)]">
                 Site-aware help
               </p>

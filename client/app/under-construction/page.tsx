@@ -1,27 +1,39 @@
-  'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
-import { apiFetch } from '@/lib/api';
-import { Recycle } from 'lucide-react';
-import Link from 'next/link';
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/use-toast";
+import { apiFetch } from "@/lib/api";
+import { Recycle } from "lucide-react";
+import Link from "next/link";
 
 export default function UnderConstructionPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
 
   const handleNotify = async () => {
     try {
-      await apiFetch('/public/launch-notify', {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      }, false);
-      toast({ title: 'Thanks!', description: 'We will notify you at launch.', variant: 'success' });
-      setEmail('');
+      await apiFetch(
+        "/public/launch-notify",
+        {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        },
+        false,
+      );
+      toast({
+        title: "Thanks!",
+        description: "We will notify you at launch.",
+        variant: "success",
+      });
+      setEmail("");
     } catch (error: any) {
-      toast({ title: 'Unable to register', description: error?.message, variant: 'error' });
+      toast({
+        title: "Unable to register",
+        description: error?.message,
+        variant: "error",
+      });
     }
   };
 
@@ -33,7 +45,7 @@ export default function UnderConstructionPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--brand) text-white">
             <Recycle className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold text-white">Trash2Cash</span>
+          <span className="text-lg font-bold text-white">Trash2Treasure</span>
         </Link>
       </header>
 
@@ -42,18 +54,22 @@ export default function UnderConstructionPage() {
         <Card className="w-full max-w-lg space-y-6 text-center">
           <div className="text-6xl">🚧</div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">We&apos;re Building Something Great!</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              We&apos;re Building Something Great!
+            </h1>
             <p className="mt-2 text-sm text-(--muted)">
               Our website is currently under construction.
               <br />
               We&apos;re working hard to bring you an amazing experience.
             </p>
           </div>
-          
+
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-foreground">Completion Progress</span>
+              <span className="font-medium text-foreground">
+                Completion Progress
+              </span>
               <span className="font-semibold text-(--brand)">70%</span>
             </div>
             <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
@@ -63,15 +79,20 @@ export default function UnderConstructionPage() {
 
           {/* Email Signup */}
           <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">Get notified when we launch</p>
+            <p className="text-sm font-medium text-foreground">
+              Get notified when we launch
+            </p>
             <div className="flex gap-2">
-              <Input 
-                placeholder="Enter your email address" 
-                value={email} 
+              <Input
+                placeholder="Enter your email address"
+                value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 className="flex-1"
               />
-              <Button onClick={handleNotify} className="bg-(--brand) text-white hover:bg-(--brand-strong)">
+              <Button
+                onClick={handleNotify}
+                className="bg-(--brand) text-white hover:bg-(--brand-strong)"
+              >
                 Get Started
               </Button>
             </div>

@@ -28,7 +28,11 @@ import { useState } from "react";
 const corporateSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
   contactName: z.string().min(2, "Contact name is required"),
-  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Enter a valid Sri Lanka phone number" }),
+  phone: z
+    .string()
+    .refine((v) => isValidSriLankaPhone(v), {
+      message: "Enter a valid Sri Lanka phone number",
+    }),
   email: z.string().email("Invalid email address"),
   requirements: z.string().optional(),
 });
@@ -147,9 +151,9 @@ export default function CorporatePage() {
             </div>
             <div className="md:w-2/3 space-y-4">
               <p className="text-lg italic font-medium">
-                "Partnering with Trash2Cash helped us divert 80% of our office
-                waste from landfills and engaged our employees in meaningful
-                sustainability action."
+                "Partnering with Trash2Treasure helped us divert 80% of our
+                office waste from landfills and engaged our employees in
+                meaningful sustainability action."
               </p>
               <div>
                 <div className="font-bold">Sarah Dias</div>
@@ -213,7 +217,11 @@ export default function CorporatePage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <PhoneInput id="phone" placeholder="+94 77 123 4567" {...register("phone")} />
+                    <PhoneInput
+                      id="phone"
+                      placeholder="+94 77 123 4567"
+                      {...register("phone")}
+                    />
                     {errors.phone && (
                       <p className="text-red-500 text-xs">
                         {errors.phone.message}

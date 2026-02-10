@@ -24,7 +24,7 @@ export default function AboutPage() {
         <ScrollAnimatedSection>
           <SectionHeading
             eyebrow="Company"
-            title="About Trash2Cash"
+            title="About Trash2Treasure"
             description="Revolutionizing waste management in Sri Lanka through technology and community participation."
           />
         </ScrollAnimatedSection>
@@ -32,7 +32,7 @@ export default function AboutPage() {
         <ScrollAnimatedSection delay={100}>
           <div className="prose dark:prose-invert max-w-none text-muted-foreground">
             <p className="text-lg leading-relaxed">
-              Trash2Cash is Sri Lanka's leading digital waste aggregation
+              Trash2Treasure is Sri Lanka's leading digital waste aggregation
               marketplace, connecting households and businesses with verified
               recyclers. Our mission is to make recycling accessible,
               transparent, and rewarding for everyone.

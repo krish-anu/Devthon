@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { Recycle, ArrowLeft } from 'lucide-react';
-import RecaptchaBadge from '@/components/recaptcha/RecaptchaBadge';
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Recycle, ArrowLeft } from "lucide-react";
+import RecaptchaBadge from "@/components/recaptcha/RecaptchaBadge";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -12,40 +12,40 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [index, setIndex] = useState(0);
 
   const lightImages = useMemo(
     () => [
-      '/bg/light/img2.png',
-      '/bg/light/img3.png',
-      '/bg/light/img4.png',
-      '/bg/light/img5.png',
-      '/bg/light/img6.png',
+      "/bg/light/img2.png",
+      "/bg/light/img3.png",
+      "/bg/light/img4.png",
+      "/bg/light/img5.png",
+      "/bg/light/img6.png",
     ],
     [],
   );
 
   const darkImages = useMemo(
     () => [
-      '/bg/dark/dimg1.png',
-      '/bg/dark/dimg2.png',
-      '/bg/dark/dimg3.png',
-      '/bg/dark/dimg4.png',
+      "/bg/dark/dimg1.png",
+      "/bg/dark/dimg2.png",
+      "/bg/dark/dimg3.png",
+      "/bg/dark/dimg4.png",
     ],
     [],
   );
 
-  const images = theme === 'dark' ? darkImages : lightImages;
+  const images = theme === "dark" ? darkImages : lightImages;
 
   // Track loaded images to avoid flicker when swapping
   const [loaded, setLoaded] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const getTheme = () =>
-      document.documentElement.getAttribute('data-theme') === 'dark'
-        ? 'dark'
-        : 'light';
+      document.documentElement.getAttribute("data-theme") === "dark"
+        ? "dark"
+        : "light";
 
     const apply = () => setTheme(getTheme());
     apply();
@@ -53,7 +53,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     const observer = new MutationObserver(apply);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme', 'class'],
+      attributeFilter: ["data-theme", "class"],
     });
 
     return () => observer.disconnect();
@@ -92,15 +92,17 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <RecaptchaBadge />
       {/* Left Panel - Green Gradient */}
       <div className="relative hidden lg:flex lg:w-[45%] flex-col justify-between overflow-hidden bg-gradient-to-b from-(--brand) to-(--brand-strong) p-10 text-white">
-
-        <div className="pointer-events-none absolute inset-0 auth-bg-container" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#f5f5f5' }}>
+        <div
+          className="pointer-events-none absolute inset-0 auth-bg-container"
+          style={{ backgroundColor: theme === "dark" ? "#1a1a1a" : "#f5f5f5" }}
+        >
           {images.map((src, i) => (
             <img
               key={src}
               src={src}
               alt=""
               aria-hidden="true"
-              className={`h-full w-full object-cover auth-bg-image ${i === index ? 'active' : ''} ${loaded[i] ? 'loaded' : ''}`}
+              className={`h-full w-full object-cover auth-bg-image ${i === index ? "active" : ""} ${loaded[i] ? "loaded" : ""}`}
             />
           ))}
           <div className="absolute inset-0 auth-bg-overlay z-22" />
@@ -110,41 +112,61 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             <ArrowLeft className="h-4 w-4" />
           </Link> */}
 
-          <Link href="/" aria-label="Go to landing page" title="Go to landing page" className="flex items-center gap-3">
+          <Link
+            href="/"
+            aria-label="Go to landing page"
+            title="Go to landing page"
+            className="flex items-center gap-3"
+          >
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
-              <img src="/recycle%20logo.png" alt="Trash2Cash logo" className="h-8 w-8 object-contain" />
+              <img
+                src="/recycle%20logo.png"
+                alt="Trash2Treasure logo"
+                className="h-8 w-8 object-contain"
+              />
             </div>
-            <span className="text-xl font-bold text-[color:var(--brand)]">Trash2Cash</span>
+            <span className="text-xl font-bold text-[color:var(--brand)]">
+              Trash2Treasure
+            </span>
           </Link>
         </div>
-        
+
         <div className="relative z-500 space-y-4">
-          <h1 className="text-4xl font-bold leading-tight text-white">{title}</h1>
+          <h1 className="text-4xl font-bold leading-tight text-white">
+            {title}
+          </h1>
           <p className="text-white/80 text-sm max-w-xs">{subtitle}</p>
         </div>
-        
+
         <div className="relative z-500 text-white/60 text-xs">
-          © 2026 Trash2Cash. All rights reserved.
+          © 2026 Trash2Treasure. All rights reserved.
         </div>
       </div>
 
       {/* Right Panel - Form Area */}
-        <div className="flex justify-between items-center p-6 lg:hidden">
-          <Link href="/" aria-label="Go to landing page" title="Go to landing page" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--brand)/10 overflow-hidden">
-              <img src="/recycle%20logo.png" alt="Trash2Cash logo" className="h-5 w-5 object-contain" />
-            </div>
-            <span className="font-semibold text-[color:var(--auth-text)]">Trash2Cash</span>
-          </Link>
-        </div>
-        
-
-        
-        <div className="flex flex-1 items-center justify-center px-6 py-8 lg:py-0">
-          <div className="w-full max-w-md">
-            {children}
+      <div className="flex justify-between items-center p-6 lg:hidden">
+        <Link
+          href="/"
+          aria-label="Go to landing page"
+          title="Go to landing page"
+          className="flex items-center gap-2"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--brand)/10 overflow-hidden">
+            <img
+              src="/recycle%20logo.png"
+              alt="Trash2Treasure logo"
+              className="h-5 w-5 object-contain"
+            />
           </div>
-        </div>
+          <span className="font-semibold text-[color:var(--auth-text)]">
+            Trash2Treasure
+          </span>
+        </Link>
+      </div>
+
+      <div className="flex flex-1 items-center justify-center px-6 py-8 lg:py-0">
+        <div className="w-full max-w-md">{children}</div>
+      </div>
     </div>
   );
 }

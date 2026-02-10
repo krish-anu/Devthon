@@ -13,7 +13,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch, passkeyApi } from "@/lib/api";
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
@@ -28,7 +37,11 @@ const schema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().refine((v) => isValidSriLankaPhone(v), { message: "Invalid Sri Lanka phone number" }),
+  phone: z
+    .string()
+    .refine((v) => isValidSriLankaPhone(v), {
+      message: "Invalid Sri Lanka phone number",
+    }),
   address: z.string().min(3),
 });
 
@@ -51,7 +64,11 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Invalid file", description: "Please choose an image.", variant: "warning" });
+      toast({
+        title: "Invalid file",
+        description: "Please choose an image.",
+        variant: "warning",
+      });
       return;
     }
 
@@ -60,9 +77,9 @@ export default function ProfilePage() {
 
       // Create a path: avatars/<userId>/<timestamp>_<name>
       const filename = `${Date.now()}_${file.name}`;
-      const path = `avatars/${user?.id ?? 'unknown'}/${filename}`;
+      const path = `avatars/${user?.id ?? "unknown"}/${filename}`;
       const bucket = getBucketName();
-      if (!supabase) throw new Error('Supabase not configured');
+      if (!supabase) throw new Error("Supabase not configured");
 
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from(bucket)
@@ -70,7 +87,9 @@ export default function ProfilePage() {
       if (uploadErr) throw uploadErr;
 
       // Build public URL (requires bucket to have public policy) – fall back to signed URL when needed
-      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+      const { data: publicData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(path);
       let url = (publicData as any)?.publicUrl ?? null;
 
       // If bucket is private or getPublicUrl returned no public URL, create a signed URL (24h)
@@ -83,19 +102,23 @@ export default function ProfilePage() {
       }
 
       // Persist avatar URL to our server profile
-      await apiFetch('/me', {
-        method: 'PATCH',
+      await apiFetch("/me", {
+        method: "PATCH",
         body: JSON.stringify({ avatarUrl: url }),
       });
 
       await refreshProfile();
-      toast({ title: 'Profile photo updated', variant: 'success' });
+      toast({ title: "Profile photo updated", variant: "success" });
     } catch (err: any) {
-      toast({ title: 'Upload failed', description: err?.message ?? 'Unable to upload image', variant: 'error' });
+      toast({
+        title: "Upload failed",
+        description: err?.message ?? "Unable to upload image",
+        variant: "error",
+      });
     } finally {
       setUploading(false);
       // clear input value so the same file can be re-selected
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
   const {
@@ -311,7 +334,11 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!user) return;
     if (deleteConfirmText !== user.email) {
-      return toast({ title: "Confirmation mismatch", description: "Please type your email to confirm.", variant: "warning" });
+      return toast({
+        title: "Confirmation mismatch",
+        description: "Please type your email to confirm.",
+        variant: "warning",
+      });
     }
 
     try {
@@ -329,10 +356,18 @@ export default function ProfilePage() {
           clearAuth();
         } catch {}
       }
-      toast({ title: "Account deleted", description: "Your account has been deleted.", variant: "success" });
+      toast({
+        title: "Account deleted",
+        description: "Your account has been deleted.",
+        variant: "success",
+      });
       router.push("/");
     } catch (err: any) {
-      toast({ title: "Delete failed", description: err?.message ?? "Could not delete account", variant: "error" });
+      toast({
+        title: "Delete failed",
+        description: err?.message ?? "Could not delete account",
+        variant: "error",
+      });
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
@@ -616,9 +651,14 @@ export default function ProfilePage() {
                 </p>
               </div>
               <div>
-                <Dialog open={showDeleteDialog} onOpenChange={(v)=>setShowDeleteDialog(v)}>
+                <Dialog
+                  open={showDeleteDialog}
+                  onOpenChange={(v) => setShowDeleteDialog(v)}
+                >
                   <DialogTrigger asChild>
-                    <Button variant="danger" size="sm">Delete account</Button>
+                    <Button variant="danger" size="sm">
+                      Delete account
+                    </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -633,17 +673,35 @@ export default function ProfilePage() {
                     <div className="grid gap-3">
                       <div className="space-y-2">
                         <Label>Type your email to confirm</Label>
-                        <Input value={deleteConfirmText} onChange={(e)=>setDeleteConfirmText(e.target.value)} />
+                        <Input
+                          value={deleteConfirmText}
+                          onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Current password (if set)</Label>
-                        <Input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} />
+                        <Input
+                          type="password"
+                          value={deletePassword}
+                          onChange={(e) => setDeletePassword(e.target.value)}
+                        />
                       </div>
                     </div>
 
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-                      <Button variant="danger" onClick={handleDeleteAccount} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete account'}</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowDeleteDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={handleDeleteAccount}
+                        disabled={deleting}
+                      >
+                        {deleting ? "Deleting…" : "Delete account"}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -804,7 +862,7 @@ export default function ProfilePage() {
                             navigator.serviceWorker.controller.postMessage({
                               type: "TEST_NOTIFICATION",
                               title: "Test notification",
-                              body: "This is a test from Trash2Cash.",
+                              body: "This is a test from Trash2Treasure.",
                             });
                             toast({
                               title: "Test sent",
@@ -822,7 +880,7 @@ export default function ProfilePage() {
                       }
                       if (Notification.permission === "granted") {
                         new Notification("Test notification", {
-                          body: "This is a test from Trash2Cash.",
+                          body: "This is a test from Trash2Treasure.",
                         });
                         toast({
                           title: "Test shown",

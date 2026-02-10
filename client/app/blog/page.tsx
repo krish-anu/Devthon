@@ -38,7 +38,7 @@ export default function BlogPage() {
               category: "Guides",
             },
             {
-              title: "Trash2Cash hits 500 Tonnes Collected Milestone",
+              title: "Trash2Treasure hits 500 Tonnes Collected Milestone",
               date: "Jan 28, 2026",
               category: "Company News",
             },

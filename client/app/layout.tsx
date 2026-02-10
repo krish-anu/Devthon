@@ -14,7 +14,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Trash2Cash | Sri Lanka Waste Marketplace",
+  title: "Trash2Treasure | Sri Lanka Waste Marketplace",
   description:
     "Turn your waste into cash with Sri Lanka?s #1 waste marketplace.",
   icons: {

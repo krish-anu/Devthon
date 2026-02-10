@@ -48,7 +48,9 @@ export default function HomePage() {
 
   // Redirect booking link depending on authentication state
   const { user } = useAuth();
-  const bookingHref = user ? "/users/bookings/new" : "/login?redirect=/users/bookings/new";
+  const bookingHref = user
+    ? "/users/bookings/new"
+    : "/login?redirect=/users/bookings/new";
 
   return (
     <div className="min-h-screen bg-background text-foreground section-grid">
@@ -58,11 +60,11 @@ export default function HomePage() {
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
               <img
                 src="/recycle%20logo.png"
-                alt="Trash2Cash logo"
+                alt="Trash2Treasure logo"
                 className="h-8 w-8 object-contain"
               />
             </div>
-            Trash2Cash
+            Trash2Treasure
           </div>
           <nav className="hidden items-center gap-6 text-sm text-(--muted) md:flex">
             <a href="#how" className="hover:text-foreground">
@@ -255,8 +257,8 @@ export default function HomePage() {
                 Sri Lankan household
               </h2>
               <p className="text-lg text-(--muted)">
-                From transparent pricing to carbon tracking, Trash2Cash keeps
-                the cycle circular.
+                From transparent pricing to carbon tracking, Trash2Treasure
+                keeps the cycle circular.
               </p>
             </div>
           </ScrollAnimatedSection>
@@ -418,11 +420,13 @@ export default function HomePage() {
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
                 <img
                   src="/recycle%20logo.png"
-                  alt="Trash2Cash logo"
+                  alt="Trash2Treasure logo"
                   className="h-8 w-8 object-contain"
                 />
               </div>
-              <h4 className="text-xl font-bold text-foreground">Trash2Cash</h4>
+              <h4 className="text-xl font-bold text-foreground">
+                Trash2Treasure
+              </h4>
             </div>
             <p className="text-sm leading-relaxed text-(--muted)">
               Sri Lanka&apos;s leading digital waste aggregation and recycling
@@ -554,8 +558,8 @@ export default function HomePage() {
         </div>
 
         <div className="border-t border-(--border) py-6 text-center text-sm text-(--muted)">
-          © 2026 Trash2Cash. All rights reserved. Making Sri Lanka greener, one
-          pickup at a time.
+          © 2026 Trash2Treasure. All rights reserved. Making Sri Lanka greener,
+          one pickup at a time.
         </div>
       </footer>
     </div>

@@ -36,7 +36,7 @@ export default function PrivacyPage() {
                 Introduction
               </h3>
               <p>
-                At Trash2Cash, we respect your privacy and are committed to
+                At Trash2Treasure, we respect your privacy and are committed to
                 protecting your personal data. This privacy policy will inform
                 you as to how we look after your personal data when you visit
                 our website and tell you about your privacy rights and how the
@@ -59,8 +59,8 @@ export default function PrivacyPage() {
                   gender.
                 </li>
                 <li>
-                  <strong>Contact Data</strong> includes billing address, delivery
-                  address, email address and telephone numbers.
+                  <strong>Contact Data</strong> includes billing address,
+                  delivery address, email address and telephone numbers.
                 </li>
                 <li>
                   <strong>Financial Data</strong> includes payment card details
@@ -72,8 +72,8 @@ export default function PrivacyPage() {
                   services you have purchased from us.
                 </li>
                 <li>
-                  <strong>Technical Data</strong> includes internet protocol (IP)
-                  address, browser type and version, time zone setting and
+                  <strong>Technical Data</strong> includes internet protocol
+                  (IP) address, browser type and version, time zone setting and
                   location, browser plug-in types and versions, operating system
                   and platform, and other technology on the devices you use to
                   access this website.
@@ -105,8 +105,14 @@ export default function PrivacyPage() {
                 circumstances:
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Where we need to perform the contract we are about to enter into or have entered into with you.</li>
-                <li>Where it is necessary for our legitimate interests (or those of a third party).</li>
+                <li>
+                  Where we need to perform the contract we are about to enter
+                  into or have entered into with you.
+                </li>
+                <li>
+                  Where it is necessary for our legitimate interests (or those
+                  of a third party).
+                </li>
                 <li>Where we need to comply with a legal obligation.</li>
               </ul>
             </section>
@@ -117,11 +123,11 @@ export default function PrivacyPage() {
               </h3>
               <p>
                 We have put in place appropriate security measures to prevent
-                your personal data from being accidentally lost, used or accessed
-                in an unauthorized way, altered or disclosed. In addition, we
-                limit access to your personal data to those employees, agents,
-                contractors and other third parties who have a business need to
-                know.
+                your personal data from being accidentally lost, used or
+                accessed in an unauthorized way, altered or disclosed. In
+                addition, we limit access to your personal data to those
+                employees, agents, contractors and other third parties who have
+                a business need to know.
               </p>
             </section>
 
@@ -142,8 +148,9 @@ export default function PrivacyPage() {
                 Your Legal Rights
               </h3>
               <p className="mb-4">
-                Under certain circumstances, you have rights under data protection
-                laws in relation to your personal data, including the right to:
+                Under certain circumstances, you have rights under data
+                protection laws in relation to your personal data, including the
+                right to:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Request access to your personal data.</li>
@@ -160,12 +167,24 @@ export default function PrivacyPage() {
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 Contact Us
               </h3>
-              <p>If you have any questions about this Privacy Policy or our privacy practices, please contact us:</p>
-              <p className="mt-2">
-                By phone: <a href="tel:0778972233" className="text-(--brand)">077 897 2233</a>
+              <p>
+                If you have any questions about this Privacy Policy or our
+                privacy practices, please contact us:
               </p>
               <p className="mt-2">
-                By email: <a href="mailto:privacy@trash2cash.lk" className="text-(--brand)">privacy@trash2cash.lk</a>
+                By phone:{" "}
+                <a href="tel:0778972233" className="text-(--brand)">
+                  077 897 2233
+                </a>
+              </p>
+              <p className="mt-2">
+                By email:{" "}
+                <a
+                  href="mailto:privacy@trash2cash.lk"
+                  className="text-(--brand)"
+                >
+                  privacy@trash2cash.lk
+                </a>
               </p>
             </section>
           </div>
