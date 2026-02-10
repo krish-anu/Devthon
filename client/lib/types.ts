@@ -14,6 +14,7 @@ export interface User {
   approved?: boolean;
   createdAt: string;
   avatar?: string | null;
+  totalPoints?: number;
 }
 
 export type BookingStatus =
@@ -70,4 +71,40 @@ export interface NotificationItem {
   isRead: boolean;
   bookingId?: string | null;
   createdAt: string;
+}
+
+export interface RewardsSummary {
+  totalPoints: number;
+  monthPoints: number;
+  monthRange: {
+    yearMonth: string;
+    start: string;
+    end: string;
+  };
+  howToEarn: Array<{ label: string; value: string }>;
+  recentPointsTransactions?: Array<{
+    id: string;
+    bookingId: string;
+    pointsAwarded: number;
+    basePoints: number;
+    bonusPoints: number;
+    multiplier: number;
+    awardedAt: string;
+  }>;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  points: number;
+}
+
+export interface LeaderboardResponse {
+  items: LeaderboardEntry[];
+  monthRange?: {
+    yearMonth: string;
+    start: string;
+    end: string;
+  };
 }

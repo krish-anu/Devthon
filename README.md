@@ -170,6 +170,38 @@ Authentication: protected endpoints require `Authorization: Bearer <accessToken>
 
 Refer to the server source for full endpoints and DTOs.
 
+## Rewards Points
+
+Points are awarded on top of LKR payouts when a booking is confirmed/completed.
+
+Rules:
+
+- Plastic (PET): 10 points per kg
+- Metal (Aluminum): 20 points per kg
+- E-waste bonus: +30 points per booking
+- Weekly pickup streak: 2x multiplier
+- First confirmed booking: 1.5x multiplier
+- Highest multiplier only
+
+Backend logic lives in:
+
+- `server/src/rewards` (calculator + rewards/leaderboard endpoints)
+- `server/src/bookings/bookings.service.ts` (status update hook)
+
+Endpoints:
+
+- `GET /api/rewards/me`
+- `GET /api/leaderboard/monthly?yearMonth=YYYY-MM`
+- `GET /api/leaderboard/overall`
+
+Verification checklist:
+
+- Confirm a booking once -> points added once
+- Re-saving a confirmed booking -> no duplicate points
+- Monthly leaderboard updates for the current calendar month
+- Overall leaderboard matches lifetime totals
+- Existing LKR payout flow remains unchanged
+
 ## Running tests
 
 Server e2e tests (requires services running):

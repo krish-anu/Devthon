@@ -6,18 +6,16 @@ import {
   Truck,
   Bell,
   Settings,
-  LogOut,
+  Trophy,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
-import { useAuth } from "@/components/auth/auth-provider";
 import { Header } from "@/components/layout/header";
 import { UserMenu } from "@/components/layout/user-menu";
 import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
   const navItems = [
     {
       label: "Dashboard",
@@ -33,6 +31,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       label: "Pending Pickups",
       href: "/users/pending-pickups",
       icon: <Truck className="h-4 w-4" />,
+    },
+    {
+      label: "Rewards",
+      href: "/users/rewards",
+      icon: <Trophy className="h-4 w-4" />,
     },
     {
       label: "Notifications",

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,6 +22,7 @@ import { authApi } from "@/lib/api";
 import supabase, { getBucketName } from "@/lib/supabase";
 import { useForm as useForm2 } from "react-hook-form";
 import { usePasskey } from "@/hooks/usePasskey";
+import { RewardsSummary } from "@/lib/types";
 
 const schema = z.object({
   firstName: z.string().min(2),
@@ -104,6 +106,10 @@ export default function ProfilePage() {
   const [passkeys, setPasskeys] = useState<any[]>([]);
   const [passkeysLoading, setPasskeysLoading] = useState(false);
   const names = (user?.fullName ?? "").split(" ");
+  const { data: rewards } = useQuery({
+    queryKey: ["rewards", "me"],
+    queryFn: () => apiFetch<RewardsSummary>("/rewards/me"),
+  });
   const {
     register,
     handleSubmit,
@@ -387,6 +393,35 @@ export default function ProfilePage() {
             >
               Remove
             </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold">Reward Points</h3>
+            <p className="text-sm text-(--muted)">
+              Lifetime totals and this month&apos;s points.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-(--border) bg-(--card) px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-(--muted)">
+              Lifetime Points
+            </p>
+            <p className="text-2xl font-semibold">
+              {rewards?.totalPoints ?? 0}
+            </p>
+          </div>
+          <div className="rounded-xl border border-(--border) bg-(--card) px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-(--muted)">
+              This Month
+            </p>
+            <p className="text-2xl font-semibold">
+              {rewards?.monthPoints ?? 0}
+            </p>
           </div>
         </div>
       </Card>
