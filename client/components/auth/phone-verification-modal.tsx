@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/components/auth/auth-provider";
 import { apiFetch } from "@/lib/api";
+import { User } from "@/lib/types";
 import { toast } from "@/components/ui/use-toast";
 
 const phoneSchema = z.object({
@@ -57,7 +58,7 @@ export function PhoneVerificationModal() {
 
   const onSubmit = async (values: PhoneFormValues) => {
     try {
-      const updatedUser = await apiFetch("/me", {
+      const updatedUser = await apiFetch<User>("/me", {
         method: "PATCH",
         body: JSON.stringify({ phone: values.phone }),
       });
