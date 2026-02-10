@@ -41,7 +41,7 @@ Services started by the compose setup:
 - Frontend (default port 3000)
 
 Access:
-    
+
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000/api
 - API docs: http://localhost:4000/api/docs
@@ -54,43 +54,74 @@ docker compose -f docker-compose.dev.yml down && docker compose -f docker-compos
 
 ## Production (Docker)
 
-Production uses prebuilt images from Docker Hub (`anusan2003/trash2cash`).
+# Devthon
+
+Devthon is a full-stack waste-management application using:
+
+- Backend: NestJS
+- Frontend: Next.js
+- Database: PostgreSQL (with Prisma)
+
+This repository contains both `server` and `client` apps plus Docker compose setups for local development and production.
+
+Quick Links
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:4000/api
+- API docs: http://localhost:4000/api/docs
+
+Quick Start (Docker - recommended)
+
+1. Copy environment template and edit values:
+
+```bash
+cp .env.example .env
+# Edit .env with required values (see Environment section)
+```
+
+2. Start development services:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+To stop or restart after changing `.env`:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Production (Docker)
 
 Start production:
 
 ```bash
 docker compose -f docker-compose.prod.yml up
-````
+```
 
 Stop production:
 
 ```bash
-docker compose -f docker-compose.prod.yml down    
+docker compose -f docker-compose.prod.yml down
 ```
 
-````
-
-## Manual (local) development
+Manual (local) development
 
 Prerequisites:
 
 - Node.js 20+
 - PostgreSQL 16+
 
-Backend:
-
-Backend:
+Backend (local):
 
 ```bash
 cd server
 npm install
 npx prisma migrate dev
 npm run start:dev
-````
+```
 
-Frontend:
-
-Frontend:
+Frontend (local):
 
 ```bash
 cd client
@@ -98,111 +129,41 @@ npm install
 npm run dev
 ```
 
-## Environment
+Environment
 
-Always use `.env` (copy from `.env.example`). The project includes `ENV_QUICK_REFERENCE.md` with examples and troubleshooting.
+Copy `.env.example` to `.env` and set required values. See `ENV_QUICK_REFERENCE.md` for examples and troubleshooting.
 
-Required variables (examples):
+Important vars (examples):
 
-```bash
-# Database (example)
-# Example: postgresql://user:password@host:5432/dbname?schema=public
+```env
+# Database
 DATABASE_URL=postgresql://user:password@host:5432/dev_db?schema=public
-DIRECT_URL=postgresql://user:password@host:5432/dev_db
 
-# JWT Secrets
+# JWT secrets
 JWT_ACCESS_SECRET=your_access_secret_here
 JWT_REFRESH_SECRET=your_refresh_secret_here
 
-# Third-party API keys
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-Optional / commonly used variables (with defaults):
-
-```bash
-# Application
-PORT=4000                              # Default: 4000
-NODE_ENV=development                   # Default: development
-CORS_ORIGIN=http://localhost:3000      # Default: http://localhost:3000
-
-# JWT Expiration
-JWT_ACCESS_EXPIRES=15m                 # Default: 15m
-JWT_REFRESH_EXPIRES=7d                 # Default: 7d
-
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
-# Server (for auth-code flow)
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_REDIRECT_URI=http://localhost:3000
-# reCAPTCHA (for protected signup/login flows)
-# RECAPTCHA_SECRET=your_recaptcha_secret_here
-# RECAPTCHA_MIN_SCORE=0.5
-# RECAPTCHA_SIGNUP_ACTION=signup
-# RECAPTCHA_LOGIN_ACTION=login
-# RECAPTCHA_ADMIN_SIGNUP_ACTION=admin_signup
-# RECAPTCHA_ADMIN_LOGIN_ACTION=admin_login
-# Note: Signup and login flows require reCAPTCHA verification in production. Set both NEXT_PUBLIC_RECAPTCHA_SITE_KEY (client) and RECAPTCHA_SECRET (server). If RECAPTCHA_SECRET is not set, verification is skipped (useful for local development).
 ```
 
-If you need the full reference and troubleshooting tips, see `ENV_QUICK_REFERENCE.md`.
-
-## Database & Migrations
+Database & Migrations
 
 - Prisma migrations live in `server/prisma/migrations`.
-- The Docker compose will run migrations at container start (see `docker-compose.yml`).
-
-To run migrations locally:
+- To run migrations locally:
 
 ```bash
 cd server
 npx prisma migrate dev
 ```
 
-## API Overview
+API Overview
 
-Server base path: `/api` (see `server/src/main.ts`).
+- Server base path: `/api` (see `server/src/main.ts`).
+- Protected endpoints require `Authorization: Bearer <accessToken>`; admin endpoints require the `ADMIN` role.
 
-Authentication: protected endpoints require `Authorization: Bearer <accessToken>`. Admin endpoints require the `ADMIN` role.
-
-Refer to the server source for full endpoints and DTOs.
-
-## Rewards Points
-
-Points are awarded on top of LKR payouts when a booking is confirmed/completed.
-
-Rules:
-
-- Plastic (PET): 10 points per kg
-- Metal (Aluminum): 20 points per kg
-- E-waste bonus: +30 points per booking
-- Weekly pickup streak: 2x multiplier
-- First confirmed booking: 1.5x multiplier
-- Highest multiplier only
-
-Backend logic lives in:
-
-- `server/src/rewards` (calculator + rewards/leaderboard endpoints)
-- `server/src/bookings/bookings.service.ts` (status update hook)
-
-Endpoints:
-
-- `GET /api/rewards/me`
-- `GET /api/leaderboard/monthly?yearMonth=YYYY-MM`
-- `GET /api/leaderboard/overall`
-
-Verification checklist:
-
-- Confirm a booking once -> points added once
-- Re-saving a confirmed booking -> no duplicate points
-- Monthly leaderboard updates for the current calendar month
-- Overall leaderboard matches lifetime totals
-- Existing LKR payout flow remains unchanged
-
-## Running tests
+Running tests
 
 Server e2e tests (requires services running):
 
@@ -211,17 +172,21 @@ cd server
 npm run test:e2e
 ```
 
-## Troubleshooting
+Troubleshooting
 
-- If `.env` changes don't apply, restart containers: `docker compose down && docker compose up --build`.
-- Ensure `.env` is in the same folder as `docker-compose.yml`.
-- Check `ENV_QUICK_REFERENCE.md` for common fixes.
+- If `.env` changes don't apply, restart containers:
 
-## Useful files
+```bash
+docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.dev.yml up --build
+```
+- Check `ENV_QUICK_REFERENCE.md` for env var examples and common fixes.
 
-- `docker-compose.dev.yml` — Development compose
-- `docker-compose.prod.yml` — Production compose
-- `server/prisma/schema.prisma` — DB schema
-- `ENV_QUICK_REFERENCE.md` — env vars and quick commands
+Useful files
+
+- [docker-compose.dev.yml](docker-compose.dev.yml)
+- [docker-compose.prod.yml](docker-compose.prod.yml)
+- [server/prisma/schema.prisma](server/prisma/schema.prisma)
+- [ENV_QUICK_REFERENCE.md](ENV_QUICK_REFERENCE.md)
 
 ---
+````
