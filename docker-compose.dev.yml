@@ -136,7 +136,6 @@ services:
       - ./client/public:/app/public
       # Persist node_modules and build output from the image
       - .next:/app/.next
-      - node_modules:/app/node_modules
     depends_on:
       - backend
     networks:
