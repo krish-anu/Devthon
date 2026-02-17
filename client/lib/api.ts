@@ -1,4 +1,4 @@
-import { getAccessToken, getRefreshToken, setAuth } from "./auth";
+import { getAccessToken, setAuth } from "./auth";
 import { User } from "./types";
 
 function trimTrailingSlash(value: string) {
@@ -17,20 +17,33 @@ function resolveApiUrl() {
   }
 
   if (!configured) {
-    return `${window.location.protocol}//${window.location.hostname}:4000/api`;
+    // In hosted environments, prefer same-origin API routing (e.g. via reverse proxy).
+    return `${window.location.origin}/api`;
   }
 
-  // If API URL is configured to loopback but app is opened via LAN host,
-  // rewrite the API host to current host to avoid browser localhost mismatch.
   try {
     const parsed = new URL(configured, window.location.origin);
+
+    // If a loopback API URL is configured in a hosted browser context,
+    // route through same-origin instead of direct :4000 calls.
     if (
       parsed.protocol.startsWith("http") &&
       isLoopbackHost(parsed.hostname) &&
       !isLoopbackHost(window.location.hostname)
     ) {
-      parsed.hostname = window.location.hostname;
+      const path = parsed.pathname && parsed.pathname !== "/" ? parsed.pathname : "/api";
+      return trimTrailingSlash(`${window.location.origin}${path}`);
     }
+
+    // Avoid mixed-content requests when frontend is served over HTTPS.
+    if (
+      window.location.protocol === "https:" &&
+      parsed.protocol === "http:" &&
+      parsed.hostname === window.location.hostname
+    ) {
+      parsed.protocol = "https:";
+    }
+
     return trimTrailingSlash(parsed.toString());
   } catch {
     return trimTrailingSlash(configured);
@@ -77,8 +90,15 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers = new Headers(options.headers || {});
   const accessToken = auth ? getAccessToken() : null;
+  const hasBody = options.body !== undefined && options.body !== null;
 
-  if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
+  // Only set JSON content type when a request body exists.
+  // Setting it on GET/HEAD triggers unnecessary CORS preflight.
+  if (
+    hasBody &&
+    !(options.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
     headers.set("Content-Type", "application/json");
   }
 

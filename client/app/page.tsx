@@ -30,12 +30,14 @@ export default function HomePage() {
   const { data: pricingData, isLoading: pricingLoading } = useQuery({
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ["public-waste-categories"],
     queryFn: () =>
       apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+    staleTime: 5 * 60 * 1000,
   });
 
   const pricingCards = useMemo(() => {
