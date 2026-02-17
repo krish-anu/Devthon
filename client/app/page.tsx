@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { PricingItem } from "@/lib/types";
+import { PricingItem, WasteCategory } from "@/lib/types";
 import Loading from "@/components/shared/Loading";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -26,101 +26,72 @@ import {
 } from "lucide-react";
 import { ScrollAnimatedSection } from "@/components/shared/scroll-animated-section";
 
-const fallbackPricing = [
-  { name: "Plastic (PET)", min: 45, max: 70 },
-  { name: "Metal (Aluminum)", min: 160, max: 240 },
-  { name: "Cardboard", min: 30, max: 55 },
-  { name: "E-Waste", min: 220, max: 450 },
-];
-
 export default function HomePage() {
-  const { data, isLoading: pricingLoading } = useQuery({
+  const { data: pricingData, isLoading: pricingLoading } = useQuery({
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
   });
 
-  const pricingCards = data?.length
-    ? data.map((item) => ({
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+    queryKey: ["public-waste-categories"],
+    queryFn: () =>
+      apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+  });
+
+  const pricingCards = useMemo(() => {
+    const pricing = pricingData ?? [];
+    const categories = categoriesData ?? [];
+
+    if (categories.length === 0) {
+      return pricing.map((item) => ({
+        id: item.wasteCategory.id,
         name: item.wasteCategory.name,
         min: item.minPriceLkrPerKg,
         max: item.maxPriceLkrPerKg,
-      }))
-    : fallbackPricing;
+        hasPricing: true,
+      }));
+    }
 
-  const {
-    data: impactData,
-    isLoading: impactLoading,
-    isError: impactError,
-  } = useQuery({
-    queryKey: ["public-impact"],
-    queryFn: () => apiFetch<Record<string, any>>("/public/impact", {}, false),
-  });
+    const pricingByCategory = new Map(
+      pricing.map((item) => [item.wasteCategory.id, item]),
+    );
 
-  const stats = impactData
-    ? [
-        {
-          icon: <Recycle className="h-5 w-5" />,
-          value: String(
-            impactData.tonnesCollected ??
-              impactData.tonnes_collected ??
-              impactData.tonnes ??
-              "—",
-          ),
-          label: "Tonnes Collected",
-        },
-        {
-          icon: <Users className="h-5 w-5" />,
-          value: String(
-            impactData.activeUsers ??
-              impactData.active_users ??
-              impactData.users ??
-              "—",
-          ),
-          label: "Active Users",
-        },
-        {
-          icon: <Leaf className="h-5 w-5" />,
-          value: String(
-            impactData.tonnesCo2Saved ??
-              impactData.tonnes_co2_saved ??
-              impactData.co2_saved ??
-              "—",
-          ),
-          label: "Tonnes CO₂ Saved",
-        },
-        {
-          icon: <MapPin className="h-5 w-5" />,
-          value: String(
-            impactData.districtsServed ??
-              impactData.districts_served ??
-              impactData.districts ??
-              "—",
-          ),
-          label: "Districts Served",
-        },
-      ]
-    : [
-        {
-          icon: <Recycle className="h-5 w-5" />,
-          value: "500+",
-          label: "Tonnes Collected",
-        },
-        {
-          icon: <Users className="h-5 w-5" />,
-          value: "12,000+",
-          label: "Active Users",
-        },
-        {
-          icon: <Leaf className="h-5 w-5" />,
-          value: "850",
-          label: "Tonnes CO₂ Saved",
-        },
-        {
-          icon: <MapPin className="h-5 w-5" />,
-          value: "25",
-          label: "Districts Served",
-        },
-      ];
+    return categories.map((category) => {
+      const matchedPrice = pricingByCategory.get(category.id);
+      return {
+        id: category.id,
+        name: category.name,
+        min: matchedPrice?.minPriceLkrPerKg ?? 0,
+        max: matchedPrice?.maxPriceLkrPerKg ?? 0,
+        hasPricing: Boolean(matchedPrice),
+      };
+    });
+  }, [pricingData, categoriesData]);
+
+  const isPricingLoading = pricingLoading || categoriesLoading;
+
+  const stats = [
+    {
+      icon: <Recycle className="h-5 w-5" />,
+      value: "500+",
+      label: "Tonnes Collected",
+    },
+    {
+      icon: <Users className="h-5 w-5" />,
+      value: "12,000+",
+      label: "Active Users",
+    },
+    {
+      icon: <Leaf className="h-5 w-5" />,
+      value: "850",
+      label: "Tonnes CO₂ Saved",
+    },
+    {
+      icon: <MapPin className="h-5 w-5" />,
+      value: "25",
+      label: "Districts Served",
+    },
+  ];
 
   // Redirect booking link depending on authentication state
   const { user } = useAuth();
@@ -319,13 +290,9 @@ export default function HomePage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                       {stat.icon}
                     </div>
-                    {impactLoading ? (
-                      <div className="h-5 w-20 rounded bg-(--muted)/20 animate-pulse" />
-                    ) : (
-                      <div className="text-lg font-bold text-(--brand)">
-                        {stat.value}
-                      </div>
-                    )}
+                    <div className="text-lg font-bold text-(--brand)">
+                      {stat.value}
+                    </div>
                     <div className="text-xs text-(--muted)">{stat.label}</div>
                   </div>
                 </Card>
@@ -456,30 +423,48 @@ export default function HomePage() {
             description="Final prices determined after quality inspection."
           />
         </ScrollAnimatedSection>
-        {pricingLoading ? (
+        {isPricingLoading ? (
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-(--brand)/10 text-center shadow-md p-6">
               <Loading message="Loading prices..." />
             </Card>
           </div>
+        ) : pricingCards.length === 0 ? (
+          <Card className="bg-(--card) text-center shadow-md p-6">
+            <p className="text-sm text-(--muted)">
+              No pricing data is available right now.
+            </p>
+          </Card>
         ) : (
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {pricingCards.map((item, index) => (
-              <ScrollAnimatedSection key={item.name} delay={index * 100}>
-                <Card className="bg-(--card) text-center shadow-md">
-                  <div className="flex flex-col items-center gap-2">
+              <ScrollAnimatedSection
+                key={item.id}
+                delay={index * 100}
+                className="h-full"
+              >
+                <Card className="h-full min-h-[10.5rem] bg-(--card) text-center shadow-md">
+                  <div className="flex h-full flex-col items-center gap-2">
                     <h4 className="text-base font-semibold text-(--brand)">
                       {item.name}
                     </h4>
-                    <div className="text-sm text-(--muted)">
-                      Min: LKR {item.min} / kg
-                    </div>
-                    <div className="text-sm text-(--muted)">
-                      Max: LKR {item.max} / kg
-                    </div>
-                    <p className="text-xs text-(--muted)">
-                      Final prices determined after quality inspection.
-                    </p>
+                    {item.hasPricing ? (
+                      <>
+                        <div className="text-sm text-(--muted)">
+                          Min: LKR {item.min} / kg
+                        </div>
+                        <div className="text-sm text-(--muted)">
+                          Max: LKR {item.max} / kg
+                        </div>
+                        <p className="text-xs text-(--muted)">
+                          Final prices determined after quality inspection.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-(--muted)">
+                          Final prices determined after physical visit.
+                      </p>
+                    )}
                   </div>
                 </Card>
               </ScrollAnimatedSection>

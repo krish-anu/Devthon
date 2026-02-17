@@ -1,11 +1,43 @@
 import { getAccessToken, getRefreshToken, setAuth } from "./auth";
 import { User } from "./types";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:4000/api`
-    : "http://localhost:4000/api");
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function isLoopbackHost(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+}
+
+function resolveApiUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+
+  if (typeof window === "undefined") {
+    return trimTrailingSlash(configured || "http://localhost:4000/api");
+  }
+
+  if (!configured) {
+    return `${window.location.protocol}//${window.location.hostname}:4000/api`;
+  }
+
+  // If API URL is configured to loopback but app is opened via LAN host,
+  // rewrite the API host to current host to avoid browser localhost mismatch.
+  try {
+    const parsed = new URL(configured, window.location.origin);
+    if (
+      parsed.protocol.startsWith("http") &&
+      isLoopbackHost(parsed.hostname) &&
+      !isLoopbackHost(window.location.hostname)
+    ) {
+      parsed.hostname = window.location.hostname;
+    }
+    return trimTrailingSlash(parsed.toString());
+  } catch {
+    return trimTrailingSlash(configured);
+  }
+}
+
+const API_URL = resolveApiUrl();
 
 export type AuthResponse = {
   user: User;
