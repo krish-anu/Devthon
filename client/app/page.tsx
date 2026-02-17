@@ -47,6 +47,81 @@ export default function HomePage() {
       }))
     : fallbackPricing;
 
+  const {
+    data: impactData,
+    isLoading: impactLoading,
+    isError: impactError,
+  } = useQuery({
+    queryKey: ["public-impact"],
+    queryFn: () => apiFetch<Record<string, any>>("/public/impact", {}, false),
+  });
+
+  const stats = impactData
+    ? [
+        {
+          icon: <Recycle className="h-5 w-5" />,
+          value: String(
+            impactData.tonnesCollected ??
+              impactData.tonnes_collected ??
+              impactData.tonnes ??
+              "—",
+          ),
+          label: "Tonnes Collected",
+        },
+        {
+          icon: <Users className="h-5 w-5" />,
+          value: String(
+            impactData.activeUsers ??
+              impactData.active_users ??
+              impactData.users ??
+              "—",
+          ),
+          label: "Active Users",
+        },
+        {
+          icon: <Leaf className="h-5 w-5" />,
+          value: String(
+            impactData.tonnesCo2Saved ??
+              impactData.tonnes_co2_saved ??
+              impactData.co2_saved ??
+              "—",
+          ),
+          label: "Tonnes CO₂ Saved",
+        },
+        {
+          icon: <MapPin className="h-5 w-5" />,
+          value: String(
+            impactData.districtsServed ??
+              impactData.districts_served ??
+              impactData.districts ??
+              "—",
+          ),
+          label: "Districts Served",
+        },
+      ]
+    : [
+        {
+          icon: <Recycle className="h-5 w-5" />,
+          value: "500+",
+          label: "Tonnes Collected",
+        },
+        {
+          icon: <Users className="h-5 w-5" />,
+          value: "12,000+",
+          label: "Active Users",
+        },
+        {
+          icon: <Leaf className="h-5 w-5" />,
+          value: "850",
+          label: "Tonnes CO₂ Saved",
+        },
+        {
+          icon: <MapPin className="h-5 w-5" />,
+          value: "25",
+          label: "Districts Served",
+        },
+      ];
+
   // Redirect booking link depending on authentication state
   const { user } = useAuth();
   const bookingHref = user
@@ -237,37 +312,20 @@ export default function HomePage() {
         </ScrollAnimatedSection>
         <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-3 sm:p-4">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {[
-              {
-                icon: <Recycle className="h-5 w-5" />,
-                value: "500+",
-                label: "Tonnes Collected",
-              },
-              {
-                icon: <Users className="h-5 w-5" />,
-                value: "12,000+",
-                label: "Active Users",
-              },
-              {
-                icon: <Leaf className="h-5 w-5" />,
-                value: "850",
-                label: "Tonnes CO₂ Saved",
-              },
-              {
-                icon: <MapPin className="h-5 w-5" />,
-                value: "25",
-                label: "Districts Served",
-              },
-            ].map((stat, index) => (
+            {stats.map((stat, index) => (
               <ScrollAnimatedSection key={stat.label} delay={index * 100}>
                 <Card className="bg-(--card) text-center shadow-md">
                   <div className="flex flex-col items-center gap-2">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                       {stat.icon}
                     </div>
-                    <div className="text-lg font-bold text-(--brand)">
-                      {stat.value}
-                    </div>
+                    {impactLoading ? (
+                      <div className="h-5 w-20 rounded bg-(--muted)/20 animate-pulse" />
+                    ) : (
+                      <div className="text-lg font-bold text-(--brand)">
+                        {stat.value}
+                      </div>
+                    )}
                     <div className="text-xs text-(--muted)">{stat.label}</div>
                   </div>
                 </Card>

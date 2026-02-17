@@ -49,6 +49,11 @@ services:
       # Use explicit DATABASE_URL only
       DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
+      # Prefer DIRECT_URL in dev to avoid pooler port blocks in some networks
+      PRISMA_PREFER_DIRECT_URL: ${PRISMA_PREFER_DIRECT_URL:-true}
+      # Retry database connection on startup for transient network issues
+      PRISMA_CONNECT_RETRIES: ${PRISMA_CONNECT_RETRIES:-8}
+      PRISMA_CONNECT_RETRY_DELAY_MS: ${PRISMA_CONNECT_RETRY_DELAY_MS:-2000}
 
       # Application settings
       PORT: ${PORT:-4000}
@@ -95,7 +100,7 @@ services:
       - trash2cash-network
     # Run migrations and seed at container start so Supabase receives the seeded data,
     # then start the dev server. This uses the DATABASE_URL env var.
-    command: sh -c "npx prisma migrate deploy --preview-feature || true && npm run start:dev"
+    command: sh -c "npx prisma migrate deploy || true && npm run start:dev"
     # Run migrations and seed at container start so Supabase receives the seeded data,
     # then start the dev server. This uses the DATABASE_URL env var.
 
