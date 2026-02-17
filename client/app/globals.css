@@ -30,7 +30,7 @@ html:not([data-theme]) { visibility: hidden; }
   color-scheme: light;
   --background: #d3ebaf;
   --foreground: #111827;
-  --card: #f0fdf4;
+  --card: #e3ebde;
   --muted: #6b7280;
   --brand: #507b2d; /* light-mode primary: rgb(118,217,77) */
   --brand-rgb: 118 217 77;

@@ -188,5 +188,14 @@ Useful files
 - [server/prisma/schema.prisma](server/prisma/schema.prisma)
 - [ENV_QUICK_REFERENCE.md](ENV_QUICK_REFERENCE.md)
 
+**Team**
+
+- **Leader:** Anusan Krishnathas
+- **Team members:**
+	- Ruththiragayan Sutharsan
+	- Nidharshan Vigneswaram
+	- Abaiyan Ramanaish
+	- Neelayadhakshi Priyadhaksan
+
 ---
 ````

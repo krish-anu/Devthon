@@ -101,8 +101,20 @@ export default function HomePage() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                {mobileMenuOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                {mobileMenuOpen ? (
+                  <path d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                )}
               </svg>
             </button>
             <Button
@@ -123,11 +135,41 @@ export default function HomePage() {
         {/* Mobile nav dropdown */}
         {mobileMenuOpen && (
           <nav className="flex flex-col gap-2 border-t border-(--border) px-4 py-3 text-sm text-(--muted) lg:hidden">
-            <a href="#how" className="py-2 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>How it works</a>
-            <a href="#impact" className="py-2 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Impact</a>
-            <a href="#pricing" className="py-2 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-            <a href="#contact" className="py-2 hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact</a>
-            <Link href="/login" className="py-2 hover:text-foreground transition-colors sm:hidden" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+            <a
+              href="#how"
+              className="py-2 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              How it works
+            </a>
+            <a
+              href="#impact"
+              className="py-2 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Impact
+            </a>
+            <a
+              href="#pricing"
+              className="py-2 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
+            </a>
+            <a
+              href="#contact"
+              className="py-2 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Contact
+            </a>
+            <Link
+              href="/login"
+              className="py-2 hover:text-foreground transition-colors sm:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Login
+            </Link>
           </nav>
         )}
       </header>
@@ -218,7 +260,7 @@ export default function HomePage() {
               },
             ].map((stat, index) => (
               <ScrollAnimatedSection key={stat.label} delay={index * 100}>
-                <Card className="bg-(--brand)/10 text-center shadow-md">
+                <Card className="bg-(--card) text-center shadow-md">
                   <div className="flex flex-col items-center gap-2">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                       {stat.icon}
@@ -268,7 +310,7 @@ export default function HomePage() {
             },
           ].map((item, index) => (
             <ScrollAnimatedSection key={item.step} delay={index * 150}>
-              <Card className="bg-(--brand)/10 shadow-md">
+              <Card className="bg-(--card) shadow-md">
                 <div className="flex flex-col items-center gap-3 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                     {item.icon}
@@ -328,7 +370,7 @@ export default function HomePage() {
               },
             ].map((item, index) => (
               <ScrollAnimatedSection key={item.title} delay={index * 100}>
-                <Card className="bg-(--brand)/10 text-center shadow-md">
+                <Card className="bg-(--card) text-center shadow-md">
                   <div className="flex flex-col items-center gap-2">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                       <CheckCircle className="h-5 w-5" />
@@ -366,7 +408,7 @@ export default function HomePage() {
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {pricingCards.map((item, index) => (
               <ScrollAnimatedSection key={item.name} delay={index * 100}>
-                <Card className="bg-(--brand)/10 text-center shadow-md">
+                <Card className="bg-(--card) text-center shadow-md">
                   <div className="flex flex-col items-center gap-2">
                     <h4 className="text-base font-semibold text-(--brand)">
                       {item.name}
@@ -421,7 +463,7 @@ export default function HomePage() {
             },
           ].map((item, index) => (
             <ScrollAnimatedSection key={item.title} delay={index * 100}>
-              <Card className="bg-(--brand)/10 shadow-md">
+              <Card className="bg-(--card) shadow-md">
                 <div className="flex flex-col items-center gap-3 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
                     {item.icon}
