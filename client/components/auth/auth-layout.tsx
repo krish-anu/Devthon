@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import RecaptchaBadge from "@/components/recaptcha/RecaptchaBadge";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -88,7 +87,6 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
 
   return (
     <div className="flex min-h-screen">
-      <RecaptchaBadge />
       {/* Left Panel - Green Gradient (hidden on mobile & tablet, shown on lg+) */}
       <div className="relative hidden lg:flex lg:w-[45%] flex-col justify-between overflow-hidden bg-gradient-to-b from-(--brand) to-(--brand-strong) p-10 text-white">
         <div

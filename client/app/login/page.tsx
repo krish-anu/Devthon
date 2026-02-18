@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { executeRecaptcha } from "@/lib/recaptcha";
-import RecaptchaNotice from "@/components/recaptcha/RecaptchaNotice";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -336,10 +335,6 @@ export default function LoginPage() {
                 {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
             </form>
-
-            <div className="mt-1.5 sm:mt-2">
-              <RecaptchaNotice />
-            </div>
 
             <p className="text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Don&apos;t have an account?{"   "}

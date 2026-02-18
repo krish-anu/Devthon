@@ -19,7 +19,6 @@ import { useGoogleLogin } from "@react-oauth/google";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
 import { executeRecaptcha } from "@/lib/recaptcha";
-import RecaptchaNotice from "@/components/recaptcha/RecaptchaNotice";
 
 const schema = z
   .object({
@@ -446,10 +445,6 @@ export default function SignupPage() {
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
-
-            <div className="mt-1.5 sm:mt-2">
-              <RecaptchaNotice />
-            </div>
 
             <p className="text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Already have an account?{"   "}
