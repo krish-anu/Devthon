@@ -610,7 +610,7 @@ export default function NewBookingPage() {
                 </div>
 
                 {/* Scan Button */}
-                <Button
+                {/* <Button
                   onClick={handleScanImages}
                   disabled={isScanning}
                   className="w-full"
@@ -656,7 +656,7 @@ export default function NewBookingPage() {
                       Scan Images
                     </>
                   )}
-                </Button>
+                </Button> */}
               </div>
             )}
           </div>

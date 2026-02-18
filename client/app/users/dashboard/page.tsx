@@ -126,8 +126,8 @@ export default function DashboardPage() {
                 <TableRow>
                   <TableHead>Booking ID</TableHead>
                   <TableHead>Waste Type</TableHead>
-                  <TableHead>Weight</TableHead>
-                  <TableHead>Amount</TableHead>
+                  {/* <TableHead>Weight</TableHead> */}
+                  {/* <TableHead>Amount</TableHead> */}
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                 </TableRow>
@@ -146,10 +146,10 @@ export default function DashboardPage() {
                     <TableCell>
                       {booking.wasteCategory?.name ?? "Unknown"}
                     </TableCell>
-                    <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
-                    <TableCell>
+                    {/* <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell> */}
+                    {/* <TableCell>
                       LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       <StatusPill status={booking.status} />
                     </TableCell>
