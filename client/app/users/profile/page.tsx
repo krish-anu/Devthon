@@ -27,7 +27,6 @@ import { useRouter } from "next/navigation";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
 import { toast } from "@/components/ui/use-toast";
-import { authApi } from "@/lib/api";
 import supabase, { getBucketName } from "@/lib/supabase";
 import { useForm as useForm2 } from "react-hook-form";
 import { usePasskey } from "@/hooks/usePasskey";
@@ -49,8 +48,6 @@ type FormValues = z.infer<typeof schema>;
 
 export default function ProfilePage() {
   const { user, refreshProfile, logout } = useAuth();
-  const [twoStepEnabled, setTwoStepEnabled] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
 
   // Avatar upload helpers
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -271,59 +268,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Two-step verification handlers (uses authApi.sendOtp / verifyOtp)
-  const handleSendOtp = async () => {
-    if (!user?.email)
-      return toast({
-        title: "No email",
-        description: "No email found for your account",
-        variant: "warning",
-      });
-    try {
-      await authApi.sendOtp({ email: user.email });
-      setOtpSent(true);
-      toast({
-        title: "OTP sent",
-        description: "Check your email for the verification code.",
-        variant: "success",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Send failed",
-        description: err?.message ?? "Unable to send OTP",
-        variant: "error",
-      });
-    }
-  };
-
-  const [otpCode, setOtpCode] = useState("");
-  const handleVerifyOtp = async () => {
-    try {
-      const res = await authApi.verifyOtp({ code: otpCode });
-      if (res?.verified) {
-        setTwoStepEnabled(true);
-        setOtpSent(false);
-        toast({
-          title: "Two-step enabled",
-          description: "Two-step verification enabled for your account.",
-          variant: "success",
-        });
-      } else {
-        toast({
-          title: "Verification failed",
-          description: "Invalid code",
-          variant: "error",
-        });
-      }
-    } catch (err: any) {
-      toast({
-        title: "Verify failed",
-        description: err?.message ?? "Unable to verify code",
-        variant: "error",
-      });
-    }
-  };
-
   // Delete account UI state
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -533,7 +477,7 @@ export default function ProfilePage() {
 
         <TabsContent value="security">
           <Card>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6">
               <div>
                 <h4 className="mb-2 text-sm font-semibold">Change password</h4>
                 <form
@@ -580,60 +524,6 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 </form>
-              </div>
-
-              <div>
-                <h4 className="mb-2 text-sm font-semibold">
-                  Two-step verification
-                </h4>
-                <p className="mb-3 text-sm text-(--muted)">
-                  Add an extra layer of security by requiring a one-time code on
-                  sign in.
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm">Status</p>
-                      <p className="text-xs text-(--muted)">
-                        {twoStepEnabled ? "Enabled" : "Disabled"}
-                      </p>
-                    </div>
-                    <div>
-                      {!twoStepEnabled ? (
-                        <Button onClick={handleSendOtp}>Enable</Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          onClick={() => setTwoStepEnabled(false)}
-                        >
-                          Disable
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {otpSent && (
-                    <div className="space-y-2">
-                      <Label>Enter verification code</Label>
-                      <Input
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
-                      />
-                      <div className="flex gap-3">
-                        <Button onClick={handleVerifyOtp}>Verify code</Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setOtpSent(false);
-                            setOtpCode("");
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </Card>
