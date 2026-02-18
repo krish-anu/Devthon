@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
 import { SkeletonGrid } from "@/components/shared/Skeleton";
 import {
   CheckCircle2,
@@ -77,7 +76,6 @@ export default function NotificationsPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <PushNotificationToggle />
           <Button
             variant="outline"
             onClick={() => mutation.mutate()}
