@@ -44,6 +44,59 @@ const LEGACY_SAFE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.CANCELLED,
   BookingStatus.REFUNDED,
 ];
+const LEGACY_USER_PROFILE_INCLUDE = {
+  customer: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      address: true,
+      type: true,
+      status: true,
+      createdAt: true,
+    },
+  },
+  admin: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      address: true,
+    },
+  },
+  driver: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      rating: true,
+      pickupCount: true,
+      vehicle: true,
+      status: true,
+      createdAt: true,
+    },
+  },
+  recycler: {
+    select: {
+      id: true,
+      companyName: true,
+      contactPerson: true,
+      phone: true,
+      materialTypes: true,
+      createdAt: true,
+    },
+  },
+  corporate: {
+    select: {
+      id: true,
+      organizationName: true,
+      contactName: true,
+      phone: true,
+      requirements: true,
+      createdAt: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class AdminService {
@@ -59,6 +112,7 @@ export class AdminService {
   ) {}
 
   async getMetrics() {
+    const pendingStatuses = await this.getPendingPickupStatuses();
     const [
       revenueAgg,
       revenueCount,
@@ -80,7 +134,7 @@ export class AdminService {
         where: { status: { in: ['ONLINE', 'ON_PICKUP'] } },
       }),
       this.prisma.booking.count({
-        where: { status: { in: ['SCHEDULED', 'ASSIGNED', 'IN_PROGRESS'] } },
+        where: { status: { in: pendingStatuses } },
       }),
     ]);
 
@@ -159,14 +213,16 @@ export class AdminService {
       value: item._count.wasteCategoryId,
     }));
 
-    const recentActivity = await this.prisma.booking.findMany({
-      take: 6,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { include: USER_PROFILE_INCLUDE },
-        wasteCategory: true,
+    const recentActivity = await this.findManyBookingsWithUserProfile(
+      {
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          wasteCategory: true,
+        },
       },
-    });
+      'metrics/recentActivity',
+    );
 
     return {
       totals: {
@@ -520,15 +576,17 @@ export class AdminService {
       ];
     }
 
-    const bookings = await this.prisma.booking.findMany({
-      where: Object.keys(where).length > 0 ? where : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { include: USER_PROFILE_INCLUDE },
-        wasteCategory: true,
-        driver: true,
+    const bookings = await this.findManyBookingsWithUserProfile(
+      {
+        where: Object.keys(where).length > 0 ? where : undefined,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          wasteCategory: true,
+          driver: true,
+        },
       },
-    });
+      'listBookings',
+    );
 
     return bookings.map((booking) => ({
       ...booking,
@@ -930,6 +988,77 @@ export class AdminService {
         'Failed to inspect Booking.status enum values from database. Falling back to default status options.',
       );
     }
+  }
+
+  private async getPendingPickupStatuses() {
+    await this.loadBookingStatusAvailability();
+    const candidateStatuses: BookingStatus[] = [
+      BookingStatus.SCHEDULED,
+      BookingStatus.ASSIGNED,
+      BookingStatus.IN_PROGRESS,
+    ];
+
+    if (!this.bookingStatusAvailabilityKnown) {
+      return [BookingStatus.SCHEDULED];
+    }
+
+    const supported = candidateStatuses.filter(
+      (status) => this.bookingStatusAvailability.get(status) === true,
+    );
+
+    return supported.length > 0 ? supported : [BookingStatus.SCHEDULED];
+  }
+
+  private isMissingColumnError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+      message.includes('column') &&
+      message.includes('does not exist')
+    );
+  }
+
+  private async findManyBookingsWithUserProfile(
+    args: Prisma.BookingFindManyArgs,
+    context: string,
+  ) {
+    const includeWithoutUser = { ...(args.include ?? {}) } as Record<string, unknown>;
+    delete includeWithoutUser.user;
+
+    const run = (user: Prisma.UserDefaultArgs) =>
+      this.prisma.booking.findMany({
+        ...args,
+        include: {
+          ...includeWithoutUser,
+          user,
+        },
+      });
+
+    try {
+      return await run({ include: USER_PROFILE_INCLUDE });
+    } catch (error) {
+      if (!this.isMissingColumnError(error)) throw error;
+      this.logger.warn(
+        `Falling back to legacy user profile select for ${context} (missing column in database schema).`,
+      );
+    }
+
+    try {
+      return await run({ include: LEGACY_USER_PROFILE_INCLUDE });
+    } catch (error) {
+      if (!this.isMissingColumnError(error)) throw error;
+      this.logger.warn(
+        `Falling back to minimal user profile select for ${context} (missing legacy columns in database schema).`,
+      );
+    }
+
+    return run({
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
   }
 
   /** Debug: trigger a 'Booking completed' style notification for a booking (admin only) */
