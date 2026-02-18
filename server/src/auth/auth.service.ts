@@ -480,16 +480,16 @@ export class AuthService {
           const name = googleUser.name as string;
           // Only update profiles that exist but have an empty/fullName placeholder
           if ((user as any).customer && !(user as any).customer.fullName) {
-            await this.prisma.customer.update({ where: { id: user.id }, data: { fullName: name } as any });
-            user = await this.prisma.user.findUnique({ where: { id: user.id }, include: USER_PROFILE_INCLUDE });
+            await this.prisma.customer.update({ where: { id: user!.id }, data: { fullName: name } as any });
+            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
             await this.syncUserToSupabase(user);
           } else if ((user as any).driver && !(user as any).driver.fullName) {
-            await this.prisma.driver.update({ where: { id: user.id }, data: { fullName: name } as any });
-            user = await this.prisma.user.findUnique({ where: { id: user.id }, include: USER_PROFILE_INCLUDE });
+            await this.prisma.driver.update({ where: { id: user!.id }, data: { fullName: name } as any });
+            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
             await this.syncUserToSupabase(user);
           } else if ((user as any).admin && !(user as any).admin.fullName) {
-            await this.prisma.admin.update({ where: { id: user.id }, data: { fullName: name } as any });
-            user = await this.prisma.user.findUnique({ where: { id: user.id }, include: USER_PROFILE_INCLUDE });
+            await this.prisma.admin.update({ where: { id: user!.id }, data: { fullName: name } as any });
+            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
             await this.syncUserToSupabase(user);
           }
         } catch (err) {
