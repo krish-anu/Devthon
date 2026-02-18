@@ -1,4 +1,4 @@
-import { getAccessToken, setAuth } from "./auth";
+import { getAccessToken, getRefreshToken, setAuth } from "./auth";
 import { User } from "./types";
 
 function trimTrailingSlash(value: string) {
@@ -73,16 +73,18 @@ async function parseError(response: Response) {
 }
 
 export async function refreshTokens() {
+  const refreshToken = getRefreshToken();
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
+    body: JSON.stringify({ refreshToken }),
   });
   if (!response.ok) {
     return null;
   }
   const data = (await response.json()) as AuthResponse;
-  setAuth({ accessToken: data.accessToken, user: data.user } as any);
+  setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user } as any);
   return data;
 }
 
