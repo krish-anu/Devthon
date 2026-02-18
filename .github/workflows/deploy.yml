@@ -57,6 +57,8 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+            NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${{ secrets.NEXT_PUBLIC_RECAPTCHA_SITE_KEY }}
+            NEXT_PUBLIC_RECAPTCHA_ENABLED=${{ secrets.NEXT_PUBLIC_RECAPTCHA_ENABLED }}
 
   # ──────────────────────────────────────────
   # 2. Deploy to EC2 via SSH
@@ -102,9 +104,14 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+            NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${{ secrets.NEXT_PUBLIC_RECAPTCHA_SITE_KEY }}
+            NEXT_PUBLIC_RECAPTCHA_ENABLED=${{ secrets.NEXT_PUBLIC_RECAPTCHA_ENABLED }}
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
             GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+            RECAPTCHA_SECRET=${{ secrets.RECAPTCHA_SECRET }}
+            RECAPTCHA_MIN_SCORE=${{ secrets.RECAPTCHA_MIN_SCORE }}
+            RECAPTCHA_ENABLED=${{ secrets.RECAPTCHA_ENABLED }}
             TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }}
             TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}
             PASSKEY_RP_NAME=Trash2Cash
