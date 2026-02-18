@@ -168,24 +168,6 @@ export const authApi = {
     apiFetch<{ success: boolean }>("/auth/logout", {
       method: "POST",
     }),
-  sendOtp: (payload: { email: string }) =>
-    apiFetch<{ success: boolean }>(
-      "/auth/otp/send",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      },
-      false,
-    ),
-  verifyOtp: (payload: { code: string }) =>
-    apiFetch<{ verified: boolean }>(
-      "/auth/otp/verify",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      },
-      false,
-    ),
   googleLogin: (payload: {
     token: string;
     signup?: boolean;

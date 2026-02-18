@@ -3,8 +3,6 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
-import { OtpSendDto } from './dto/otp-send.dto';
-import { OtpVerifyDto } from './dto/otp-verify.dto';
 import { GoogleLoginDto, GoogleCodeDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { Response } from 'express';
@@ -113,15 +111,5 @@ export class AuthController {
     await this.authService.logout(req.user.sub);
     res.clearCookie('refreshToken', { path: '/' });
     return { success: true };
-  }
-
-  @Post('otp/send')
-  sendOtp(@Body() dto: OtpSendDto) {
-    return { success: true, message: 'OTP sent', email: dto.email };
-  }
-
-  @Post('otp/verify')
-  verifyOtp(@Body() dto: OtpVerifyDto) {
-    return { verified: true, code: dto.code };
   }
 }
