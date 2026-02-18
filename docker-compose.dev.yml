@@ -49,8 +49,9 @@ services:
       # Use explicit DATABASE_URL only
       DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
-      # Prefer DIRECT_URL in dev to avoid pooler port blocks in some networks
-      PRISMA_PREFER_DIRECT_URL: ${PRISMA_PREFER_DIRECT_URL:-true}
+      # Default to pooled DATABASE_URL for broader local-network compatibility.
+      # Set PRISMA_PREFER_DIRECT_URL=true explicitly if you need DIRECT_URL.
+      PRISMA_PREFER_DIRECT_URL: ${PRISMA_PREFER_DIRECT_URL:-false}
       # Retry database connection on startup for transient network issues
       PRISMA_CONNECT_RETRIES: ${PRISMA_CONNECT_RETRIES:-8}
       PRISMA_CONNECT_RETRY_DELAY_MS: ${PRISMA_CONNECT_RETRY_DELAY_MS:-2000}
