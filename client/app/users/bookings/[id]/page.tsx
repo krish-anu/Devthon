@@ -34,9 +34,11 @@ export default function BookingDetailsPage() {
   const id = params?.id as string;
   const queryClient = useQueryClient();
 
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
   // Load Google Maps script
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyBSvWSJfQMojEZpNYrq9c6pW4yQXg8k5AY",
+    googleMapsApiKey: apiKey || "",
   });
 
   const { data, isLoading } = useQuery({
@@ -200,7 +202,11 @@ export default function BookingDetailsPage() {
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Live Tracking Map</h3>
           <div className="h-48 rounded-xl border border-(--border) overflow-hidden">
-            {loadError ? (
+            {!apiKey ? (
+              <div className="flex items-center justify-center h-full text-sm text-red-500">
+                Google Maps API key is not configured
+              </div>
+            ) : loadError ? (
               <div className="flex items-center justify-center h-full text-sm text-(--muted)">
                 Error loading map
               </div>
