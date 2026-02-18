@@ -104,6 +104,7 @@ export default function SignupPage() {
             (tokenResponse as any).code,
             undefined,
             true,
+            role,
           );
           toast({
             title: "Welcome!",
@@ -117,7 +118,7 @@ export default function SignupPage() {
         const token =
           (tokenResponse as any).access_token ||
           (tokenResponse as any).credential;
-        const user = await googleLogin(token, true);
+        const user = await googleLogin(token, true, role);
         toast({
           title: "Welcome!",
           description: "Signed up with Google successfully.",
