@@ -121,7 +121,7 @@ npx prisma migrate dev
 npm run start:dev
 ```
 
-Frontend (local):
+Frontend (local): 
 
 ```bash
 cd client
