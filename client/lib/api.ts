@@ -13,7 +13,10 @@ function resolveApiUrl() {
   const configured = process.env.NEXT_PUBLIC_API_URL;
 
   if (typeof window === "undefined") {
-    return trimTrailingSlash(configured || "http://localhost:4000/api");
+    // Prefer INTERNAL_API_URL for server-side requests (e.g. inside Docker
+    // where "localhost" does not reach the backend container).
+    const internal = process.env.INTERNAL_API_URL;
+    return trimTrailingSlash(internal || configured || "http://localhost:4000/api");
   }
 
   if (!configured) {

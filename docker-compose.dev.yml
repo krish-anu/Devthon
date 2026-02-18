@@ -99,11 +99,15 @@ services:
       # Persist node_modules from the image (do not mount host path here)
     networks:
       - trash2cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/api || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     # Run migrations and seed at container start so Supabase receives the seeded data,
     # then start the dev server. This uses the DATABASE_URL env var.
     command: sh -c "npx prisma migrate deploy || true && npm run start:dev"
-    # Run migrations and seed at container start so Supabase receives the seeded data,
-    # then start the dev server. This uses the DATABASE_URL env var.
 
   # ==========================================
   # Next.js Frontend Service
@@ -121,6 +125,8 @@ services:
       # Backend API URL for client-side requests (from browser)
       # Must use localhost since browser can't resolve Docker service names
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+      # Internal backend URL for server-side requests (SSR) within Docker network
+      INTERNAL_API_URL: http://backend:4000/api
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
       NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
@@ -143,7 +149,8 @@ services:
       # Persist node_modules and build output from the image
       - .next:/app/.next
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - trash2cash-network
 
