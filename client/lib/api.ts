@@ -1,4 +1,4 @@
-import { getAccessToken, setAuth } from "./auth";
+import { getAccessToken, getRefreshToken, setAuth } from "./auth";
 import { User } from "./types";
 
 function trimTrailingSlash(value: string) {
@@ -13,7 +13,10 @@ function resolveApiUrl() {
   const configured = process.env.NEXT_PUBLIC_API_URL;
 
   if (typeof window === "undefined") {
-    return trimTrailingSlash(configured || "http://localhost:4000/api");
+    // Prefer INTERNAL_API_URL for server-side requests (e.g. inside Docker
+    // where "localhost" does not reach the backend container).
+    const internal = process.env.INTERNAL_API_URL;
+    return trimTrailingSlash(internal || configured || "http://localhost:4000/api");
   }
 
   if (!configured) {
@@ -70,16 +73,18 @@ async function parseError(response: Response) {
 }
 
 export async function refreshTokens() {
+  const refreshToken = getRefreshToken();
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
+    body: JSON.stringify({ refreshToken }),
   });
   if (!response.ok) {
     return null;
   }
   const data = (await response.json()) as AuthResponse;
-  setAuth({ accessToken: data.accessToken, user: data.user } as any);
+  setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user } as any);
   return data;
 }
 

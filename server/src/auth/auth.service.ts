@@ -353,6 +353,25 @@ export class AuthService {
     return this.findOrCreateUserFromGoogle(googleUser, isSignup, role);
   }
 
+  /**
+   * Extract the display name from a Google profile object.
+   * Google may return `name`, `given_name`, `family_name`, or none.
+   */
+  private extractGoogleName(googleUser: any): string {
+    if (googleUser.name && typeof googleUser.name === 'string' && googleUser.name.trim()) {
+      return googleUser.name.trim();
+    }
+    const parts: string[] = [];
+    if (googleUser.given_name) parts.push(googleUser.given_name);
+    if (googleUser.family_name) parts.push(googleUser.family_name);
+    if (parts.length > 0) return parts.join(' ').trim();
+    // Last resort: use the local part of the email
+    if (googleUser.email) {
+      return googleUser.email.split('@')[0];
+    }
+    return 'Google User';
+  }
+
   // Shared logic to find or create app user from Google profile
   private async findOrCreateUserFromGoogle(
     googleUser: any,
@@ -370,12 +389,17 @@ export class AuthService {
     }
 
     if (!user) {
+      const displayName = this.extractGoogleName(googleUser);
+      this.logger.log(
+        `Creating new Google user: email=${googleUser.email}, name="${displayName}", raw_name="${googleUser.name}", given_name="${googleUser.given_name}", family_name="${googleUser.family_name}"`,
+      );
+
       // Try to create Supabase Auth user for Google users too
       const supabaseAuthId = await this.supabaseService.createAuthUser(
         googleUser.email,
         Math.random().toString(36).slice(-16) + 'A1!',
         {
-          fullName: googleUser.name || 'Google User',
+          fullName: displayName,
           provider: 'google',
           role: role ?? 'CUSTOMER',
         },
@@ -402,7 +426,7 @@ export class AuthService {
           await tx.admin.create({
             data: {
               id: newUser.id,
-              fullName: googleUser.name || 'Google User',
+              fullName: displayName,
               phone: '',
             },
           });
@@ -410,7 +434,7 @@ export class AuthService {
           await tx.driver.create({
             data: {
               id: newUser.id,
-              fullName: googleUser.name || 'Google User',
+              fullName: displayName,
               phone: '',
               vehicle: 'Not specified',
             },
@@ -422,7 +446,7 @@ export class AuthService {
           await tx.customer.create({
             data: {
               id: newUser.id,
-              fullName: googleUser.name || 'Google User',
+              fullName: displayName,
               phone: '',
               type: 'HOUSEHOLD',
             } as any,
@@ -442,19 +466,53 @@ export class AuthService {
       });
       await this.syncUserToSupabase(userWithProfile ?? user);
     } else {
+      // Existing user — ensure a role-specific profile row exists.
+      // Users who registered via email/password without a profile, or whose profile
+      // was deleted, would otherwise have fullName=null forever.
+      const hasProfile = (user as any).customer || (user as any).driver || (user as any).admin;
+      if (!hasProfile) {
+        const displayName = this.extractGoogleName(googleUser);
+        this.logger.log(
+          `Existing user ${user!.id} (${user!.email}) has no profile row — creating one with fullName="${displayName}"`,
+        );
+        try {
+          if (user!.role === 'ADMIN') {
+            await this.prisma.admin.create({
+              data: { id: user!.id, fullName: displayName, phone: '' },
+            });
+          } else if (user!.role === 'DRIVER') {
+            await this.prisma.driver.create({
+              data: { id: user!.id, fullName: displayName, phone: '', vehicle: 'Not specified' },
+            });
+          } else {
+            await this.prisma.customer.create({
+              data: { id: user!.id, fullName: displayName, phone: '', type: 'HOUSEHOLD' } as any,
+            });
+          }
+          // Re-fetch with profile included
+          user = await this.prisma.user.findUnique({
+            where: { id: user!.id },
+            include: USER_PROFILE_INCLUDE,
+          });
+          await this.syncUserToSupabase(user);
+        } catch (err) {
+          this.logger.warn('Failed to create missing profile row for existing user', err as any);
+        }
+      }
+
       // Existing user — update avatar if Google provides one (or it changed).
       if (googleUser.picture) {
         try {
           const avatarFromDb = (user as any).customer?.avatarUrl ?? null;
           if (avatarFromDb !== googleUser.picture) {
             await this.prisma.customer.update({
-              where: { id: user.id },
+              where: { id: user!.id },
               data: { avatarUrl: googleUser.picture } as any,
             });
 
             // refresh the user object for return
             user = await this.prisma.user.findUnique({
-              where: { id: user.id },
+              where: { id: user!.id },
               include: USER_PROFILE_INCLUDE,
             });
 
@@ -470,6 +528,45 @@ export class AuthService {
             'Failed to update avatar for existing user',
             err as any,
           );
+        }
+      }
+
+      // If Google provided a display name and the existing role-profile is missing a fullName
+      // (null, empty, or the generic 'Google User' placeholder), populate it from Google.
+      const displayName = this.extractGoogleName(googleUser);
+      this.logger.log(
+        `Existing Google user: email=${googleUser.email}, extracted name="${displayName}", raw_name="${googleUser.name}", given_name="${googleUser.given_name}", family_name="${googleUser.family_name}"`,
+      );
+      if (displayName && displayName !== 'Google User') {
+        try {
+          // Replace fullName if it's missing, a placeholder, or looks like an email prefix
+          const needsName = (profileName: string | null | undefined) => {
+            if (!profileName || profileName.trim() === '' || profileName === 'Google User') return true;
+            // If the current name matches the local part of the email, replace with real name
+            const emailPrefix = googleUser.email?.split('@')[0];
+            if (emailPrefix && profileName === emailPrefix) return true;
+            return false;
+          };
+          if ((user as any).customer && needsName((user as any).customer.fullName)) {
+            this.logger.log(`Updating customer fullName to "${displayName}" for user ${user!.id}`);
+            await this.prisma.customer.update({ where: { id: user!.id }, data: { fullName: displayName } as any });
+            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
+            await this.syncUserToSupabase(user);
+          } else if ((user as any).driver && needsName((user as any).driver.fullName)) {
+            this.logger.log(`Updating driver fullName to "${displayName}" for user ${user!.id}`);
+            await this.prisma.driver.update({ where: { id: user!.id }, data: { fullName: displayName } as any });
+            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
+            await this.syncUserToSupabase(user);
+          } else if ((user as any).admin && needsName((user as any).admin.fullName)) {
+            this.logger.log(`Updating admin fullName to "${displayName}" for user ${user!.id}`);
+            await this.prisma.admin.update({ where: { id: user!.id }, data: { fullName: displayName } as any });
+            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
+            await this.syncUserToSupabase(user);
+          } else {
+            this.logger.log(`fullName already set for user ${user!.id}, skipping update`);
+          }
+        } catch (err) {
+          this.logger.warn('Failed to populate fullName from Google for existing user', err as any);
         }
       }
     }

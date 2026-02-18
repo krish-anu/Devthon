@@ -18,7 +18,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Header } from "@/components/layout/header";
-import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import NotificationNavButton from "@/components/shared/NotificationNavButton";
 import { UserMenu } from "@/components/layout/user-menu";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { usePathname } from "next/navigation";
@@ -107,7 +107,7 @@ export default function AdminLayout({
         <AppShell
           hasSidebar={!isPendingApproval}
           sidebar={isPendingApproval ? null : <Sidebar title="Admin Portal" items={allNavItems} />}
-          header={<Header title="Admin Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
+          header={<Header title="Admin Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><NotificationNavButton /><UserMenu /></>}</>} showThemeToggle />}
         >
           {isRestricted ? (
             <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">

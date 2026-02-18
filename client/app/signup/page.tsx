@@ -19,7 +19,6 @@ import { useGoogleLogin } from "@react-oauth/google";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
 import { executeRecaptcha } from "@/lib/recaptcha";
-import RecaptchaNotice from "@/components/recaptcha/RecaptchaNotice";
 
 const schema = z
   .object({
@@ -104,6 +103,7 @@ export default function SignupPage() {
             (tokenResponse as any).code,
             undefined,
             true,
+            role,
           );
           toast({
             title: "Welcome!",
@@ -117,7 +117,7 @@ export default function SignupPage() {
         const token =
           (tokenResponse as any).access_token ||
           (tokenResponse as any).credential;
-        const user = await googleLogin(token, true);
+        const user = await googleLogin(token, true, role);
         toast({
           title: "Welcome!",
           description: "Signed up with Google successfully.",
@@ -445,10 +445,6 @@ export default function SignupPage() {
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
             </form>
-
-            <div className="mt-1.5 sm:mt-2">
-              <RecaptchaNotice />
-            </div>
 
             <p className="text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Already have an account?{"   "}
