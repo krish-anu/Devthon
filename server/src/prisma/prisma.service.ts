@@ -96,4 +96,28 @@ export class PrismaService
   async onModuleDestroy() {
     await this.$disconnect();
   }
+
+  /**
+   * Protects runtime against partially-applied migrations in long-lived dev DBs.
+   * These statements are idempotent and safe to run on every startup.
+   */
+  private async ensureSchemaCompatibility() {
+    const statements = [
+      `ALTER TABLE "PointsTransaction" ADD COLUMN IF NOT EXISTS "multiplier" DOUBLE PRECISION NOT NULL DEFAULT 1`,
+      `ALTER TABLE "PointsTransaction" ADD COLUMN IF NOT EXISTS "reason" JSONB`,
+      `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "totalPoints" INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMP(3)`,
+    ];
+
+    for (const statement of statements) {
+      try {
+        await this.$executeRawUnsafe(statement);
+      } catch (error) {
+        this.logger.warn(
+          `Schema compatibility step failed: ${statement}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
+    }
+  }
 }

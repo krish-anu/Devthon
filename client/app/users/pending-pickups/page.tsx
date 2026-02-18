@@ -20,6 +20,7 @@ export default function PendingPickupsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["pending-pickups"],
     queryFn: () => apiFetch<Booking[]>("/pickups/pending"),
+    refetchInterval: 12000,
   });
 
   const pickups = data ?? []; 

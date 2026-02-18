@@ -110,6 +110,11 @@ export async function executeRecaptcha(action: string) {
     return null;
   }
 
+  // Placeholder value in `.env` should never trigger a real script load.
+  if (siteKey && /your_recaptcha_site_key_here/i.test(siteKey)) {
+    return null;
+  }
+
   if (!siteKey) {
     // If no site key is configured, skip gracefully (useful for local/dev)
     // Return null to indicate no token was generated

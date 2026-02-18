@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/shared/kpi-card";
@@ -14,28 +14,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Button } from "@/components/ui/button";
 
 export default function DriverDashboardPage() {
+  const { user, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["driver-bookings"],
     queryFn: () => apiFetch<any[]>("/driver/bookings"),
+    refetchInterval: 12000,
   });
 
   const bookings = data ?? [];
 
   const stats = useMemo(() => {
     const assigned = bookings.length;
-    const scheduled = bookings.filter((b) => b.status === "SCHEDULED").length;
-    const onPickup = bookings.filter(
-      (b) => b.status === "IN_PROGRESS" || b.status === "ON_PICKUP",
+    const scheduled = bookings.filter((b) =>
+      ["CREATED", "SCHEDULED", "ASSIGNED"].includes(b.status),
+    ).length;
+    const onPickup = bookings.filter((b) =>
+      ["IN_PROGRESS", "COLLECTED", "PAID"].includes(b.status),
     ).length;
     const completed = bookings.filter((b) => b.status === "COMPLETED").length;
     return { assigned, scheduled, onPickup, completed };
   }, [bookings]);
 
+  const statusMutation = useMutation({
+    mutationFn: (nextStatus: "ONLINE" | "OFFLINE") =>
+      apiFetch("/driver/status", {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      }),
+    onSuccess: async () => {
+      await refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ["admin-drivers"] });
+    },
+  });
+
+  const currentStatus = user?.driverStatus ?? "OFFLINE";
+  const isOnPickup = currentStatus === "ON_PICKUP";
+  const nextStatus = currentStatus === "ONLINE" ? "OFFLINE" : "ONLINE";
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-sm text-(--muted)">Driver status</p>
+          <p className="text-lg font-semibold">{currentStatus}</p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => statusMutation.mutate(nextStatus)}
+          disabled={statusMutation.isLoading || isOnPickup}
+        >
+          {currentStatus === "ONLINE" ? "Go offline" : "Go online"}
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
         <KpiCard label="Assigned" value={`${stats.assigned}`} />
         <KpiCard label="Scheduled" value={`${stats.scheduled}`} />
         <KpiCard label="On Pickup" value={`${stats.onPickup}`} />

@@ -42,6 +42,7 @@ export default function BookingHistoryPage() {
           ...(category ? { category } : {}),
         }).toString()}`,
       ),
+    refetchInterval: 12000,
   });
 
   const bookings = data?.items ?? [];

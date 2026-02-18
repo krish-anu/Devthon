@@ -12,13 +12,17 @@ export interface User {
   address?: string | null;
   status?: CustomerStatus;
   approved?: boolean;
+  driverStatus?: 'ONLINE' | 'OFFLINE' | 'ON_PICKUP';
   createdAt: string;
   avatar?: string | null;
   totalPoints?: number;
 }
 
 export type BookingStatus =
+  | 'CREATED'
   | 'SCHEDULED'
+  | 'ASSIGNED'
+  | 'IN_PROGRESS'
   | 'COLLECTED'
   | 'PAID'
   | 'COMPLETED'
@@ -46,6 +50,12 @@ export interface Booking {
   status: BookingStatus;
   actualWeightKg?: number | null;
   finalAmountLkr?: number | null;
+  user?: {
+    id?: string;
+    fullName?: string | null;
+    phone?: string | null;
+    email?: string;
+  } | null;
   driver?: {
     id: string;
     fullName: string;

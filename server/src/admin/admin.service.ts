@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma, CustomerType, NotificationLevel, Role } from '@prisma/client';
+import { BookingStatus, CustomerType, NotificationLevel, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../notifications/push.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
@@ -13,28 +13,76 @@ import { AdminCreateWasteCategoryDto } from './dto/admin-create-waste-category.d
 import { AdminUpdateWasteCategoryDto } from './dto/admin-update-waste-category.dto';
 import * as bcrypt from 'bcrypt';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
+import { RewardsService } from '../rewards/rewards.service';
+import { UpdateBookingStatusDto } from '../bookings/dto/update-booking-status.dto';
+import { calculateMidpointAmountLkr } from '../bookings/booking-amount';
+import { getTransitionError } from '../bookings/booking-status';
+
+type ActorContext = { sub: string; role: Role };
+const CLOSED_BOOKING_STATUSES = new Set<BookingStatus>([
+  BookingStatus.COMPLETED,
+  BookingStatus.CANCELLED,
+  BookingStatus.REFUNDED,
+]);
+const PRE_ASSIGN_BOOKING_STATUSES = new Set<BookingStatus>([
+  BookingStatus.CREATED,
+  BookingStatus.SCHEDULED,
+]);
+const DRIVER_REQUIRED_BOOKING_STATUSES = new Set<BookingStatus>([
+  BookingStatus.ASSIGNED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.COLLECTED,
+  BookingStatus.PAID,
+  BookingStatus.COMPLETED,
+]);
+const BOOKING_STATUSES = Object.values(BookingStatus) as BookingStatus[];
+const LEGACY_SAFE_BOOKING_STATUSES: BookingStatus[] = [
+  BookingStatus.SCHEDULED,
+  BookingStatus.COLLECTED,
+  BookingStatus.PAID,
+  BookingStatus.COMPLETED,
+  BookingStatus.CANCELLED,
+  BookingStatus.REFUNDED,
+];
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
+  private readonly bookingStatusAvailability = new Map<BookingStatus, boolean>();
+  private bookingStatusAvailabilityLoaded = false;
+  private bookingStatusAvailabilityKnown = false;
 
   constructor(
     private prisma: PrismaService,
     private pushService: PushService,
+    private rewardsService: RewardsService,
   ) {}
 
   async getMetrics() {
-    const [revenueAgg, totalUsers, activeDrivers, pendingPickups] =
-      await Promise.all([
-        this.prisma.paymentTransaction.aggregate({
-          _sum: { amountLkr: true },
-        }),
-        this.prisma.user.count(),
-        this.prisma.driver.count({
-          where: { status: { in: ['ONLINE', 'ON_PICKUP'] } },
-        }),
-        this.prisma.booking.count({ where: { status: 'SCHEDULED' } }),
-      ]);
+    const [
+      revenueAgg,
+      revenueCount,
+      completedAgg,
+      totalUsers,
+      activeDrivers,
+      pendingPickups,
+    ] = await Promise.all([
+      this.prisma.paymentTransaction.aggregate({
+        _sum: { amountLkr: true },
+      }),
+      this.prisma.paymentTransaction.count(),
+      this.prisma.booking.aggregate({
+        _sum: { finalAmountLkr: true },
+        where: { status: BookingStatus.COMPLETED },
+      }),
+      this.prisma.user.count(),
+      this.prisma.driver.count({
+        where: { status: { in: ['ONLINE', 'ON_PICKUP'] } },
+      }),
+      this.prisma.booking.count({
+        where: { status: { in: ['SCHEDULED', 'ASSIGNED', 'IN_PROGRESS'] } },
+      }),
+    ]);
 
     const last7Days = Array.from({ length: 7 }).map((_, index) => {
       const date = new Date();
@@ -42,21 +90,63 @@ export class AdminService {
       return date;
     });
 
-    const transactions = await this.prisma.paymentTransaction.findMany({
-      where: {
-        createdAt: {
-          gte: new Date(last7Days[0].toISOString().slice(0, 10)),
-        },
-      },
-    });
+    const useTransactions = revenueCount > 0;
+    const totalRevenue = useTransactions
+      ? revenueAgg._sum.amountLkr ?? 0
+      : completedAgg._sum.finalAmountLkr ?? 0;
 
-    const revenueByDay = last7Days.map((date) => {
-      const key = date.toISOString().slice(0, 10);
-      const sum = transactions
-        .filter((t) => t.createdAt.toISOString().slice(0, 10) === key)
-        .reduce((acc, cur) => acc + cur.amountLkr, 0);
-      return { date: key, revenue: sum };
-    });
+    let revenueByDay: Array<{ date: string; revenue: number }> = [];
+
+    if (useTransactions) {
+      const transactions = await this.prisma.paymentTransaction.findMany({
+        where: {
+          createdAt: {
+            gte: new Date(last7Days[0].toISOString().slice(0, 10)),
+          },
+        },
+      });
+
+      revenueByDay = last7Days.map((date) => {
+        const key = date.toISOString().slice(0, 10);
+        const sum = transactions
+          .filter((t) => t.createdAt.toISOString().slice(0, 10) === key)
+          .reduce((acc, cur) => acc + cur.amountLkr, 0);
+        return { date: key, revenue: sum };
+      });
+    } else {
+      const completed = await this.prisma.booking.findMany({
+        where: {
+          status: BookingStatus.COMPLETED,
+          finalAmountLkr: { not: null },
+          OR: [
+            {
+              confirmedAt: {
+                gte: new Date(last7Days[0].toISOString().slice(0, 10)),
+              },
+            },
+            {
+              confirmedAt: null,
+              createdAt: {
+                gte: new Date(last7Days[0].toISOString().slice(0, 10)),
+              },
+            },
+          ],
+        },
+        select: {
+          finalAmountLkr: true,
+          confirmedAt: true,
+          createdAt: true,
+        },
+      });
+
+      revenueByDay = last7Days.map((date) => {
+        const key = date.toISOString().slice(0, 10);
+        const sum = completed
+          .filter((b) => (b.confirmedAt ?? b.createdAt).toISOString().slice(0, 10) === key)
+          .reduce((acc, cur) => acc + (cur.finalAmountLkr ?? 0), 0);
+        return { date: key, revenue: sum };
+      });
+    }
 
     const bookingsByCategory = await this.prisma.booking.groupBy({
       by: ['wasteCategoryId'],
@@ -80,7 +170,7 @@ export class AdminService {
 
     return {
       totals: {
-        totalRevenue: revenueAgg._sum.amountLkr ?? 0,
+        totalRevenue,
         totalUsers,
         activeDrivers,
         pendingPickups,
@@ -339,6 +429,7 @@ export class AdminService {
       pickupCount: d.pickupCount,
       vehicle: d.vehicle,
       status: d.status,
+      approved: d.approved,
       createdAt: d.createdAt,
     }));
   }
@@ -445,6 +536,17 @@ export class AdminService {
     }));
   }
 
+  async listSupportedBookingStatuses() {
+    await this.loadBookingStatusAvailability();
+    if (!this.bookingStatusAvailabilityKnown) {
+      return LEGACY_SAFE_BOOKING_STATUSES;
+    }
+
+    return BOOKING_STATUSES.filter(
+      (status) => this.bookingStatusAvailability.get(status) === true,
+    );
+  }
+
   async updatePricing(dto: AdminUpdatePricingDto) {
     const updates = await Promise.all(
       dto.items.map((item) =>
@@ -513,36 +615,131 @@ export class AdminService {
    * Admin updates a booking (assign driver, change status, set final weight/amount).
    * Sends push notifications to the customer (and driver if assigned).
    */
-  async updateBooking(id: string, dto: AdminUpdateBookingDto) {
+  async updateBooking(id: string, dto: AdminUpdateBookingDto, actor: ActorContext) {
     const existing = await this.prisma.booking.findUnique({
       where: { id },
       include: { wasteCategory: true, driver: true },
     });
     if (!existing) throw new NotFoundException('Booking not found');
 
+    const update: AdminUpdateBookingDto = { ...dto };
+    const driverChanged = Boolean(
+      update.driverId && update.driverId !== existing.driverId,
+    );
+
+    if (driverChanged) {
+      if (CLOSED_BOOKING_STATUSES.has(existing.status)) {
+        throw new BadRequestException('Cannot assign a driver to a closed booking');
+      }
+
+      const driver = await this.prisma.driver.findUnique({
+        where: { id: update.driverId },
+      });
+      if (!driver) throw new BadRequestException('Driver not found');
+      if (!driver.approved) {
+        throw new BadRequestException('Driver must be approved before assignment');
+      }
+
+      if (!update.status && PRE_ASSIGN_BOOKING_STATUSES.has(existing.status)) {
+        const canUseAssignedStatus = await this.isBookingStatusSupported(
+          BookingStatus.ASSIGNED,
+          false,
+        );
+        if (canUseAssignedStatus) {
+          update.status = BookingStatus.ASSIGNED;
+        } else {
+          this.logger.warn(
+            'Skipping auto status ASSIGNED because the database enum is missing that value',
+          );
+        }
+      }
+    }
+
+    if (update.status) {
+      const isSupported = await this.isBookingStatusSupported(update.status, true);
+      if (!isSupported) {
+        throw new BadRequestException(
+          `Status ${update.status} is not available in the current database schema. Run migrations and restart the backend.`,
+        );
+      }
+    }
+
+    const nextStatus = update.status ?? existing.status;
+    const shouldConfirm = nextStatus === BookingStatus.COMPLETED;
+    const statusChanged = nextStatus !== existing.status;
+
+    if (statusChanged) {
+      const transitionError = getTransitionError(existing.status, nextStatus);
+      if (transitionError) {
+        throw new BadRequestException(transitionError);
+      }
+    }
+
+    const hasDriver =
+      update.driverId !== undefined ? Boolean(update.driverId) : Boolean(existing.driverId);
+    if (
+      DRIVER_REQUIRED_BOOKING_STATUSES.has(nextStatus) &&
+      !hasDriver
+    ) {
+      throw new BadRequestException('Assign a driver before advancing this booking');
+    }
+
     const data: any = {};
-    if (dto.status) data.status = dto.status;
-    if (dto.driverId) data.driverId = dto.driverId;
-    if (dto.actualWeightKg !== undefined) data.actualWeightKg = dto.actualWeightKg;
-    if (dto.finalAmountLkr !== undefined) data.finalAmountLkr = dto.finalAmountLkr;
+    if (update.status) data.status = update.status;
+    if (update.driverId) data.driverId = update.driverId;
+    if (update.actualWeightKg !== undefined) data.actualWeightKg = update.actualWeightKg;
+    if (update.finalAmountLkr !== undefined) data.finalAmountLkr = update.finalAmountLkr;
+    if (shouldConfirm && !existing.confirmedAt) data.confirmedAt = new Date();
 
-    const updated = await this.prisma.booking.update({
-      where: { id },
-      data,
-      include: { wasteCategory: true, driver: true },
-    });
+    const weightForAmount =
+      update.actualWeightKg !== undefined
+        ? update.actualWeightKg
+        : existing.actualWeightKg ?? null;
+    if (data.finalAmountLkr === undefined && weightForAmount !== null) {
+      const computed = await this.calculateFinalAmountLkr(
+        existing.wasteCategoryId,
+        weightForAmount,
+      );
+      if (computed !== null) data.finalAmountLkr = computed;
+    }
 
-    // ── Push notification triggers based on what changed ──
+    const updated = await (async () => {
+      try {
+        return await this.prisma.booking.update({
+          where: { id },
+          data,
+          include: { wasteCategory: true, driver: true },
+        });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (
+          update.status &&
+          errorMessage.includes('invalid input value for enum') &&
+          errorMessage.includes('BookingStatus')
+        ) {
+          throw new BadRequestException(
+            `Status ${update.status} is not available in the current database schema. Run migrations and restart the backend.`,
+          );
+        }
+        throw error;
+      }
+    })();
+
+    if (statusChanged && actor) {
+      await this.recordStatusHistory(existing.id, existing.status, nextStatus, actor);
+    }
+
+    // Push notification triggers based on what changed
     const catName = updated.wasteCategory?.name ?? 'waste';
     const shortId = id.slice(0, 8);
 
     // Driver was just assigned
-    if (dto.driverId && dto.driverId !== existing.driverId) {
-      const driver = await this.prisma.driver.findUnique({ where: { id: dto.driverId } });
+    if (update.driverId && update.driverId !== existing.driverId) {
+      const driver = await this.prisma.driver.findUnique({ where: { id: update.driverId } });
       // Notify customer
       this.pushService
         .notify(existing.userId, {
-          title: 'Driver assigned 🚚',
+          title: 'Driver assigned',
           body: `Driver ${driver?.fullName ?? 'a driver'} will collect your ${catName}.`,
           level: NotificationLevel.INFO,
           bookingId: id,
@@ -552,8 +749,8 @@ export class AdminService {
       // Notify driver
       if (driver) {
         this.pushService
-          .notify(dto.driverId, {
-            title: 'New pickup assigned 📦',
+          .notify(update.driverId, {
+            title: 'New pickup assigned',
             body: `Pickup at ${existing.addressLine1}, ${existing.city} on ${new Date(existing.scheduledDate).toLocaleDateString()} (${existing.scheduledTimeSlot}).`,
             level: NotificationLevel.INFO,
             bookingId: id,
@@ -564,12 +761,12 @@ export class AdminService {
     }
 
     // Status-based notifications to customer
-    if (dto.status && dto.status !== existing.status) {
-      switch (dto.status) {
+    if (statusChanged) {
+      switch (nextStatus) {
         case 'COLLECTED':
           this.pushService
             .notify(existing.userId, {
-              title: 'Pickup collected ✅',
+              title: 'Pickup collected',
               body: `Your ${catName} pickup #${shortId} has been collected.`,
               level: NotificationLevel.SUCCESS,
               bookingId: id,
@@ -580,7 +777,7 @@ export class AdminService {
         case 'PAID':
           this.pushService
             .notify(existing.userId, {
-              title: 'Payment processed 💰',
+              title: 'Payment processed',
               body: `Payment of LKR ${updated.finalAmountLkr?.toFixed(2) ?? '0.00'} for booking #${shortId} was processed.`,
               level: NotificationLevel.SUCCESS,
               bookingId: id,
@@ -591,8 +788,8 @@ export class AdminService {
         case 'COMPLETED':
           this.pushService
             .notify(existing.userId, {
-              title: 'Booking completed 🎉',
-              body: `Your ${catName} pickup #${shortId} is complete. Final: LKR ${updated.finalAmountLkr?.toFixed(2) ?? '—'}.`,
+              title: 'Booking completed',
+              body: `Your ${catName} pickup #${shortId} is complete. Final: LKR ${updated.finalAmountLkr?.toFixed(2) ?? '-'}.`,
               level: NotificationLevel.SUCCESS,
               bookingId: id,
               url: `/users/bookings/${id}`,
@@ -602,7 +799,7 @@ export class AdminService {
         case 'CANCELLED':
           this.pushService
             .notify(existing.userId, {
-              title: 'Booking cancelled ❌',
+              title: 'Booking cancelled',
               body: `Booking #${shortId} was cancelled by the admin.`,
               level: NotificationLevel.WARNING,
               bookingId: id,
@@ -613,7 +810,7 @@ export class AdminService {
         case 'REFUNDED':
           this.pushService
             .notify(existing.userId, {
-              title: 'Refund issued 💸',
+              title: 'Refund issued',
               body: `Refund for booking #${shortId} has been processed.`,
               level: NotificationLevel.WARNING,
               bookingId: id,
@@ -624,10 +821,115 @@ export class AdminService {
       }
     }
 
+    if (shouldConfirm) {
+      await this.rewardsService.awardPointsForBooking(updated.id);
+    }
+
     return {
       ...updated,
       user: undefined, // Don't leak full user in admin response
     };
+  }
+
+  async assignDriver(id: string, driverId: string, actor: ActorContext) {
+    return this.updateBooking(id, { driverId }, actor);
+  }
+
+  async updateBookingStatus(
+    id: string,
+    dto: UpdateBookingStatusDto,
+    actor: ActorContext,
+  ) {
+    return this.updateBooking(
+      id,
+      {
+        status: dto.status,
+        actualWeightKg: dto.actualWeightKg,
+        finalAmountLkr: dto.finalAmountLkr,
+      },
+      actor,
+    );
+  }
+
+  private async calculateFinalAmountLkr(
+    wasteCategoryId: string,
+    weightKg: number,
+  ) {
+    const pricing = await this.prisma.pricing.findUnique({
+      where: { wasteCategoryId },
+    });
+    return calculateMidpointAmountLkr(weightKg, pricing);
+  }
+
+  private async recordStatusHistory(
+    bookingId: string,
+    fromStatus: BookingStatus,
+    toStatus: BookingStatus,
+    actor: ActorContext,
+  ) {
+    await this.prisma.bookingStatusHistory.create({
+      data: {
+        bookingId,
+        fromStatus,
+        toStatus,
+        changedById: actor.sub,
+        changedByRole: actor.role,
+      },
+    });
+  }
+
+  private async isBookingStatusSupported(
+    status: BookingStatus,
+    fallbackWhenUnknown: boolean,
+  ) {
+    await this.loadBookingStatusAvailability();
+    if (!this.bookingStatusAvailabilityKnown) return fallbackWhenUnknown;
+    return this.bookingStatusAvailability.get(status) === true;
+  }
+
+  private async loadBookingStatusAvailability() {
+    if (this.bookingStatusAvailabilityLoaded) return;
+
+    this.bookingStatusAvailabilityLoaded = true;
+    for (const status of BOOKING_STATUSES) {
+      this.bookingStatusAvailability.set(status, false);
+    }
+
+    try {
+      const rows = await this.prisma.$queryRaw<Array<{ value: string }>>(
+        Prisma.sql`
+          SELECT e.enumlabel AS "value"
+          FROM pg_attribute a
+          JOIN pg_class c ON c.oid = a.attrelid
+          JOIN pg_namespace n ON n.oid = c.relnamespace
+          JOIN pg_type t ON t.oid = a.atttypid
+          JOIN pg_enum e ON e.enumtypid = t.oid
+          WHERE c.relname = 'Booking'
+            AND a.attname = 'status'
+            AND n.nspname = current_schema()
+          ORDER BY e.enumsortorder
+        `,
+      );
+
+      if (!rows.length) {
+        this.logger.warn(
+          'Could not load Booking.status enum values from the database. Falling back to default status options.',
+        );
+        return;
+      }
+
+      for (const row of rows) {
+        if (this.bookingStatusAvailability.has(row.value as BookingStatus)) {
+          this.bookingStatusAvailability.set(row.value as BookingStatus, true);
+        }
+      }
+
+      this.bookingStatusAvailabilityKnown = true;
+    } catch {
+      this.logger.warn(
+        'Failed to inspect Booking.status enum values from database. Falling back to default status options.',
+      );
+    }
   }
 
   /** Debug: trigger a 'Booking completed' style notification for a booking (admin only) */

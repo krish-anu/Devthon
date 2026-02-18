@@ -2,7 +2,11 @@
 
 export default function RecaptchaBadge() {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-  if (!siteKey) return null;
+  const enabled = process.env.NEXT_PUBLIC_RECAPTCHA_ENABLED;
+  const isEnabled = !enabled || enabled.toLowerCase() !== "false";
+  const hasRealSiteKey =
+    !!siteKey && !/your_recaptcha_site_key_here/i.test(siteKey);
+  if (!isEnabled || !hasRealSiteKey) return null;
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-md bg-white/90 dark:bg-slate-900/80 px-3 py-2 shadow-sm border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200">

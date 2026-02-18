@@ -61,9 +61,8 @@ export function isMetalCategory(name: string) {
 export function isEwasteCategory(name: string) {
   const normalized = normalizeCategoryName(name);
   return (
-    normalized.includes('e-waste') ||
-    normalized.includes('ewaste') ||
-    normalized.includes('electronic')
+    normalized.includes('electronic') ||
+    /(^|[^a-z])e[\s-]?wastes?([^a-z]|$)/.test(normalized)
   );
 }
 

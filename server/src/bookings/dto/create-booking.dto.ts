@@ -1,11 +1,12 @@
 import {
+  ArrayMinSize,
   IsArray,
   IsDateString,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -16,11 +17,13 @@ export class BookingItemDto {
 
   @IsNumber()
   @Type(() => Number)
+  @Min(0.1)
   quantityKg: number;
 }
 
 export class CreateBookingDto {
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => BookingItemDto)
   items: BookingItemDto[];

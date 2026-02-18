@@ -112,11 +112,19 @@ export async function apiFetch<T>(
       ...options,
       headers,
       credentials: (options as any).credentials ?? "include",
+      signal: timeoutController.signal,
     });
   } catch (e: any) {
+    if (e?.name === "AbortError") {
+      throw new Error(
+        `Request timed out after ${Math.ceil(REQUEST_TIMEOUT_MS / 1000)}s`,
+      );
+    }
     // Provide a clearer error when the network/socket is unavailable.
     console.error("Network error while fetching", `${API_URL}${path}`, e);
     throw new Error(`Network error connecting to ${API_URL}${path}: ${e?.message || e}`);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (response.status === 401 && auth && retry) {
