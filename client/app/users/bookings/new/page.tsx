@@ -86,6 +86,10 @@ export default function NewBookingPage() {
   const [uploadedImages, setUploadedImages] = useState<
     { id: string; file: File; preview: string }[]
   >([]);
+  // images assigned specifically to categories (categoryId -> images)
+  const [categoryImages, setCategoryImages] = useState<
+    Record<string, { id: string; file: File; preview: string }[]>
+  >({});
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<
     {
@@ -199,6 +203,64 @@ export default function NewBookingPage() {
     handleFileSelect(event.target.files);
   };
 
+  // Add images tied to a specific category (also adds them to the global uploadedImages list)
+  const handleCategoryFileSelect = (
+    categoryId: string,
+    files: FileList | null,
+  ) => {
+    if (!files || files.length === 0) return;
+
+    const newImages: { id: string; file: File; preview: string }[] = [];
+    const maxFiles = 10;
+
+    for (let i = 0; i < Math.min(files.length, maxFiles); i++) {
+      const file = files[i];
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file",
+          description: `${file.name} is not an image file`,
+          variant: "error",
+        });
+        continue;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} is larger than 5MB`,
+          variant: "error",
+        });
+        continue;
+      }
+
+      const id = Math.random().toString(36).substring(7);
+      const preview = URL.createObjectURL(file);
+      newImages.push({ id, file, preview });
+    }
+
+    if (newImages.length === 0) return;
+
+    // keep global uploaded list (so user can scan all images together)
+    setUploadedImages((prev) => [...prev, ...newImages]);
+
+    // add to the specific category
+    setCategoryImages((prev) => {
+      const existing = prev[categoryId] ?? [];
+      return { ...prev, [categoryId]: [...existing, ...newImages] };
+    });
+
+    if (files.length > maxFiles) {
+      toast({
+        title: "Too many files",
+        description: `Only the first ${maxFiles} images were added`,
+        variant: "warning",
+      });
+    }
+  };
+
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
@@ -226,6 +288,16 @@ export default function NewBookingPage() {
     setScanResults((prev) =>
       prev.filter((result) => result.imageId !== imageId),
     );
+
+    // remove from any category assignments
+    setCategoryImages((prev) => {
+      const updated: Record<string, { id: string; file: File; preview: string }[]> = {};
+      Object.entries(prev).forEach(([key, imgs]) => {
+        const filtered = imgs.filter((i) => i.id !== imageId);
+        if (filtered.length > 0) updated[key] = filtered;
+      });
+      return updated;
+    });
   };
 
   const handleScanImages = async () => {
@@ -480,232 +552,123 @@ export default function NewBookingPage() {
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Select Waste Categories</h3>
 
-          {/* Image Upload Section */}
-          <div className="rounded-xl border border-(--border) bg-(--surface) p-6">
-            <Label className="mb-4 block text-sm font-semibold">
-              Upload Images to Auto-Detect Categories
-            </Label>
-
-            {/* Drag and Drop Zone */}
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-                isDragging
-                  ? "border-(--brand) bg-(--brand)/5"
-                  : "border-(--border) bg-(--surface-strong)"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-(--brand)/10">
-                  <svg
-                    className="h-6 w-6 text-(--brand)"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">
-                    Drag and drop images here, or click to browse
-                  </p>
-                  <p className="text-xs text-(--muted) mt-1">
-                    Support for multiple images (max 10). PNG, JPG up to 5MB
-                    each
-                  </p>
-                </div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="absolute inset-0 cursor-pointer opacity-0"
-                />
-              </div>
-            </div>
-
-            {/* Uploaded Images Preview */}
-            {uploadedImages.length > 0 && (
-              <div className="mt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold">
-                    Uploaded Images ({uploadedImages.length})
-                  </Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      uploadedImages.forEach((img) =>
-                        URL.revokeObjectURL(img.preview),
-                      );
-                      setUploadedImages([]);
-                      setScanResults([]);
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  {uploadedImages.map((image) => {
-                    const result = scanResults.find(
-                      (r) => r.imageId === image.id,
-                    );
-                    return (
-                      <div
-                        key={image.id}
-                        className="relative rounded-lg border border-(--border) bg-(--surface-strong) p-3"
-                      >
-                        <button
-                          onClick={() => removeImage(image.id)}
-                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                        <div className="aspect-square overflow-hidden rounded-md">
-                          <img
-                            src={image.preview}
-                            alt="Waste preview"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        {result && (
-                          <div className="mt-2 space-y-1">
-                            <p className="text-xs text-(--muted)">Detected:</p>
-                            <p className="text-sm font-semibold">
-                              {result.categoryName}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-block h-2 w-2 rounded-full ${
-                                  result.confidence === "high"
-                                    ? "bg-green-500"
-                                    : result.confidence === "medium"
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
-                                }`}
-                              />
-                              <span className="text-xs text-(--muted) capitalize">
-                                {result.confidence}
-                              </span>
-                            </div>
-                            {result.message && (
-                              <p className="text-xs text-(--muted)">
-                                {result.message}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Scan Button */}
-                {/* <Button
-                  onClick={handleScanImages}
-                  disabled={isScanning}
-                  className="w-full"
-                >
-                  {isScanning ? (
-                    <>
-                      <svg
-                        className="mr-2 h-4 w-4 animate-spin"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Scanning {uploadedImages.length} image(s)...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="mr-2 h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                      Scan Images
-                    </>
-                  )}
-                </Button> */}
-              </div>
-            )}
-          </div>
 
           {/* Category Selection Grid */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">
+            {/* <Label className="text-sm font-semibold">
               {scanResults.length > 0
                 ? "Detected Categories (You can modify selection):"
                 : "Or Select Categories Manually:"}
-            </Label>
+            </Label> */}
             <div className="grid gap-4 md:grid-cols-3">
-              {(combinedPricing ?? []).map((item) => (
-                <button
-                  key={item.id}
-                  className={`rounded-2xl border px-4 py-4 text-left ${
-                    selectedItems.some((s) => s.id === item.id)
-                      ? "border-(--brand) bg-(--brand)/10"
-                      : "border-(--border) bg-(--surface)"
-                  }`}
-                  onClick={() => {
-                    const exists = selectedItems.find((s) => s.id === item.id);
-                    if (exists) {
-                      setSelectedItems((prev) =>
-                        prev.filter((p) => p.id !== item.id),
-                      );
-                    } else {
-                      setSelectedItems((prev) => [
-                        ...prev,
-                        { id: item.id, item, quantity: 1 },
-                      ]);
-                    }
-                  }}
-                >
-                  <div className="flex-1 text-left">
-                    <p className="text-lg font-semibold">
-                      {item.wasteCategory.name}
-                    </p>
-                    <p className="text-xs text-(--muted)">
-                      LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg
-                    </p>
+              {(combinedPricing ?? []).map((item) => {
+                const isSelected = selectedItems.some((s) => s.id === item.id);
+                const catId = item.wasteCategory.id;
+                const imgsForCat = categoryImages[catId] ?? [];
+
+                const toggleSelection = () => {
+                  const exists = selectedItems.find((s) => s.id === item.id);
+                  if (exists) {
+                    setSelectedItems((prev) => prev.filter((p) => p.id !== item.id));
+                  } else {
+                    setSelectedItems((prev) => [
+                      ...prev,
+                      { id: item.id, item, quantity: 1 },
+                    ]);
+                  }
+                };
+
+                return (
+                  <div
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleSelection();
+                      }
+                    }}
+                    onClick={toggleSelection}
+                    className={`relative rounded-2xl border px-4 py-4 text-left ${
+                      isSelected ? "border-(--brand) bg-(--brand)/10" : "border-(--border) bg-(--surface)"
+                    }`}
+                  >
+                    {/* camera / per-category image picker */}
+                    <div className="absolute right-3 top-3 flex items-center gap-2">
+                      <label
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center rounded-full bg-(--surface-strong) p-1 cursor-pointer"
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleCategoryFileSelect(catId, e.target.files);
+                            (e.target as HTMLInputElement).value = "";
+                          }}
+                          className="sr-only"
+                        />
+                        <svg
+                          className="h-4 w-4 text-(--muted)"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l4-4h10l4 4M5 8v10a1 1 0 001 1h12a1 1 0 001-1V8M8 12l2 2 4-4"
+                          />
+                        </svg>
+                      </label>
+
+                      {imgsForCat.length > 0 && (
+                        <div className="ml-2 inline-flex items-center rounded-full bg-(--brand) px-2 py-0.5 text-xs font-semibold text-white">
+                          {imgsForCat.length}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 text-left">
+                      <p className="text-lg font-semibold">{item.wasteCategory.name}</p>
+                      <p className="text-xs text-(--muted)">
+                        LKR {item.minPriceLkrPerKg} - {item.maxPriceLkrPerKg} / kg
+                      </p>
+
+                      {imgsForCat.length > 0 && (
+                        <div className="mt-2 flex items-center gap-2">
+                          {imgsForCat.slice(0, 3).map((img) => (
+                            <img
+                              key={img.id}
+                              src={img.preview}
+                              alt="preview"
+                              className="h-8 w-8 rounded-md object-cover"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeImage(img.id);
+                              }}
+                            />
+                          ))}
+                          {imgsForCat.length > 3 && (
+                            <div className="h-8 w-8 flex items-center justify-center rounded-md bg-(--surface-strong) text-xs text-(--muted)">
+                              +{imgsForCat.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-sm text-(--muted)">
+                      {isSelected ? "Selected" : "Tap to add"}
+                    </div>
                   </div>
-                  <div className="text-sm text-(--muted)">
-                    {selectedItems.find((s) => s.id === item.id)
-                      ? "Selected"
-                      : "Tap to add"}
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           </div>
 
