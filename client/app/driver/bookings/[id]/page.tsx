@@ -75,12 +75,12 @@ export default function DriverBookingDetailPage() {
   const canStart =
     status &&
     ["SCHEDULED", "ASSIGNED", "CREATED"].includes(status) &&
-    !updateMutation.isLoading;
+    !updateMutation.isPending;
 
   const canComplete =
     status &&
     ["IN_PROGRESS", "COLLECTED", "PAID"].includes(status) &&
-    !updateMutation.isLoading;
+    !updateMutation.isPending;
 
   const handleUpdate = (nextStatus?: BookingStatus) => {
     if (!bookingId) return;
@@ -179,7 +179,7 @@ export default function DriverBookingDetailPage() {
           <Button
             variant="secondary"
             onClick={() => handleUpdate()}
-            disabled={updateMutation.isLoading}
+            disabled={updateMutation.isPending}
           >
             Save updates
           </Button>

@@ -66,7 +66,7 @@ export default function DriverDashboardPage() {
         <Button
           variant="secondary"
           onClick={() => statusMutation.mutate(nextStatus)}
-          disabled={statusMutation.isLoading || isOnPickup}
+          disabled={statusMutation.isPending || isOnPickup}
         >
           {currentStatus === "ONLINE" ? "Go offline" : "Go online"}
         </Button>
