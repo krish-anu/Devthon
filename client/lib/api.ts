@@ -51,6 +51,7 @@ function resolveApiUrl() {
 }
 
 const API_URL = resolveApiUrl();
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export type AuthResponse = {
   user: User;
@@ -88,6 +89,7 @@ export async function apiFetch<T>(
   auth = true,
   retry = true,
 ): Promise<T> {
+  const { signal: externalSignal, ...requestOptions } = options;
   const headers = new Headers(options.headers || {});
   const accessToken = auth ? getAccessToken() : null;
   const hasBody = options.body !== undefined && options.body !== null;
@@ -106,10 +108,22 @@ export async function apiFetch<T>(
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
+  const abortOnExternalSignal = () => timeoutController.abort();
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      abortOnExternalSignal();
+    } else {
+      externalSignal.addEventListener("abort", abortOnExternalSignal, { once: true });
+    }
+  }
+
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
-      ...options,
+      ...requestOptions,
       headers,
       credentials: (options as any).credentials ?? "include",
       signal: timeoutController.signal,
@@ -125,6 +139,7 @@ export async function apiFetch<T>(
     throw new Error(`Network error connecting to ${API_URL}${path}: ${e?.message || e}`);
   } finally {
     clearTimeout(timeoutId);
+    externalSignal?.removeEventListener("abort", abortOnExternalSignal);
   }
 
   if (response.status === 401 && auth && retry) {
