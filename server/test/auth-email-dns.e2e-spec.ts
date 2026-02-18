@@ -30,8 +30,8 @@ describe('Auth email DNS check (e2e)', () => {
     await createApp();
 
     const res = await request(app.getHttpServer())
-      .post('/api/auth/otp/send')
-      .send({ email: 'user@asdfqweqwe123.com' })
+      .post('/api/auth/login')
+      .send({ email: 'user@asdfqweqwe123.com', password: 'test-password' })
       .expect(400);
 
     expect(JSON.stringify(res.body)).toContain('Email domain cannot receive mail');
@@ -42,11 +42,10 @@ describe('Auth email DNS check (e2e)', () => {
     await createApp();
 
     const res = await request(app.getHttpServer())
-      .post('/api/auth/otp/send')
-      .send({ email: 'user@asdfqweqwe123.com' })
-      .expect(201);
+      .post('/api/auth/login')
+      .send({ email: 'user@asdfqweqwe123.com', password: 'test-password' })
+      .expect(401);
 
-    expect(res.body).toHaveProperty('success', true);
-    expect(res.body).toHaveProperty('email', 'user@asdfqweqwe123.com');
+    expect(JSON.stringify(res.body)).not.toContain('Email domain cannot receive mail');
   });
 });

@@ -85,8 +85,8 @@ export default function DriverDashboardPage() {
         </Card>
       ) : (
         <Card>
-          <div className="mt-2">
-            <Table>
+          <div className="mt-2 overflow-x-auto -mx-6 sm:mx-0">
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking</TableHead>
@@ -104,13 +104,18 @@ export default function DriverDashboardPage() {
                     <TableCell>{b.actualWeightKg ?? "-"} kg</TableCell>
                     <TableCell>{b.status}</TableCell>
                     <TableCell>
-                      {new Date(b.scheduledDate || b.createdAt).toLocaleString()}
+                      {new Date(
+                        b.scheduledDate || b.createdAt,
+                      ).toLocaleString()}
                     </TableCell>
                   </TableRow>
                 ))}
                 {!bookings.length && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-(--muted)">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-(--muted)"
+                    >
                       No assigned pickups.
                     </TableCell>
                   </TableRow>

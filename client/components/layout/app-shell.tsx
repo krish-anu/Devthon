@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, cloneElement, isValidElement } from "react";
 import { cn } from "@/lib/utils";
 
 export function AppShell({
@@ -55,7 +55,11 @@ export function AppShell({
                 </svg>
               </button>
             </div>
-            {sidebar}
+            {isValidElement(sidebar)
+              ? cloneElement(sidebar as React.ReactElement<any>, {
+                  onNavigate: () => setMobileSidebarOpen(false),
+                })
+              : sidebar}
           </div>
         </div>
       )}
@@ -118,7 +122,7 @@ export function AppShell({
       >
         <div className="flex min-h-screen">
           <div className="flex-1">
-            <main className={cn("space-y-6 px-6 py-6", className)}>
+            <main className={cn("space-y-6 px-3 sm:px-6 py-4 sm:py-6", className)}>
               {children}
             </main>
           </div>

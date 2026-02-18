@@ -24,7 +24,7 @@ export default function AdminDriversPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <KpiCard label="Total Drivers" value={`${stats.total}`} />
         <KpiCard label="Online Now" value={`${stats.online}`} />
         <KpiCard label="On Pickup" value={`${stats.onPickup}`} />
@@ -36,7 +36,7 @@ export default function AdminDriversPage() {
           <SkeletonGrid count={6} cardClass="h-28" />
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {drivers.map((driver) => (
             <Card key={driver.id} className="space-y-2">
               <div className="flex items-center justify-between">

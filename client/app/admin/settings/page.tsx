@@ -103,14 +103,14 @@ export default function AdminSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      {/* <Card> */}
+        {/* <CardHeader>
           <CardTitle>Notifications</CardTitle>
           <CardDescription>
             Customize what alerts you receive in the admin console.
           </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </CardHeader> */}
+        {/* <CardContent className="space-y-4">
           <div className="flex items-start gap-3">
             <Checkbox
               id="admin-email-reports"
@@ -165,8 +165,8 @@ export default function AdminSettingsPage() {
               </p>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
+        </CardContent> */}
+        {/* <CardFooter className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="secondary"
@@ -177,8 +177,8 @@ export default function AdminSettingsPage() {
           <p className="text-xs text-(--muted)">
             Preferences are saved locally for this browser.
           </p>
-        </CardFooter>
-      </Card>
+        </CardFooter> */}
+      {/* </Card> */}
     </div>
   );
 }

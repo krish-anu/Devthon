@@ -1,15 +1,56 @@
-import { getAccessToken, getRefreshToken, setAuth } from "./auth";
+import { getAccessToken, setAuth } from "./auth";
 import { User } from "./types";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:4000/api`
-    : "http://localhost:4000/api");
-const REQUEST_TIMEOUT_MS = Math.max(
-  Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? "15000") || 15000,
-  1000,
-);
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function isLoopbackHost(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+}
+
+function resolveApiUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+
+  if (typeof window === "undefined") {
+    return trimTrailingSlash(configured || "http://localhost:4000/api");
+  }
+
+  if (!configured) {
+    // In hosted environments, prefer same-origin API routing (e.g. via reverse proxy).
+    return `${window.location.origin}/api`;
+  }
+
+  try {
+    const parsed = new URL(configured, window.location.origin);
+
+    // If a loopback API URL is configured in a hosted browser context,
+    // route through same-origin instead of direct :4000 calls.
+    if (
+      parsed.protocol.startsWith("http") &&
+      isLoopbackHost(parsed.hostname) &&
+      !isLoopbackHost(window.location.hostname)
+    ) {
+      const path = parsed.pathname && parsed.pathname !== "/" ? parsed.pathname : "/api";
+      return trimTrailingSlash(`${window.location.origin}${path}`);
+    }
+
+    // Avoid mixed-content requests when frontend is served over HTTPS.
+    if (
+      window.location.protocol === "https:" &&
+      parsed.protocol === "http:" &&
+      parsed.hostname === window.location.hostname
+    ) {
+      parsed.protocol = "https:";
+    }
+
+    return trimTrailingSlash(parsed.toString());
+  } catch {
+    return trimTrailingSlash(configured);
+  }
+}
+
+const API_URL = resolveApiUrl();
 
 export type AuthResponse = {
   user: User;
@@ -49,21 +90,15 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers = new Headers(options.headers || {});
   const accessToken = auth ? getAccessToken() : null;
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(
-    () => timeoutController.abort(),
-    REQUEST_TIMEOUT_MS,
-  );
+  const hasBody = options.body !== undefined && options.body !== null;
 
-  if (options.signal) {
-    options.signal.addEventListener(
-      "abort",
-      () => timeoutController.abort(),
-      { once: true },
-    );
-  }
-
-  if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
+  // Only set JSON content type when a request body exists.
+  // Setting it on GET/HEAD triggers unnecessary CORS preflight.
+  if (
+    hasBody &&
+    !(options.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -141,24 +176,6 @@ export const authApi = {
     apiFetch<{ success: boolean }>("/auth/logout", {
       method: "POST",
     }),
-  sendOtp: (payload: { email: string }) =>
-    apiFetch<{ success: boolean }>(
-      "/auth/otp/send",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      },
-      false,
-    ),
-  verifyOtp: (payload: { code: string }) =>
-    apiFetch<{ verified: boolean }>(
-      "/auth/otp/verify",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      },
-      false,
-    ),
   googleLogin: (payload: {
     token: string;
     signup?: boolean;

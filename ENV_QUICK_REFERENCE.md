@@ -53,6 +53,11 @@ GEMINI_API_KEY=your_key_here
 PORT=4000                              # Default: 4000
 NODE_ENV=development                   # Default: development
 CORS_ORIGIN=http://localhost:3000      # Default: http://localhost:3000
+# Prisma runtime behavior (recommended for local dev with Supabase)
+# Keep false by default to use pooled DATABASE_URL in Docker/local networks.
+PRISMA_PREFER_DIRECT_URL=false
+PRISMA_CONNECT_RETRIES=8
+PRISMA_CONNECT_RETRY_DELAY_MS=2000
 # Email DNS validation
 EMAIL_DNS_CHECK=false                    # Default: false. Set to 'true' to enable MX/A DNS checks when validating email domains
 

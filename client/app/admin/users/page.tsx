@@ -231,8 +231,8 @@ export default function AdminUsersPage() {
           <SkeletonTableRows columns={7} rows={6} />
         </Card>
       ) : (
-        <Card>
-          <Table>
+        <Card className="overflow-x-auto">
+          <Table className="min-w-[700px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -288,8 +288,8 @@ export default function AdminUsersPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-md space-y-4 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md space-y-4 p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 {editingUser ? "Edit User" : "Add User"}

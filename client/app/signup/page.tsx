@@ -181,7 +181,7 @@ export default function SignupPage() {
         description: "Welcome to Trash2Treasure.",
         variant: "success",
       });
-      window.location.href = "/verify";
+      window.location.href = "/";
     } catch (error: any) {
       // eslint-disable-next-line no-console
       console.error("Signup error:", error);
@@ -198,27 +198,27 @@ export default function SignupPage() {
       title="Turn Your Waste Into Wealth"
       subtitle="Join thousands of users earning money by recycling their waste responsibly."
     >
-      <div className="space-y-6">
-        <div className="flex items-center justify-center w-full h-full bg-background px-6 py-6 lg:py-12">
-          <ThemeToggle className="fixed right-6 top-6" />
-          <Card className="w-full max-w-md space-y-6">
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-(--brand)">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center justify-center w-full h-full bg-background px-4 sm:px-6 py-4 sm:py-6 lg:py-12">
+          <ThemeToggle className="fixed right-4 sm:right-6 top-4 sm:top-6 z-50" />
+          <Card className="w-full max-w-md space-y-4 sm:space-y-6">
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-[0.65rem] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-(--brand)">
                 Join the Green Revolution
               </p>
-              <h1 className="text-2xl font-semibold">Create your account</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold">Create your account</h1>
             </div>
 
             <Button
               variant="outline"
-              className="w-full h-11 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+              className="w-full h-10 sm:h-11 gap-2 text-xs sm:text-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
               loading={googleLoading}
               onClick={() => {
                 setGoogleLoading(true);
                 handleGoogleSignup();
               }}
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -239,7 +239,7 @@ export default function SignupPage() {
               Sign up with Google
             </Button>
             <form
-              className="space-y-4"
+              className="space-y-3 sm:space-y-4"
               onSubmit={handleSubmit(onSubmit)}
               onSubmitCapture={() => {
                 // eslint-disable-next-line no-console
@@ -267,6 +267,7 @@ export default function SignupPage() {
               <div className="space-y-2">
                 <Label>Phone Number</Label>
                 <PhoneInput
+                  className="w-full"
                   placeholder="+94 77 123 4567"
                   {...register("phone")}
                 />
@@ -280,6 +281,7 @@ export default function SignupPage() {
                 <Label>Password</Label>
                 <div className="flex items-center gap-2">
                   <Input
+                    className="flex-1"
                     type={showPassword ? "text" : "password"}
                     placeholder="Choose a strong password"
                     {...register("password")}
@@ -290,7 +292,7 @@ export default function SignupPage() {
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
-                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)]"
+                    className="h-9 w-9 sm:h-11 sm:w-11 inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)]"
                   >
                     {showPassword ? (
                       <svg
@@ -334,6 +336,7 @@ export default function SignupPage() {
                 <Label>Confirm Password</Label>
                 <div className="flex items-center gap-2">
                   <Input
+                    className="flex-1"
                     type={showConfirm ? "text" : "password"}
                     placeholder="Re-enter password"
                     {...register("confirmPassword")}
@@ -346,7 +349,7 @@ export default function SignupPage() {
                         ? "Hide confirm password"
                         : "Show confirm password"
                     }
-                    className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)]"
+                    className="h-9 w-9 sm:h-11 sm:w-11 inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)]"
                   >
                     {showConfirm ? (
                       <svg
@@ -387,7 +390,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label>Account Type</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {["HOUSEHOLD", "BUSINESS"].map((type) => (
                     <button
                       type="button"
@@ -414,7 +417,14 @@ export default function SignupPage() {
                   }
                 />
                 <span>
-                  I agree to the terms and privacy policy.
+                  I agree to the{" "}
+                  <Link href="/terms" target="_blank" className="text-(--brand) hover:text-(--brand-strong) underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="text-(--brand) hover:text-(--brand-strong) underline">
+                    Privacy Policy
+                  </Link>.
                   {errors.terms && (
                     <span className="block text-rose-400">
                       {errors.terms.message}
@@ -425,7 +435,7 @@ export default function SignupPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-(--brand) hover:bg-(--brand-strong) text-white"
+                className="w-full h-10 sm:h-11 bg-(--brand) hover:bg-(--brand-strong) text-white text-xs sm:text-sm"
                 loading={isSubmitting}
                 onClick={() => {
                   // eslint-disable-next-line no-console
@@ -436,15 +446,15 @@ export default function SignupPage() {
               </Button>
             </form>
 
-            <div className="mt-2">
+            <div className="mt-1.5 sm:mt-2">
               <RecaptchaNotice />
             </div>
 
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Already have an account?{"   "}
               <Link
                 href="/login"
-                className="font-medium text-(--brand) hover:text-(--brand-strong) ml-2"
+                className="font-medium text-(--brand) hover:text-(--brand-strong) ml-1 sm:ml-2 transition-colors"
               >
                 Login
               </Link>

@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { authApi, apiFetch, passkeyApi } from "@/lib/api";
+import { executeRecaptcha } from "@/lib/recaptcha";
 import {
   clearAuth,
   getStoredUser,
@@ -85,15 +86,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
+  const isRecaptchaVerificationFailure = (error: unknown) =>
+    error instanceof Error &&
+    error.message.toLowerCase().includes("recaptcha verification failed");
+
   const login = async (
     email: string,
     password: string,
     recaptchaToken?: string,
   ) => {
-    const data = await authApi.login({ email, password, recaptchaToken });
-    setAuth(data);
-    setUser(data.user);
-    return data.user;
+    try {
+      const data = await authApi.login({ email, password, recaptchaToken });
+      setAuth(data);
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      if (recaptchaToken && isRecaptchaVerificationFailure(error)) {
+        const retryToken = await executeRecaptcha("login");
+        if (retryToken && retryToken !== recaptchaToken) {
+          const data = await authApi.login({
+            email,
+            password,
+            recaptchaToken: retryToken,
+          });
+          setAuth(data);
+          setUser(data.user);
+          return data.user;
+        }
+      }
+      throw error;
+    }
   };
 
   const register = async (payload: {
@@ -105,10 +127,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN" | "DRIVER";
     recaptchaToken?: string;
   }) => {
-    const data = await authApi.register(payload);
-    setAuth(data);
-    setUser(data.user);
-    return data.user;
+    try {
+      const data = await authApi.register(payload);
+      setAuth(data);
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      if (payload.recaptchaToken && isRecaptchaVerificationFailure(error)) {
+        const retryToken = await executeRecaptcha("signup");
+        if (retryToken && retryToken !== payload.recaptchaToken) {
+          const data = await authApi.register({
+            ...payload,
+            recaptchaToken: retryToken,
+          });
+          setAuth(data);
+          setUser(data.user);
+          return data.user;
+        }
+      }
+      throw error;
+    }
   };
 
   const logout = async () => {
@@ -170,21 +208,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data.user;
   };
 
-  const value = useMemo(
-    () => ({
-      user,
-      loading,
-      login,
-      register,
-      logout,
-      refreshProfile,
-      updateUser,
-      googleLogin,
-      googleLoginWithCode,
-      passkeyLogin,
-    }),
-    [user, loading],
-  );
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    refreshProfile,
+    updateUser,
+    googleLogin,
+    googleLoginWithCode,
+    passkeyLogin,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

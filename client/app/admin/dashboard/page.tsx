@@ -40,11 +40,11 @@ export default function AdminDashboardPage() {
     totalUsers: 0,
     activeDrivers: 0,
     pendingPickups: 0,
-  }; 
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Total Revenue"
           value={`LKR ${totals.totalRevenue.toFixed(0)}`}
@@ -54,10 +54,12 @@ export default function AdminDashboardPage() {
         <KpiCard label="Pending Pickups" value={`${totals.pendingPickups}`} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="h-80">
-          <h3 className="text-lg font-semibold">Revenue Overview</h3>
-          <div className="mt-4 h-60">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+        <Card className="h-72 sm:h-80">
+          <h3 className="text-base sm:text-lg font-semibold">
+            Revenue Overview
+          </h3>
+          <div className="mt-3 sm:mt-4 h-52 sm:h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.revenueByDay ?? []}>
                 <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
@@ -74,9 +76,11 @@ export default function AdminDashboardPage() {
             </ResponsiveContainer>
           </div>
         </Card>
-        <Card className="h-80">
-          <h3 className="text-lg font-semibold">Waste Types Distribution</h3>
-          <div className="mt-4 h-60">
+        <Card className="h-72 sm:h-80">
+          <h3 className="text-base sm:text-lg font-semibold">
+            Waste Types Distribution
+          </h3>
+          <div className="mt-3 sm:mt-4 h-52 sm:h-60">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -109,8 +113,8 @@ export default function AdminDashboardPage() {
       </div>
 
       <Card>
-        <h3 className="text-lg font-semibold">Recent Activity</h3>
-        <div className="mt-4 space-y-3">
+        <h3 className="text-base sm:text-lg font-semibold">Recent Activity</h3>
+        <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
           {(data?.recentActivity ?? []).map((activity: any) => (
             <div
               key={activity.id}

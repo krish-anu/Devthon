@@ -2,6 +2,7 @@
 
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { normalizeSriLankaPhone, formatSriLankaPhone } from "@/lib/phone";
+import { cn } from "@/lib/utils";
 
 export type PhoneInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   // when used with react-hook-form register, it will receive onChange and onBlur handlers
@@ -210,10 +211,10 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
         onPaste={handlePaste}
         placeholder={placeholder ?? "+94 77 123 4567"}
         inputMode="tel"
-        className={
-          className ??
-          "flex h-11 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--foreground)] placeholder:text-[color:var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]"
-        }
+        className={cn(
+          "flex h-11 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-4 text-sm text-[color:var(--foreground)] placeholder:text-[color:var(--muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]",
+          className,
+        )}
         aria-label={rest["aria-label"] ?? "Phone"}
       />
     );

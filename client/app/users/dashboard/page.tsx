@@ -52,14 +52,14 @@ export default function DashboardPage() {
   }, [bookings]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <p className="text-sm text-(--muted)">Dashboard</p>
-        <h1 className="text-2xl font-semibold">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-0.5 sm:gap-1">
+        <p className="text-xs sm:text-sm text-(--muted)">Dashboard</p>
+        <h1 className="text-xl sm:text-2xl font-semibold">
           Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}!
         </h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard
           label="Total Earned"
           value={`LKR ${metrics.totalEarned.toFixed(0)}`}
@@ -87,30 +87,41 @@ export default function DashboardPage() {
         />
       </div>
 
-      <Card className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h3 className="text-xl font-semibold">Ready for another pickup?</h3>
-          <p className="text-sm text-(--muted)">
+      <Card className="flex flex-col justify-between gap-3 sm:gap-4 md:flex-row md:items-center">
+        <div className="space-y-1">
+          <h3 className="text-lg sm:text-xl font-semibold">
+            Ready for another pickup?
+          </h3>
+          <p className="text-xs sm:text-sm text-(--muted)">
             Book your next collection and earn more.
           </p>
         </div>
-        <Button asChild>
+        <Button className="w-full sm:w-auto shrink-0" asChild>
           <Link href="/users/bookings/new">+ Book New Pickup</Link>
         </Button>
       </Card>
 
       <Card>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Recent Bookings</h3>
-          <Button variant="outline" size="sm" asChild>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+          <h3 className="text-base sm:text-lg font-semibold">
+            Recent Bookings
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+            asChild
+          >
             <Link href="/users/bookings">View all</Link>
           </Button>
         </div>
-        <div className="mt-4">
+        <div className="mt-3 sm:mt-4 overflow-x-auto -mx-6 sm:mx-0">
           {isLoading ? (
-            <div className="p-6"><SkeletonTableRows columns={6} rows={5} /></div>
+            <div className="p-6">
+              <SkeletonTableRows columns={6} rows={5} />
+            </div>
           ) : (
-            <Table>
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking ID</TableHead>
@@ -149,7 +160,10 @@ export default function DashboardPage() {
                 ))}
                 {!bookings.length && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-(--muted)">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-(--muted)"
+                    >
                       No bookings yet.
                     </TableCell>
                   </TableRow>

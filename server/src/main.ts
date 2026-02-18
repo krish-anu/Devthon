@@ -17,6 +17,30 @@ import * as bodyParser from 'body-parser';
 };
 
 async function bootstrap() {
+  const configuredCorsOrigins = (
+    process.env.CORS_ORIGIN ?? 'http://localhost:3000'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const isDevLocalOrigin = (origin: string) => {
+    try {
+      const parsed = new URL(origin);
+      const hostname = parsed.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+        return true;
+      }
+      const isPrivateIp =
+        /^10\./.test(hostname) ||
+        /^192\.168\./.test(hostname) ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+      return isPrivateIp;
+    } catch {
+      return false;
+    }
+  };
+
   // Render a background-colored level badge using ANSI escapes for console output
   const levelBadge = (level: string) => {
     const L = (level || '').toLowerCase();
@@ -112,7 +136,18 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000').split(','),
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (configuredCorsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      if (process.env.NODE_ENV !== 'production' && isDevLocalOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin ${origin}`), false);
+    },
     credentials: true,
   });
   app.use(cookieParser());

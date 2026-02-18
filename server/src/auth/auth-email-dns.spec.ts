@@ -10,14 +10,14 @@ jest.mock('dns/promises', () => ({
 }));
 
 import { Controller, Post, Body } from '@nestjs/common';
-import { OtpSendDto } from './dto/otp-send.dto';
+import { LoginDto } from './dto/login.dto';
 
 // Minimal controller used for validation e2e checks to avoid booting entire AuthModule
 @Controller('auth')
 class TestAuthController {
-  @Post('otp/send')
-  sendOtp(@Body() dto: OtpSendDto) {
-    return { success: true, message: 'OTP sent', email: dto.email };
+  @Post('login')
+  login(@Body() dto: LoginDto) {
+    return { success: true, email: dto.email };
   }
 }
 
@@ -51,8 +51,8 @@ describe('Auth email DNS check (e2e)', () => {
     await createApp();
 
     const res = await request(app.getHttpServer())
-      .post('/api/auth/otp/send')
-      .send({ email: 'user@asdfqweqwe123.com' })
+      .post('/api/auth/login')
+      .send({ email: 'user@asdfqweqwe123.com', password: 'test-password' })
       .expect(400);
 
     expect(JSON.stringify(res.body)).toContain('Email domain cannot receive mail');
@@ -63,8 +63,8 @@ describe('Auth email DNS check (e2e)', () => {
     await createApp();
 
     const res = await request(app.getHttpServer())
-      .post('/api/auth/otp/send')
-      .send({ email: 'user@asdfqweqwe123.com' })
+      .post('/api/auth/login')
+      .send({ email: 'user@asdfqweqwe123.com', password: 'test-password' })
       .expect(201);
 
     expect(res.body).toHaveProperty('success', true);

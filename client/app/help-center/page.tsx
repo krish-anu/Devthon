@@ -25,7 +25,7 @@ export default function HelpCenterPage() {
 
         <ScrollAnimatedSection>
           <div className="text-center space-y-4 mb-12">
-            <h1 className="text-4xl font-bold">How can we help?</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">How can we help?</h1>
             <div className="max-w-md mx-auto relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search articles..." className="pl-10" />
