@@ -252,6 +252,21 @@ export default function NewBookingPage() {
       return { ...prev, [categoryId]: [...existing, ...newImages] };
     });
 
+    // Auto-select the category when the user uploads images for it
+    const matchingPricing = combinedPricing.find(
+      (p) => p.wasteCategory.id === categoryId,
+    );
+    if (matchingPricing) {
+      setSelectedItems((prev) => {
+        const exists = prev.find((s) => s.id === matchingPricing.id);
+        if (exists) return prev;
+        return [
+          ...prev,
+          { id: matchingPricing.id, item: matchingPricing, quantity: 1 },
+        ];
+      });
+    }
+
     if (files.length > maxFiles) {
       toast({
         title: "Too many files",
