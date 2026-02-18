@@ -47,11 +47,41 @@ export class RecaptchaService {
       const success = Boolean(json.success);
       const score = typeof json.score === 'number' ? json.score : 1;
       const actionMatches = !action || json.action === action;
+      const errorCodes = Array.isArray(json['error-codes'])
+        ? json['error-codes']
+        : [];
+      const nodeEnv = this.configService.get<string>('NODE_ENV') ?? 'development';
+      const allowBrowserErrorRaw = this.configService.get<string>(
+        'RECAPTCHA_ALLOW_BROWSER_ERROR',
+      );
+      const allowBrowserError =
+        allowBrowserErrorRaw == null
+          ? nodeEnv !== 'production'
+          : allowBrowserErrorRaw.toLowerCase() === 'true';
+
+      // Google may return browser-error for transient client/network failures.
+      // In non-production environments we allow this by default to avoid blocking local development.
+      if (!success && errorCodes.includes('browser-error') && allowBrowserError) {
+        this.logger.warn(
+          'reCAPTCHA verify returned browser-error; allowing in non-production',
+          { nodeEnv, action, errorCodes },
+        );
+        return true;
+      }
 
       const passed = success && actionMatches && score >= this.minScore;
 
       if (!passed) {
-        this.logger.warn('reCAPTCHA verification failed', { success: json.success, score: json.score, action: json.action, minScore: this.minScore });
+        this.logger.warn('reCAPTCHA verification failed', {
+          success: json.success,
+          score: json.score,
+          action: json.action,
+          expectedAction: action,
+          minScore: this.minScore,
+          hostname: json.hostname,
+          challengeTs: json.challenge_ts,
+          errorCodes,
+        });
       }
 
       return passed;
