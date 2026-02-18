@@ -6,6 +6,10 @@ const API_URL =
   (typeof window !== "undefined"
     ? `${window.location.protocol}//${window.location.hostname}:4000/api`
     : "http://localhost:4000/api");
+const REQUEST_TIMEOUT_MS = Math.max(
+  Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? "15000") || 15000,
+  1000,
+);
 
 export type AuthResponse = {
   user: User;
@@ -45,6 +49,19 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers = new Headers(options.headers || {});
   const accessToken = auth ? getAccessToken() : null;
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(
+    () => timeoutController.abort(),
+    REQUEST_TIMEOUT_MS,
+  );
+
+  if (options.signal) {
+    options.signal.addEventListener(
+      "abort",
+      () => timeoutController.abort(),
+      { once: true },
+    );
+  }
 
   if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -60,11 +77,19 @@ export async function apiFetch<T>(
       ...options,
       headers,
       credentials: (options as any).credentials ?? "include",
+      signal: timeoutController.signal,
     });
   } catch (e: any) {
+    if (e?.name === "AbortError") {
+      throw new Error(
+        `Request timed out after ${Math.ceil(REQUEST_TIMEOUT_MS / 1000)}s`,
+      );
+    }
     // Provide a clearer error when the network/socket is unavailable.
     console.error("Network error while fetching", `${API_URL}${path}`, e);
     throw new Error(`Network error connecting to ${API_URL}${path}: ${e?.message || e}`);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (response.status === 401 && auth && retry) {

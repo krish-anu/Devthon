@@ -20,7 +20,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import MapComponent from "@/components/shared/map";
 
 const weightOptions = [
-  { label: "0-5 kg", min: 0, max: 5 },
+  { label: "1-5 kg", min: 1, max: 5 },
   { label: "5-10 kg", min: 5, max: 10 },
   { label: "10-20 kg", min: 10, max: 20 },
   { label: "20-50 kg", min: 20, max: 50 },
@@ -52,7 +52,8 @@ export default function NewBookingPage() {
 
   const { data: categories } = useQuery({
     queryKey: ["public-waste-categories"],
-    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+    queryFn: () =>
+      apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
   });
 
   const combinedPricing = useMemo(() => {
@@ -60,13 +61,16 @@ export default function NewBookingPage() {
     const existingCatIds = new Set(pricing.map((p) => p.wasteCategory.id));
     const missing = (categories ?? [])
       .filter((c) => !existingCatIds.has(c.id))
-      .map((c) => ({
-        id: `new-${c.id}`,
-        minPriceLkrPerKg: 0,
-        maxPriceLkrPerKg: 0,
-        isActive: false,
-        wasteCategory: c,
-      } as PricingItem));
+      .map(
+        (c) =>
+          ({
+            id: `new-${c.id}`,
+            minPriceLkrPerKg: 0,
+            maxPriceLkrPerKg: 0,
+            isActive: false,
+            wasteCategory: c,
+          }) as PricingItem,
+      );
     return [...pricing, ...missing];
   }, [pricingData, categories]);
   const { data: latestBookingData, isLoading: latestLoading } = useQuery({
@@ -110,8 +114,9 @@ export default function NewBookingPage() {
 
   const isPaperCategory = useMemo(() => {
     return selectedItems.some(
-      (item) => item.item.wasteCategory.name.toLowerCase().includes("paper") ||
-                item.item.wasteCategory.name.toLowerCase().includes("cardboard")
+      (item) =>
+        item.item.wasteCategory.name.toLowerCase().includes("paper") ||
+        item.item.wasteCategory.name.toLowerCase().includes("cardboard"),
     );
   }, [selectedItems]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,8 +126,8 @@ export default function NewBookingPage() {
     let min = 0;
     let max = 0;
     for (const s of selectedItems) {
-      const weight = isPaperCategory ? s.quantity : (weightRange?.min || 0);
-      const weightMax = isPaperCategory ? s.quantity : (weightRange?.max || 0);
+      const weight = isPaperCategory ? weightRange?.min || 0 : s.quantity;
+      const weightMax = isPaperCategory ? weightRange?.max || 0 : s.quantity;
       min += s.item.minPriceLkrPerKg * weight;
       max += s.item.maxPriceLkrPerKg * weightMax;
     }
@@ -180,7 +185,7 @@ export default function NewBookingPage() {
     }
 
     setUploadedImages((prev) => [...prev, ...newImages]);
-    
+
     if (files.length > maxFiles) {
       toast({
         title: "Too many files",
@@ -218,7 +223,9 @@ export default function NewBookingPage() {
       }
       return prev.filter((img) => img.id !== imageId);
     });
-    setScanResults((prev) => prev.filter((result) => result.imageId !== imageId));
+    setScanResults((prev) =>
+      prev.filter((result) => result.imageId !== imageId),
+    );
   };
 
   const handleScanImages = async () => {
@@ -253,10 +260,14 @@ export default function NewBookingPage() {
             categoryName: string;
             confidence: string;
             message?: string;
-          }>("/public/classify-image", {
-            method: "POST",
-            body: JSON.stringify({ imageBase64: base64Data }),
-          }, false);
+          }>(
+            "/public/classify-image",
+            {
+              method: "POST",
+              body: JSON.stringify({ imageBase64: base64Data }),
+            },
+            false,
+          );
 
           results.push({
             imageId: image.id,
@@ -287,7 +298,7 @@ export default function NewBookingPage() {
 
       uniqueCategoryIds.forEach((categoryId) => {
         const matchingItem = combinedPricing.find(
-          (item) => item.wasteCategory.id === categoryId
+          (item) => item.wasteCategory.id === categoryId,
         );
 
         if (matchingItem) {
@@ -362,7 +373,8 @@ export default function NewBookingPage() {
     if (!isValidSriLankaPhone(phoneNumber)) {
       toast({
         title: "Invalid phone number",
-        description: "Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
+        description:
+          "Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
         variant: "warning",
       });
       return;
@@ -384,7 +396,7 @@ export default function NewBookingPage() {
         body: JSON.stringify({
           items: selectedItems.map((s) => ({
             wasteCategoryId: s.item.wasteCategory.id,
-            quantityKg: isPaperCategory ? s.quantity : (weightRange?.min || 0),
+            quantityKg: isPaperCategory ? weightRange?.min || 0 : s.quantity,
           })),
           addressLine1,
           city,
@@ -467,13 +479,13 @@ export default function NewBookingPage() {
       {step === 1 && (
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Select Waste Categories</h3>
-          
+
           {/* Image Upload Section */}
           <div className="rounded-xl border border-(--border) bg-(--surface) p-6">
             <Label className="mb-4 block text-sm font-semibold">
               Upload Images to Auto-Detect Categories
             </Label>
-            
+
             {/* Drag and Drop Zone */}
             <div
               onDragOver={handleDragOver}
@@ -506,7 +518,8 @@ export default function NewBookingPage() {
                     Drag and drop images here, or click to browse
                   </p>
                   <p className="text-xs text-(--muted) mt-1">
-                    Support for multiple images (max 10). PNG, JPG up to 5MB each
+                    Support for multiple images (max 10). PNG, JPG up to 5MB
+                    each
                   </p>
                 </div>
                 <Input
@@ -531,7 +544,7 @@ export default function NewBookingPage() {
                     size="sm"
                     onClick={() => {
                       uploadedImages.forEach((img) =>
-                        URL.revokeObjectURL(img.preview)
+                        URL.revokeObjectURL(img.preview),
                       );
                       setUploadedImages([]);
                       setScanResults([]);
@@ -544,7 +557,7 @@ export default function NewBookingPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                   {uploadedImages.map((image) => {
                     const result = scanResults.find(
-                      (r) => r.imageId === image.id
+                      (r) => r.imageId === image.id,
                     );
                     return (
                       <div
@@ -576,8 +589,8 @@ export default function NewBookingPage() {
                                   result.confidence === "high"
                                     ? "bg-green-500"
                                     : result.confidence === "medium"
-                                    ? "bg-yellow-500"
-                                    : "bg-red-500"
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
                                 }`}
                               />
                               <span className="text-xs text-(--muted) capitalize">
@@ -713,9 +726,13 @@ export default function NewBookingPage() {
                 />
               </svg>
               <div>
-                <p className="text-sm font-semibold text-(--brand)">Important Note</p>
+                <p className="text-sm font-semibold text-(--brand)">
+                  Important Note
+                </p>
                 <p className="text-sm text-(--muted) mt-1">
-                  Final prices may vary according to the quality, condition, and actual weight of your product. The quoted prices are estimates and will be confirmed after inspection.
+                  Final prices may vary according to the quality, condition, and
+                  actual weight of your product. The quoted prices are estimates
+                  and will be confirmed after inspection.
                 </p>
               </div>
             </div>
@@ -725,7 +742,9 @@ export default function NewBookingPage() {
 
       {step === 2 && isPaperCategory && (
         <Card className="space-y-4">
-          <h3 className="text-lg font-semibold">Estimate Weight of the Papers</h3>
+          <h3 className="text-lg font-semibold">
+            Estimate Weight of the Papers
+          </h3>
           <div className="grid gap-3 md:grid-cols-3">
             {weightOptions.map((option) => (
               <button
@@ -748,7 +767,8 @@ export default function NewBookingPage() {
         </Card>
       )}
 
-      {((step === 3 && isPaperCategory) || (step === 2 && !isPaperCategory)) && (
+      {((step === 3 && isPaperCategory) ||
+        (step === 2 && !isPaperCategory)) && (
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Pickup Details & Contact</h3>
           <div className="grid gap-4 md:grid-cols-2">
@@ -785,7 +805,9 @@ export default function NewBookingPage() {
                 required
               />
               {!isValidSriLankaPhone(phoneNumber) && phoneNumber && (
-                <p className="text-xs text-rose-500">Enter a valid Sri Lanka phone number</p>
+                <p className="text-xs text-rose-500">
+                  Enter a valid Sri Lanka phone number
+                </p>
               )}
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -818,7 +840,8 @@ export default function NewBookingPage() {
         </Card>
       )}
 
-      {((step === 4 && isPaperCategory) || (step === 3 && !isPaperCategory)) && (
+      {((step === 4 && isPaperCategory) ||
+        (step === 3 && !isPaperCategory)) && (
         <Card className="space-y-4">
           <h3 className="text-lg font-semibold">Select Date & Time</h3>
           <div className="space-y-4">
@@ -846,16 +869,21 @@ export default function NewBookingPage() {
         </Card>
       )}
 
-      {((step === 5 && isPaperCategory) || (step === 4 && !isPaperCategory)) && (
+      {((step === 5 && isPaperCategory) ||
+        (step === 4 && !isPaperCategory)) && (
         <Card className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold">Booking Summary</h3>
-            <p className="text-sm text-(--muted) mt-1">Please review all details before confirming</p>
+            <p className="text-sm text-(--muted) mt-1">
+              Please review all details before confirming
+            </p>
           </div>
 
           {/* Waste Categories Summary */}
           <div className="rounded-xl border-2 border-(--brand) bg-(--brand)/5 p-4">
-            <p className="text-sm font-semibold text-(--brand) mb-3">Waste Categories</p>
+            <p className="text-sm font-semibold text-(--brand) mb-3">
+              Waste Categories
+            </p>
             <div className="space-y-2">
               {selectedItems.map((s) => (
                 <div key={s.id} className="flex items-center justify-between">
@@ -864,12 +892,22 @@ export default function NewBookingPage() {
                       {s.item.wasteCategory.name}
                     </p>
                     <p className="text-xs text-(--muted)">
-                      {isPaperCategory ? `Quantity: ${s.quantity} kg` : `Estimated weight: ${weightRange?.label || 'Not specified'}`}
+                      {isPaperCategory
+                        ? `Estimated weight: ${weightRange?.label || "Not specified"}`
+                        : `Quantity: ${s.quantity} kg`}
                     </p>
                   </div>
                   <div className="text-sm text-(--muted)">
-                    LKR {(s.item.minPriceLkrPerKg * (isPaperCategory ? s.quantity : (weightRange?.min || 1))).toFixed(0)} -{" "}
-                    {(s.item.maxPriceLkrPerKg * (isPaperCategory ? s.quantity : (weightRange?.max || 1))).toFixed(0)}
+                    LKR{" "}
+                    {(
+                      s.item.minPriceLkrPerKg *
+                      (isPaperCategory ? weightRange?.min || 1 : s.quantity)
+                    ).toFixed(0)}{" "}
+                    -{" "}
+                    {(
+                      s.item.maxPriceLkrPerKg *
+                      (isPaperCategory ? weightRange?.max || 1 : s.quantity)
+                    ).toFixed(0)}
                   </div>
                 </div>
               ))}
@@ -881,11 +919,15 @@ export default function NewBookingPage() {
             <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
               {isPaperCategory ? (
                 <>
-                  <p className="text-sm text-(--muted) mb-2">Estimated Total Earnings</p>
+                  <p className="text-sm text-(--muted) mb-2">
+                    Estimated Total Earnings
+                  </p>
                   <p className="text-2xl font-bold text-(--brand)">
                     LKR {estimate.min.toFixed(0)} - {estimate.max.toFixed(0)}
                   </p>
-                  <p className="text-xs text-(--muted) mt-1">Final amount may change after quality inspection</p>
+                  <p className="text-xs text-(--muted) mt-1">
+                    Final amount may change after quality inspection
+                  </p>
                 </>
               ) : (
                 <>
@@ -905,41 +947,54 @@ export default function NewBookingPage() {
                       />
                     </svg>
                     <div>
-                      <p className="text-sm font-semibold">To be determined on-site</p>
+                      <p className="text-sm font-semibold">
+                        To be determined on-site
+                      </p>
                       <p className="text-xs text-(--muted) mt-1">
-                        Final pricing will be determined after physical inspection based on the quality, condition, and actual weight of your recyclables.
+                        Final pricing will be determined after physical
+                        inspection based on the quality, condition, and actual
+                        weight of your recyclables.
                       </p>
                     </div>
                   </div>
                 </>
               )}
             </div>
-            
+
             {/* Weight Range */}
-            {!isPaperCategory && weightRange && (
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+            {isPaperCategory && weightRange && (
+              <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
                 <p className="text-sm text-(--muted) mb-2">Estimated Weight</p>
                 <p className="text-lg font-semibold">{weightRange.label}</p>
-            </div>
+              </div>
             )}
           </div>
 
           {/* Pickup Details */}
-            <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
+          <div className="rounded-xl border border-(--border) bg-(--surface) p-4">
             <p className="text-sm font-semibold mb-3">Pickup Details</p>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <p className="text-xs text-(--muted)">Address</p>
                 <p className="text-sm font-medium">{addressLine1}</p>
-                <p className="text-sm text-(--muted)">{city}, {postalCode}</p>
-            </div>
+                <p className="text-sm text-(--muted)">
+                  {city}, {postalCode}
+                </p>
+              </div>
               <div>
                 <p className="text-xs text-(--muted)">Contact Number</p>
                 <p className="text-sm font-medium">{phoneNumber}</p>
               </div>
               <div>
                 <p className="text-xs text-(--muted)">Scheduled Date</p>
-                <p className="text-sm font-medium">{new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-sm font-medium">
+                  {new Date(scheduledDate).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-(--muted)">Time Slot</p>
@@ -961,14 +1016,22 @@ export default function NewBookingPage() {
             />
             <span className="leading-relaxed">
               I agree to the{" "}
-              <Link href="/terms" target="_blank" className="text-(--brand) hover:underline">
+              <Link
+                href="/terms"
+                target="_blank"
+                className="text-(--brand) hover:underline"
+              >
                 Terms and Conditions
-              </Link>
-              {" "}and{" "}
-              <Link href="/privacy" target="_blank" className="text-(--brand) hover:underline">
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="text-(--brand) hover:underline"
+              >
                 Privacy Policy
-              </Link>
-              {" "}for waste pickup and recycling services.
+              </Link>{" "}
+              for waste pickup and recycling services.
             </span>
           </div>
         </Card>
@@ -993,7 +1056,9 @@ export default function NewBookingPage() {
                 toast({ title: "Select a weight range", variant: "warning" });
                 return;
               }
-              const isPickupStep = (isPaperCategory && step === 3) || (!isPaperCategory && step === 2);
+              const isPickupStep =
+                (isPaperCategory && step === 3) ||
+                (!isPaperCategory && step === 2);
               if (isPickupStep) {
                 if (!addressLine1 || !city || !postalCode) {
                   toast({
@@ -1014,13 +1079,16 @@ export default function NewBookingPage() {
                 if (!locationPicked) {
                   toast({
                     title: "Select a pickup location",
-                    description: "Please confirm the map location before proceeding.",
+                    description:
+                      "Please confirm the map location before proceeding.",
                     variant: "warning",
                   });
                   return;
                 }
               }
-              const isDateStep = (isPaperCategory && step === 4) || (!isPaperCategory && step === 3);
+              const isDateStep =
+                (isPaperCategory && step === 4) ||
+                (!isPaperCategory && step === 3);
               if (isDateStep && (!scheduledDate || !scheduledTimeSlot)) {
                 toast({
                   title: "Select date and time",

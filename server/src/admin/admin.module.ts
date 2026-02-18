@@ -3,9 +3,10 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { SmsModule } from '../sms/sms.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { RewardsModule } from '../rewards/rewards.module';
 
 @Module({
-  imports: [SmsModule, NotificationsModule],
+  imports: [SmsModule, NotificationsModule, RewardsModule],
   controllers: [AdminController],
   providers: [AdminService],
 })

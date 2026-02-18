@@ -42,8 +42,10 @@ export default function DashboardPage() {
       (sum, booking) => sum + (booking.actualWeightKg ?? 0),
       0,
     );
-    const pending = bookings.filter(
-      (booking) => booking.status === "SCHEDULED",
+    const pending = bookings.filter((booking) =>
+      ["CREATED", "SCHEDULED", "ASSIGNED", "IN_PROGRESS"].includes(
+        booking.status,
+      ),
     ).length;
     const co2 = Math.round(totalWeight * 1.7);
     return { totalEarned, totalWeight, pending, co2 };

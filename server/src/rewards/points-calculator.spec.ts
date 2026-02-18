@@ -1,4 +1,4 @@
-import { calculatePoints } from './points-calculator';
+import { calculatePoints, isEwasteCategory } from './points-calculator';
 
 describe('calculatePoints', () => {
   it('calculates base points with no multiplier', () => {
@@ -42,5 +42,13 @@ describe('calculatePoints', () => {
 
     expect(result.multiplier).toBe(2);
     expect(result.finalPoints).toBe(20);
+  });
+
+  it('detects common e-waste category naming', () => {
+    expect(isEwasteCategory('E-Waste')).toBe(true);
+    expect(isEwasteCategory('E Waste')).toBe(true);
+    expect(isEwasteCategory('Ewaste')).toBe(true);
+    expect(isEwasteCategory('Electronics')).toBe(true);
+    expect(isEwasteCategory('Plastic')).toBe(false);
   });
 });

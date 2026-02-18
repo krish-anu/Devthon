@@ -7,6 +7,7 @@ import {
   Post,
   Query,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -14,44 +15,65 @@ import { BookingsService } from './bookings.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
+type AuthRequest = {
+  user?: {
+    sub?: string;
+    id?: string;
+    role?: string;
+  };
+};
+
 @UseGuards(JwtAuthGuard)
 @Controller('bookings')
 export class BookingsController {
   constructor(private bookingsService: BookingsService) {}
 
+  private getUserId(req: AuthRequest) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
+    return userId;
+  }
+
   @Get()
-  list(@Req() req: any, @Query() query: BookingsQueryDto) {
-    return this.bookingsService.list(req.user.sub, query);
+  list(@Req() req: AuthRequest, @Query() query: BookingsQueryDto) {
+    return this.bookingsService.list(this.getUserId(req), query);
   }
 
   @Get(':id')
-  getById(@Req() req: any, @Param('id') id: string) {
-    return this.bookingsService.getById(req.user.sub, id);
+  getById(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.bookingsService.getById(this.getUserId(req), id);
   }
 
   @Post()
-  create(@Req() req: any, @Body() dto: CreateBookingDto) {
-    return this.bookingsService.create(req.user.sub, dto);
+  create(@Req() req: AuthRequest, @Body() dto: CreateBookingDto) {
+    return this.bookingsService.create(this.getUserId(req), dto);
   }
 
   @Post(':id/cancel')
-  cancel(@Req() req: any, @Param('id') id: string) {
-    return this.bookingsService.cancel(req.user.sub, id);
+  cancel(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.bookingsService.cancel(this.getUserId(req), id);
   }
 
   @Post(':id/location')
   updateLocation(
-    @Req() req: any,
+    @Req() req: AuthRequest,
     @Param('id') id: string,
     @Body() body: { lng: number; lat: number },
   ) {
-    return this.bookingsService.updateLocation(req.user.sub, id, body.lng, body.lat);
+    return this.bookingsService.updateLocation(
+      this.getUserId(req),
+      id,
+      body.lng,
+      body.lat,
+    );
   }
 
   @Delete(':id')
-  delete(@Req() req: any, @Param('id') id: string) {
+  delete(@Req() req: AuthRequest, @Param('id') id: string) {
     // Pass role through so admins can delete any booking
     const role = req.user?.role ?? 'CUSTOMER';
-    return this.bookingsService.delete(req.user.sub, id, role);
+    return this.bookingsService.delete(this.getUserId(req), id, role);
   }
 }

@@ -18,6 +18,7 @@ export default function DriverBookingsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["driver-bookings-list"],
     queryFn: () => apiFetch<any[]>("/driver/bookings"),
+    refetchInterval: 12000,
   });
 
   const bookings = data ?? [];

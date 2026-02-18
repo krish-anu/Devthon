@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -53,7 +57,7 @@ export class RewardsService {
   async getMyRewards(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { totalPoints: true },
+      select: { id: true },
     });
 
     if (!user) {
@@ -62,7 +66,7 @@ export class RewardsService {
 
     const { start, end, yearMonth } = getMonthRange();
 
-    const [monthAgg, recent] = await Promise.all([
+    const [monthAgg, lifetimeAgg, recent] = await Promise.all([
       this.prisma.pointsTransaction.aggregate({
         _sum: { pointsAwarded: true },
         where: {
@@ -73,15 +77,28 @@ export class RewardsService {
           },
         },
       }),
+      this.prisma.pointsTransaction.aggregate({
+        _sum: { pointsAwarded: true },
+        where: { userId },
+      }),
       this.prisma.pointsTransaction.findMany({
         where: { userId },
         orderBy: { awardedAt: 'desc' },
         take: 5,
+        select: {
+          id: true,
+          userId: true,
+          bookingId: true,
+          pointsAwarded: true,
+          basePoints: true,
+          bonusPoints: true,
+          awardedAt: true,
+        },
       }),
     ]);
 
     return {
-      totalPoints: user.totalPoints ?? 0,
+      totalPoints: lifetimeAgg._sum.pointsAwarded ?? 0,
       monthPoints: monthAgg._sum.pointsAwarded ?? 0,
       monthRange: {
         yearMonth,
@@ -186,45 +203,65 @@ export class RewardsService {
     });
 
     return this.prisma.$transaction(async (tx) => {
-      const createResult = await tx.pointsTransaction.createMany({
-        data: [
-          {
-            userId: booking.userId,
-            bookingId: booking.id,
-            pointsAwarded: calculation.finalPoints,
-            basePoints: calculation.basePoints,
-            bonusPoints: calculation.bonusPoints,
-            multiplier: calculation.multiplier,
-            reason: {
-              ...calculation.breakdown,
-              includesEwaste,
-              isFirstBooking,
-              hasWeeklyStreak,
-            },
-            awardedAt: confirmedAt,
-          },
-        ],
-        skipDuplicates: true,
-      });
+      let insertedCount = 0;
 
-      if (createResult.count === 0) {
+      try {
+        const createResult = await tx.pointsTransaction.createMany({
+          data: [
+            {
+              userId: booking.userId,
+              bookingId: booking.id,
+              pointsAwarded: calculation.finalPoints,
+              basePoints: calculation.basePoints,
+              bonusPoints: calculation.bonusPoints,
+              multiplier: calculation.multiplier,
+              reason: {
+                ...calculation.breakdown,
+                includesEwaste,
+                isFirstBooking,
+                hasWeeklyStreak,
+              },
+              awardedAt: confirmedAt,
+            },
+          ],
+          skipDuplicates: true,
+        });
+        insertedCount = createResult.count;
+      } catch (error) {
+        const missingMultiplier = this.isMissingColumnError(
+          error,
+          'PointsTransaction.multiplier',
+        );
+        const missingReason = this.isMissingColumnError(
+          error,
+          'PointsTransaction.reason',
+        );
+
+        if (!missingMultiplier && !missingReason) {
+          throw error;
+        }
+
+        insertedCount = Number(
+          await tx.$executeRaw`
+            INSERT INTO "PointsTransaction"
+              ("userId", "bookingId", "pointsAwarded", "basePoints", "bonusPoints", "awardedAt")
+            VALUES
+              (${booking.userId}, ${booking.id}, ${calculation.finalPoints}, ${calculation.basePoints}, ${calculation.bonusPoints}, ${confirmedAt})
+            ON CONFLICT ("bookingId") DO NOTHING
+          `,
+        );
+      }
+
+      if (insertedCount === 0) {
         return { awarded: false, reason: 'already_awarded' };
       }
 
-      await Promise.all([
-        tx.user.update({
-          where: { id: booking.userId },
-          data: {
-            totalPoints: { increment: calculation.finalPoints },
-          },
-        }),
-        booking.confirmedAt
-          ? Promise.resolve(null)
-          : tx.booking.update({
-              where: { id: booking.id },
-              data: { confirmedAt },
-            }),
-      ]);
+      if (!booking.confirmedAt) {
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: { confirmedAt },
+        });
+      }
 
       return {
         awarded: true,
@@ -339,5 +376,10 @@ export class RewardsService {
     });
 
     return count > 0;
+  }
+
+  private isMissingColumnError(error: unknown, columnName: string) {
+    const message = error instanceof Error ? error.message : String(error);
+    return message.includes('does not exist') && message.includes(columnName);
   }
 }

@@ -194,6 +194,21 @@ model Booking {
   wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])
   transactions         PaymentTransaction[]
   pointsTransaction    PointsTransaction?
+  statusHistory        BookingStatusHistory[]
+}
+
+model BookingStatusHistory {
+  id            String        @id @default(uuid())
+  bookingId     String
+  fromStatus    BookingStatus
+  toStatus      BookingStatus
+  changedById   String
+  changedByRole Role
+  createdAt     DateTime      @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
 }
 
 model Notification {
@@ -282,7 +297,10 @@ enum DriverStatus {
 }
 
 enum BookingStatus {
+  CREATED
   SCHEDULED
+  ASSIGNED
+  IN_PROGRESS
   COLLECTED
   PAID
   COMPLETED

@@ -290,7 +290,17 @@ export class BookingsService {
     this.transactionLogger.logTransaction('booking.pending.start', { userId });
     try {
       const results = await this.prisma.booking.findMany({
-        where: { userId, status: BookingStatus.SCHEDULED },
+        where: {
+          userId,
+          status: {
+            in: [
+              BookingStatus.CREATED,
+              BookingStatus.SCHEDULED,
+              BookingStatus.ASSIGNED,
+              BookingStatus.IN_PROGRESS,
+            ],
+          },
+        },
         include: { wasteCategory: true, driver: true },
         orderBy: { scheduledDate: 'asc' },
       });

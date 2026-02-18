@@ -43,6 +43,7 @@ export default function BookingDetailsPage() {
     queryKey: ["booking", id],
     queryFn: () => apiFetch<Booking>(`/bookings/${id}`),
     enabled: Boolean(id),
+    refetchInterval: 12000,
   });
 
   const booking = data;

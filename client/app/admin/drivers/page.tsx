@@ -11,6 +11,7 @@ export default function AdminDriversPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-drivers"],
     queryFn: () => apiFetch<any[]>("/admin/drivers"),
+    refetchInterval: 15000,
   });
 
   const drivers = data ?? []; 

@@ -26,6 +26,8 @@ import { AdminBookingsQueryDto } from './dto/admin-bookings-query.dto';
 import { AdminSendSmsDto } from './dto/admin-send-sms.dto';
 import { AdminCreateWasteCategoryDto } from './dto/admin-create-waste-category.dto';
 import { AdminUpdateWasteCategoryDto } from './dto/admin-update-waste-category.dto';
+import { AdminAssignDriverDto } from './dto/admin-assign-driver.dto';
+import { UpdateBookingStatusDto } from '../bookings/dto/update-booking-status.dto';
 import { SmsService } from '../sms/sms.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -85,14 +87,41 @@ export class AdminController {
     return this.adminService.deleteDriver(id);
   }
 
+  @Get('bookings/status-options')
+  listBookingStatusOptions() {
+    return this.adminService.listSupportedBookingStatuses();
+  }
+
   @Get('bookings')
   listBookings(@Query() query: AdminBookingsQueryDto) {
     return this.adminService.listBookings(query);
   }
 
   @Patch('bookings/:id')
-  updateBooking(@Param('id') id: string, @Body() dto: AdminUpdateBookingDto) {
-    return this.adminService.updateBooking(id, dto);
+  updateBooking(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateBookingDto,
+    @Req() req: any,
+  ) {
+    return this.adminService.updateBooking(id, dto, req.user);
+  }
+
+  @Patch('bookings/:id/assign')
+  assignDriver(
+    @Param('id') id: string,
+    @Body() dto: AdminAssignDriverDto,
+    @Req() req: any,
+  ) {
+    return this.adminService.assignDriver(id, dto.driverId, req.user);
+  }
+
+  @Patch('bookings/:id/status')
+  updateBookingStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateBookingStatusDto,
+    @Req() req: any,
+  ) {
+    return this.adminService.updateBookingStatus(id, dto, req.user);
   }
 
   /** Admin-only debug endpoint: trigger a test 'completed' notification */
