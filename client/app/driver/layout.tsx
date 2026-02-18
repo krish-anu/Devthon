@@ -14,7 +14,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
-import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import NotificationNavButton from "@/components/shared/NotificationNavButton";
 import { UserMenu } from "@/components/layout/user-menu";
 import { usePathname } from "next/navigation";
 
@@ -62,7 +62,7 @@ export default function DriverLayout({
       <AppShell
         hasSidebar={!isPendingApproval}
         sidebar={isPendingApproval ? null : <Sidebar title="Driver Console" items={navItems} />}
-        header={<Header title="Driver Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><PushNotificationToggle /><UserMenu /></>}</>} showThemeToggle />}
+        header={<Header title="Driver Console" right={<>{isPendingApproval ? <UserMenu onlySettings /> : <><NotificationNavButton /><UserMenu /></>}</>} showThemeToggle />}
       >
         {isRestricted ? (
           <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">

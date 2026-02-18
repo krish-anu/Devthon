@@ -31,6 +31,7 @@ import supabase, { getBucketName } from "@/lib/supabase";
 import { useForm as useForm2 } from "react-hook-form";
 import { usePasskey } from "@/hooks/usePasskey";
 import { RewardsSummary } from "@/lib/types";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
 
 const schema = z.object({
   firstName: z.string().min(2),
@@ -740,6 +741,44 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Push subscription / server-side push toggle (manage from settings) */}
+                <div className="mt-6 border-t pt-4">
+                  <h5 className="text-sm font-semibold mb-2">Push subscriptions</h5>
+                  <p className="mb-3 text-sm text-(--muted)">
+                    Enable or disable server-delivered push notifications (used to
+                    receive updates when the app is closed). This registers a
+                    subscription with the backend.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <PushNotificationToggle />
+                    <Button
+                      variant="ghost"
+                      onClick={async () => {
+                        try {
+                          if (
+                            navigator.serviceWorker &&
+                            navigator.serviceWorker.controller
+                          ) {
+                            navigator.serviceWorker.controller.postMessage({
+                              type: "TEST_NOTIFICATION",
+                              title: "Test push",
+                              body: "Test push from settings",
+                            });
+                            toast({ title: "Test sent", variant: "success" });
+                            return;
+                          }
+                        } catch (e) {
+                          // ignore
+                        }
+                        toast({ title: "Test unavailable", variant: "warning" });
+                      }}
+                    >
+                      Send test push
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="mt-3">
                   <Button
                     onClick={async () => {

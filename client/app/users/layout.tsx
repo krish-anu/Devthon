@@ -13,7 +13,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { UserMenu } from "@/components/layout/user-menu";
-import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
+import NotificationNavButton from "@/components/shared/NotificationNavButton";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
@@ -53,7 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <RequireAuth roles={["CUSTOMER", "ADMIN", "SUPER_ADMIN"]}>
       <AppShell
         sidebar={<Sidebar title="User Portal" items={navItems} />}
-        header={<Header title="User Portal" right={<><PushNotificationToggle /><UserMenu /></>} showThemeToggle />}
+        header={<Header title="User Portal" right={<><NotificationNavButton /><UserMenu /></>} showThemeToggle />}
       >
         {children}
       </AppShell>
