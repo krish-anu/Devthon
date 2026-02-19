@@ -6,18 +6,16 @@ import { useState } from "react";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
+import {
+  isUserPaymentDueStatus,
+  normalizeBookingStatus,
+} from "@/lib/booking-status";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/shared/Loading";
+import { StatusPill } from "@/components/shared/status-pill";
 import { Phone, MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-
-const steps = [
-  "Booking Confirmed",
-  "Driver Assigned",
-  "Driver En Route",
-  "Pickup Complete",
-];
 
 const mapContainerStyle = {
   height: "100%",
@@ -131,6 +129,17 @@ export default function BookingDetailsPage() {
     saveLocationMutation.mutate(markerPosition);
   };
 
+  const normalizedStatus = booking
+    ? normalizeBookingStatus(booking.status)
+    : "CREATED";
+  const canDelete = normalizedStatus === "CREATED";
+  const isPaymentDue = Boolean(
+    booking &&
+      isUserPaymentDueStatus(booking.status) &&
+      booking.finalAmountLkr !== null &&
+      booking.finalAmountLkr !== undefined,
+  );
+
   return (
     <div className="space-y-6">
       <Card className="space-y-4">
@@ -143,9 +152,11 @@ export default function BookingDetailsPage() {
               Booking {booking?.id?.slice(0, 8) ?? ""}
             </h2>
           </div>
-          <div className="flex items-center gap-3 text-sm text-(--muted)">
-            <span>Estimated Arrival 15 minutes</span>
-            {booking?.status === "SCHEDULED" && (
+          <div className="flex items-center gap-3">
+            {booking && (
+              <StatusPill status={booking.status} viewerRole="CUSTOMER" />
+            )}
+            {canDelete && (
               <Button
                 variant="outline"
                 size="sm"
@@ -165,17 +176,36 @@ export default function BookingDetailsPage() {
             )}
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          {steps.map((step, index) => (
-            <div
-              key={step}
-              className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3"
-            >
-              <p className="text-xs text-(--muted)">Step {index + 1}</p>
-              <p className="text-sm font-semibold">{step}</p>
-            </div>
-          ))}
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+            <p className="text-xs text-(--muted)">Waste Type</p>
+            <p className="text-sm font-semibold">
+              {booking?.wasteCategory?.name ?? "Unknown"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+            <p className="text-xs text-(--muted)">Scheduled Pickup</p>
+            <p className="text-sm font-semibold">
+              {booking
+                ? new Date(booking.scheduledDate).toLocaleString()
+                : "-"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+            <p className="text-xs text-(--muted)">Collected Details</p>
+            <p className="text-sm font-semibold">
+              {booking?.actualWeightKg ?? "-"} kg
+            </p>
+            <p className="text-xs text-(--muted)">
+              Amount: LKR {booking?.finalAmountLkr ?? booking?.estimatedMaxAmount}
+            </p>
+          </div>
         </div>
+        {isPaymentDue && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
+            Please pay LKR {booking?.finalAmountLkr?.toFixed(2)} to the driver.
+          </div>
+        )}
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">

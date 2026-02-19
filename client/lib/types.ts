@@ -20,20 +20,32 @@ export interface User {
 
 export type BookingStatus =
   | 'CREATED'
-  | 'SCHEDULED'
   | 'ASSIGNED'
   | 'IN_PROGRESS'
   | 'COLLECTED'
-  | 'PAID'
   | 'COMPLETED'
   | 'CANCELLED'
-  | 'REFUNDED';
+  | 'REFUNDED'
+  // Legacy statuses are retained for compatibility-safe reads.
+  | 'SCHEDULED'
+  | 'PAID';
 
 export interface WasteCategory {
   id: string;
   name: string;
+  slug?: string;
   description?: string | null;
   isActive?: boolean;
+}
+
+export interface WasteType {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  minPriceLkrPerKg: number | null;
+  maxPriceLkrPerKg: number | null;
+  ratePerKg: number | null;
 }
 
 export interface Booking {

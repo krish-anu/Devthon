@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { normalizeBookingStatus } from "@/lib/booking-status";
 import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/shared/kpi-card";
 import Loading from "@/components/shared/Loading";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { StatusPill } from "@/components/shared/status-pill";
 
 export default function DriverDashboardPage() {
   const { user, refreshProfile } = useAuth();
@@ -31,12 +33,14 @@ export default function DriverDashboardPage() {
   const stats = useMemo(() => {
     const assigned = bookings.length;
     const scheduled = bookings.filter((b) =>
-      ["CREATED", "SCHEDULED", "ASSIGNED"].includes(b.status),
+      ["CREATED", "ASSIGNED"].includes(normalizeBookingStatus(b.status)),
     ).length;
     const onPickup = bookings.filter((b) =>
-      ["IN_PROGRESS", "COLLECTED", "PAID"].includes(b.status),
+      ["IN_PROGRESS", "COLLECTED"].includes(normalizeBookingStatus(b.status)),
     ).length;
-    const completed = bookings.filter((b) => b.status === "COMPLETED").length;
+    const completed = bookings.filter(
+      (b) => normalizeBookingStatus(b.status) === "COMPLETED",
+    ).length;
     return { assigned, scheduled, onPickup, completed };
   }, [bookings]);
 
@@ -102,7 +106,9 @@ export default function DriverDashboardPage() {
                     <TableCell>{b.id.slice(0, 8)}</TableCell>
                     <TableCell>{b.addressLine1}</TableCell>
                     <TableCell>{b.actualWeightKg ?? "-"} kg</TableCell>
-                    <TableCell>{b.status}</TableCell>
+                    <TableCell>
+                      <StatusPill status={b.status} viewerRole="DRIVER" />
+                    </TableCell>
                     <TableCell>
                       {new Date(
                         b.scheduledDate || b.createdAt,

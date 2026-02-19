@@ -15,6 +15,13 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 // Supabase syncing removed from seed script to avoid relying on external credentials
+function toWasteSlug(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 async function main() {
   // Delete in reverse-dependency order
@@ -35,7 +42,7 @@ async function main() {
   // Create admin user + admin profile
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@trash2cash.lk',
+      email: 'admin@trash2treasure.lk',
       passwordHash,
       role: Role.ADMIN,
     },
@@ -45,7 +52,7 @@ async function main() {
       id: adminUser.id,
       fullName: 'Admin Team',
       phone: '+94 77 000 0000',
-      address: 'Trash2Cash HQ, Colombo',
+      address: 'Trash2Treasure HQ, Colombo',
       approved: true,
     },
   });
@@ -53,7 +60,7 @@ async function main() {
   // Create customer user: Rajesh
   const rajeshUser = await prisma.user.create({
     data: {
-      email: 'rajesh@trash2cash.lk',
+      email: 'rajesh@trash2treasure.lk',
       passwordHash,
       role: Role.CUSTOMER,
     },
@@ -72,7 +79,7 @@ async function main() {
   // Create customer user: Samantha
   const samanthaUser = await prisma.user.create({
     data: {
-      email: 'samantha@trash2cash.lk',
+      email: 'samantha@trash2treasure.lk',
       passwordHash,
       role: Role.CUSTOMER,
     },
@@ -91,7 +98,7 @@ async function main() {
   // Create driver users + driver profiles (1:1 with User)
   const driverData = [
     {
-      email: 'sunil@trash2cash.lk',
+      email: 'sunil@trash2treasure.lk',
       fullName: 'Sunil Jayasinghe',
       phone: '+94 77 555 0101',
       rating: 4.8,
@@ -100,7 +107,7 @@ async function main() {
       status: DriverStatus.ON_PICKUP,
     },
     {
-      email: 'nimali@trash2cash.lk',
+      email: 'nimali@trash2treasure.lk',
       fullName: 'Nimali Fernando',
       phone: '+94 77 555 0202',
       rating: 4.6,
@@ -109,7 +116,7 @@ async function main() {
       status: DriverStatus.ONLINE,
     },
     {
-      email: 'kasun@trash2cash.lk',
+      email: 'kasun@trash2treasure.lk',
       fullName: 'Kasun Abeysekera',
       phone: '+94 77 555 0303',
       rating: 4.4,
@@ -158,8 +165,15 @@ async function main() {
   for (const def of categoryDefs) {
     const cat = await prisma.wasteCategory.upsert({
       where: { name: def.name },
-      update: { description: def.description },
-      create: { name: def.name, description: def.description },
+      update: {
+        description: def.description,
+        slug: toWasteSlug(def.name),
+      } as any,
+      create: {
+        name: def.name,
+        slug: toWasteSlug(def.name),
+        description: def.description,
+      } as any,
     });
     categories.push(cat);
   }
@@ -205,7 +219,7 @@ async function main() {
       postalCode: '00300',
       scheduledDate: new Date(),
       scheduledTimeSlot: '10:00 AM - 12:00 PM',
-      status: BookingStatus.SCHEDULED,
+      status: BookingStatus.CREATED,
       driverId: drivers[1].id,
     },
   });
@@ -284,7 +298,7 @@ async function main() {
   });
 
   await prisma.launchNotify.create({
-    data: { email: 'hello@trash2cash.lk' },
+    data: { email: 'hello@trash2treasure.lk' },
   });
 
   // Insert application config values (e.g. storage bucket) if provided via env
@@ -321,3 +335,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

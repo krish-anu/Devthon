@@ -49,16 +49,16 @@ cmd_start() {
 cmd_start_local() {
     print_header "Starting Docker Services (Local DB)"
     print_info "Building and starting all services with local database..."
-    export DATABASE_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
-    export DIRECT_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
+    export DATABASE_URL="postgresql://trash2treasure:trash2treasure_dev_password@db:5432/trash2treasure"
+    export DIRECT_URL="postgresql://trash2treasure:trash2treasure_dev_password@db:5432/trash2treasure"
     docker compose --profile local-db up --build
 }
 
 cmd_start_local_detached() {
     print_header "Starting Docker Services (Local DB, Detached)"
     print_info "Building and starting all services with local database in background..."
-    export DATABASE_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
-    export DIRECT_URL="postgresql://trash2cash:trash2cash_dev_password@db:5432/trash2cash"
+    export DATABASE_URL="postgresql://trash2treasure:trash2treasure_dev_password@db:5432/trash2treasure"
+    export DIRECT_URL="postgresql://trash2treasure:trash2treasure_dev_password@db:5432/trash2treasure"
     docker compose --profile local-db up --build -d
     print_success "Services started successfully!"
     echo ""
@@ -153,7 +153,7 @@ cmd_shell() {
             ;;
         db)
             print_info "Opening PostgreSQL shell..."
-            docker compose exec db psql -U trash2cash -d trash2cash
+            docker compose exec db psql -U trash2treasure -d trash2treasure
             ;;
         *)
             print_error "Unknown service: $2"
@@ -302,3 +302,4 @@ case "$1" in
         exit 1
         ;;
 esac
+

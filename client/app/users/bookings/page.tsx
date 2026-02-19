@@ -6,6 +6,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Booking, WasteCategory } from "@/lib/types";
+import {
+  getBookingStatusLabel,
+  isUserPaymentDueStatus,
+  normalizeBookingStatus,
+} from "@/lib/booking-status";
 import { Card } from "@/components/ui/card";
 import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Input } from "@/components/ui/input";
@@ -88,7 +93,9 @@ export default function BookingHistoryPage() {
   };
 
   const metrics = useMemo(() => {
-    const completed = bookings.filter((b) => b.status === "COMPLETED").length;
+    const completed = bookings.filter(
+      (b) => normalizeBookingStatus(b.status) === "COMPLETED",
+    ).length;
     const totalEarned = bookings.reduce(
       (sum, b) => sum + (b.finalAmountLkr ?? 0),
       0,
@@ -106,7 +113,7 @@ export default function BookingHistoryPage() {
       booking.wasteCategory?.name ?? "",
       booking.actualWeightKg ?? "",
       booking.finalAmountLkr ?? booking.estimatedMaxAmount,
-      booking.status,
+      getBookingStatusLabel(booking.status, "CUSTOMER"),
       booking.createdAt,
     ]);
     const header = [
@@ -225,16 +232,29 @@ export default function BookingHistoryPage() {
                   </TableCell>
                   <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
                   <TableCell>
-                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                    <div className="space-y-1">
+                      <div>
+                        LKR{" "}
+                        {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                      </div>
+                      {isUserPaymentDueStatus(booking.status) &&
+                        booking.finalAmountLkr !== null &&
+                        booking.finalAmountLkr !== undefined && (
+                          <div className="text-xs text-amber-700 dark:text-amber-300">
+                            Please pay LKR {booking.finalAmountLkr.toFixed(2)} to
+                            driver.
+                          </div>
+                        )}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <StatusPill status={booking.status} />
+                    <StatusPill status={booking.status} viewerRole="CUSTOMER" />
                   </TableCell>
                   <TableCell>
                     {new Date(booking.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    {booking.status === "SCHEDULED" && (
+                    {normalizeBookingStatus(booking.status) === "CREATED" && (
                       <Button
                         variant="ghost"
                         size="icon"

@@ -52,8 +52,8 @@ export default function ContactPage() {
                   <Mail className="w-6 h-6 text-(--brand) mt-1" />
                   <div>
                     <h4 className="font-semibold">Email</h4>
-                    <p className="text-(--muted)">info@trash2cash.lk</p>
-                    <p className="text-(--muted)">support@trash2cash.lk</p>
+                    <p className="text-(--muted)">info@trash2treasure.lk</p>
+                    <p className="text-(--muted)">support@trash2treasure.lk</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -118,3 +118,4 @@ export default function ContactPage() {
     </div>
   );
 }
+

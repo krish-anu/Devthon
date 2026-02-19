@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,7 +12,12 @@ import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
-import { RewardsService } from '../rewards/rewards.service';
+import {
+  expandBookingStatusFilter,
+  getTransitionError,
+  isLegacyBookingStatus,
+  normalizeBookingStatus,
+} from './booking-status';
 
 @Injectable()
 export class BookingsService {
@@ -20,7 +26,6 @@ export class BookingsService {
     private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
     private pushService: PushService,
-    private rewardsService: RewardsService,
   ) {}
 
   async list(userId: string, query: BookingsQueryDto) {
@@ -32,7 +37,9 @@ export class BookingsService {
     const pageSize = query.pageSize ?? 10;
 
     const where: any = { userId };
-    if (query.status) where.status = query.status;
+    if (query.status) {
+      where.status = { in: expandBookingStatusFilter(query.status) };
+    }
     if (query.category) where.wasteCategoryId = query.category;
     if (query.from || query.to) {
       where.scheduledDate = {};
@@ -63,7 +70,12 @@ export class BookingsService {
         count: items.length,
         total,
       });
-      return { items, total, page, pageSize };
+      return {
+        items: items.map((item) => this.normalizeBookingForRead(item)),
+        total,
+        page,
+        pageSize,
+      };
     } catch (err) {
       this.transactionLogger.logError('booking.list.failure', err as Error, {
         userId,
@@ -88,7 +100,7 @@ export class BookingsService {
         userId,
         bookingId: id,
       });
-      return booking;
+      return this.normalizeBookingForRead(booking);
     } catch (err) {
       this.transactionLogger.logError('booking.get.failure', err as Error, {
         userId,
@@ -131,7 +143,7 @@ export class BookingsService {
               scheduledTimeSlot: dto.scheduledTimeSlot,
               lat: dto.lat,
               lng: dto.lng,
-              status: BookingStatus.SCHEDULED,
+              status: BookingStatus.CREATED,
             },
           });
           this.transactionLogger.logTransaction('booking.create.success', {
@@ -187,7 +199,7 @@ export class BookingsService {
           .catch(() => {});
       }
 
-      return created;
+      return created.map((item) => this.normalizeBookingForRead(item));
     } catch (err) {
       this.transactionLogger.logError('booking.create.failure', err as Error, {
         userId,
@@ -232,7 +244,7 @@ export class BookingsService {
         })
         .catch(() => {});
 
-      return updated;
+      return this.normalizeBookingForRead(updated);
     } catch (err) {
       this.transactionLogger.logError('booking.cancel.failure', err as Error, {
         userId,
@@ -308,7 +320,7 @@ export class BookingsService {
         userId,
         count: results.length,
       });
-      return results;
+      return results.map((item) => this.normalizeBookingForRead(item));
     } catch (err) {
       this.transactionLogger.logError('booking.pending.failure', err as Error, {
         userId,
@@ -362,8 +374,44 @@ export class BookingsService {
       const booking = await this.prisma.booking.findUnique({ where: { id } });
       if (!booking) throw new NotFoundException('Booking not found');
 
-      const shouldConfirm = dto.status === BookingStatus.COMPLETED;
-      const data: any = { status: dto.status };
+      if (isLegacyBookingStatus(dto.status)) {
+        throw new BadRequestException(
+          `Legacy status ${dto.status} is not allowed.`,
+        );
+      }
+
+      const currentStatus = normalizeBookingStatus(booking.status);
+      const nextStatus = normalizeBookingStatus(dto.status);
+      if (nextStatus !== currentStatus) {
+        const transitionError = getTransitionError(currentStatus, nextStatus);
+        if (transitionError) {
+          throw new BadRequestException(transitionError);
+        }
+      }
+
+      const shouldConfirm = nextStatus === BookingStatus.COMPLETED;
+      const nextWeight =
+        dto.actualWeightKg !== undefined
+          ? dto.actualWeightKg
+          : booking.actualWeightKg;
+      const nextAmount =
+        dto.finalAmountLkr !== undefined
+          ? dto.finalAmountLkr
+          : booking.finalAmountLkr;
+
+      if (
+        shouldConfirm &&
+        (nextWeight === null ||
+          nextWeight === undefined ||
+          nextAmount === null ||
+          nextAmount === undefined)
+      ) {
+        throw new BadRequestException(
+          'Cannot complete a booking without weight and amount.',
+        );
+      }
+
+      const data: any = { status: nextStatus };
 
       if (dto.actualWeightKg !== undefined) {
         data.actualWeightKg = dto.actualWeightKg;
@@ -388,16 +436,12 @@ export class BookingsService {
         confirmedAt: updated.confirmedAt,
       });
 
-      if (shouldConfirm) {
-        await this.rewardsService.awardPointsForBooking(updated.id);
-      }
-
       this.transactionLogger.logTransaction('booking.status.update.success', {
         bookingId: id,
         status: updated.status,
       });
 
-      return updated;
+      return this.normalizeBookingForRead(updated);
     } catch (err) {
       this.transactionLogger.logError(
         'booking.status.update.failure',
@@ -406,5 +450,16 @@ export class BookingsService {
       );
       throw err;
     }
+  }
+
+  private normalizeBookingForRead<T extends { status: BookingStatus }>(
+    booking: T,
+  ): T {
+    const normalizedStatus = normalizeBookingStatus(booking.status);
+    if (normalizedStatus === booking.status) return booking;
+    return {
+      ...booking,
+      status: normalizedStatus,
+    };
   }
 }

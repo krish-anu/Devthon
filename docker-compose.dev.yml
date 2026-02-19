@@ -11,22 +11,22 @@ services:
   # instead of the external Supabase database
   db:
     image: postgres:16-alpine
-    container_name: trash2cash-db
+    container_name: trash2treasure-db
     restart: unless-stopped
     profiles:
       - local-db
     environment:
-      POSTGRES_USER: trash2cash
-      POSTGRES_PASSWORD: trash2cash_dev_password
-      POSTGRES_DB: trash2cash
+      POSTGRES_USER: trash2treasure
+      POSTGRES_PASSWORD: trash2treasure_dev_password
+      POSTGRES_DB: trash2treasure
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - trash2cash-network
+      - trash2treasure-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trash2cash"]
+      test: ["CMD-SHELL", "pg_isready -U trash2treasure"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,7 +39,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: trash2cash-backend
+    container_name: trash2treasure-backend
     restart: unless-stopped
     ports:
       # Expose backend on host port 4000
@@ -90,7 +90,7 @@ services:
       # Web Push (VAPID) - provided from project .env or environment
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
-      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@trash2cash.lk}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@trash2treasure.lk}
     volumes:
       # Mount source code for hot reload in development
       - ./server/src:/app/src
@@ -99,7 +99,7 @@ services:
       - ./server/logs:/app/logs
       # Persist node_modules from the image (do not mount host path here)
     networks:
-      - trash2cash-network
+      - trash2treasure-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:4000/api || exit 1"]
       interval: 10s
@@ -117,7 +117,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-    container_name: trash2cash-frontend
+    container_name: trash2treasure-frontend
     restart: unless-stopped
     ports:
       # Expose frontend on host port 3000
@@ -153,13 +153,13 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - trash2cash-network
+      - trash2treasure-network
 
 # ==========================================
 # Networks
 # ==========================================
 networks:
-  trash2cash-network:
+  trash2treasure-network:
     driver: bridge
 
 # ==========================================
@@ -170,3 +170,4 @@ volumes:
     driver: local
   node_modules:
     driver: local
+

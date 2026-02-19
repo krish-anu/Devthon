@@ -3,14 +3,16 @@ import { BookingStatus, DriverStatus, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 import { calculateMidpointAmountLkr } from '../bookings/booking-amount';
-import { getTransitionError } from '../bookings/booking-status';
-import { RewardsService } from '../rewards/rewards.service';
+import {
+  getRoleTransitionError,
+  isLegacyBookingStatus,
+  normalizeBookingStatus,
+} from '../bookings/booking-status';
+import { PushService } from '../notifications/push.service';
+import { CollectDriverBookingDto } from './dto/collect-driver-booking.dto';
+import { CancelDriverBookingDto } from './dto/cancel-driver-booking.dto';
 import { UpdateDriverBookingDto } from './dto/update-driver-booking.dto';
 
-const PICKUP_ACTIVE_BOOKING_STATUSES = new Set<BookingStatus>([
-  BookingStatus.IN_PROGRESS,
-  BookingStatus.COLLECTED,
-]);
 const MANUAL_DRIVER_STATUSES = new Set<DriverStatus>([
   DriverStatus.ONLINE,
   DriverStatus.OFFLINE,
@@ -20,7 +22,7 @@ const MANUAL_DRIVER_STATUSES = new Set<DriverStatus>([
 export class DriverService {
   constructor(
     private prisma: PrismaService,
-    private rewardsService: RewardsService,
+    private pushService: PushService,
   ) {}
 
   async getBookings(driverId: string) {
@@ -35,15 +37,29 @@ export class DriverService {
       orderBy: { scheduledDate: 'asc' },
     });
 
-    return bookings.map((b) => ({
-      ...b,
-      user: flattenUser(b.user),
-    }));
+    return bookings.map((booking) => this.toDriverBookingResponse(booking));
   }
 
   async getBookingById(driverId: string, bookingId: string) {
-    const booking = await this.prisma.booking.findUnique({
+    const booking = await this.getAssignedBooking(driverId, bookingId);
+    return this.toDriverBookingResponse(booking);
+  }
+
+  async startPickup(driverId: string, bookingId: string) {
+    const booking = await this.getAssignedBooking(driverId, bookingId);
+    const currentStatus = normalizeBookingStatus(booking.status);
+    const nextStatus = BookingStatus.IN_PROGRESS;
+
+    const transitionError = getRoleTransitionError(
+      'DRIVER',
+      currentStatus,
+      nextStatus,
+    );
+    if (transitionError) throw new BadRequestException(transitionError);
+
+    const updated = await this.prisma.booking.update({
       where: { id: bookingId },
+      data: { status: nextStatus },
       include: {
         user: {
           include: USER_PROFILE_INCLUDE,
@@ -52,63 +68,50 @@ export class DriverService {
       },
     });
 
-    if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.driverId !== driverId) throw new ForbiddenException();
-
-    return {
-      ...booking,
-      user: flattenUser(booking.user),
-    };
-  }
-
-  async updateBooking(driverId: string, bookingId: string, dto: UpdateDriverBookingDto) {
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { wasteCategory: true },
+    await this.recordStatusHistory(booking.id, currentStatus, nextStatus, driverId);
+    await this.prisma.driver.update({
+      where: { id: driverId },
+      data: { status: DriverStatus.ON_PICKUP },
     });
 
-    if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.driverId !== driverId) {
-      throw new ForbiddenException('Booking is not assigned to this driver');
-    }
+    return this.toDriverBookingResponse(updated);
+  }
 
-    const nextStatus = dto.status ?? booking.status;
-    const statusChanged = nextStatus !== booking.status;
+  async collectBooking(
+    driverId: string,
+    bookingId: string,
+    dto: CollectDriverBookingDto,
+  ) {
+    const booking = await this.getAssignedBooking(driverId, bookingId);
+    const currentStatus = normalizeBookingStatus(booking.status);
+    const nextStatus = BookingStatus.COLLECTED;
 
-    if (statusChanged) {
-      const transitionError = getTransitionError(booking.status, nextStatus);
-      if (transitionError) throw new BadRequestException(transitionError);
-    }
+    const transitionError = getRoleTransitionError(
+      'DRIVER',
+      currentStatus,
+      nextStatus,
+    );
+    if (transitionError) throw new BadRequestException(transitionError);
 
-    if (nextStatus === BookingStatus.COMPLETED) {
-      const weight = dto.actualWeightKg ?? booking.actualWeightKg;
-      if (weight === null || weight === undefined) {
-        throw new BadRequestException('Pickup weight is required to complete the booking');
-      }
-    }
-
-    const data: any = {};
-    if (dto.status) data.status = dto.status;
-    if (dto.actualWeightKg !== undefined) data.actualWeightKg = dto.actualWeightKg;
-    if (dto.finalAmountLkr !== undefined) data.finalAmountLkr = dto.finalAmountLkr;
-    if (dto.wasteCategoryId) data.wasteCategoryId = dto.wasteCategoryId;
-
-    const shouldConfirm = nextStatus === BookingStatus.COMPLETED;
-    if (shouldConfirm && !booking.confirmedAt) data.confirmedAt = new Date();
-
-    const weightForAmount =
-      dto.actualWeightKg !== undefined
-        ? dto.actualWeightKg
-        : booking.actualWeightKg ?? null;
     const categoryForPricing = dto.wasteCategoryId ?? booking.wasteCategoryId;
-    if (data.finalAmountLkr === undefined && weightForAmount !== null) {
-      const computed = await this.calculateFinalAmountLkr(categoryForPricing, weightForAmount);
-      if (computed !== null) data.finalAmountLkr = computed;
+    const amountLkr = await this.calculateFinalAmountLkr(
+      categoryForPricing,
+      dto.weightKg,
+    );
+    if (amountLkr === null) {
+      throw new BadRequestException(
+        'Pricing is not configured for this waste category.',
+      );
     }
 
     const updated = await this.prisma.booking.update({
       where: { id: bookingId },
-      data,
+      data: {
+        status: nextStatus,
+        actualWeightKg: dto.weightKg,
+        finalAmountLkr: amountLkr,
+        wasteCategoryId: dto.wasteCategoryId ?? booking.wasteCategoryId,
+      },
       include: {
         user: {
           include: USER_PROFILE_INCLUDE,
@@ -117,18 +120,9 @@ export class DriverService {
       },
     });
 
+    const statusChanged = currentStatus !== nextStatus;
     if (statusChanged) {
-      await this.recordStatusHistory(booking.id, booking.status, nextStatus, driverId);
-    }
-
-    if (statusChanged && PICKUP_ACTIVE_BOOKING_STATUSES.has(nextStatus)) {
-      await this.prisma.driver.update({
-        where: { id: driverId },
-        data: { status: DriverStatus.ON_PICKUP },
-      });
-    }
-
-    if (statusChanged && nextStatus === BookingStatus.COMPLETED) {
+      await this.recordStatusHistory(booking.id, currentStatus, nextStatus, driverId);
       await this.prisma.driver.update({
         where: { id: driverId },
         data: {
@@ -136,13 +130,112 @@ export class DriverService {
           pickupCount: { increment: 1 },
         },
       });
-      await this.rewardsService.awardPointsForBooking(updated.id);
     }
 
-    return {
-      ...updated,
-      user: flattenUser(updated.user),
-    };
+    if (statusChanged) {
+      const wasteTypeName = updated.wasteCategory?.name ?? 'Waste';
+      this.pushService
+        .notify(booking.userId, {
+          title: 'Pickup collected',
+          body: `Pickup collected: ${wasteTypeName}, ${dto.weightKg.toFixed(2)} kg. Amount due: LKR ${amountLkr.toFixed(2)}.`,
+          bookingId: booking.id,
+          url: `/users/bookings/${booking.id}`,
+        })
+        .catch(() => {});
+    }
+
+    return this.toDriverBookingResponse(updated);
+  }
+
+  async cancelBooking(
+    driverId: string,
+    bookingId: string,
+    dto?: CancelDriverBookingDto,
+  ) {
+    const booking = await this.getAssignedBooking(driverId, bookingId);
+    const currentStatus = normalizeBookingStatus(booking.status);
+    const nextStatus = BookingStatus.CANCELLED;
+
+    const transitionError = getRoleTransitionError(
+      'DRIVER',
+      currentStatus,
+      nextStatus,
+    );
+    if (transitionError) throw new BadRequestException(transitionError);
+
+    const updated = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: nextStatus },
+      include: {
+        user: {
+          include: USER_PROFILE_INCLUDE,
+        },
+        wasteCategory: true,
+      },
+    });
+
+    await this.recordStatusHistory(booking.id, currentStatus, nextStatus, driverId);
+    await this.prisma.driver.update({
+      where: { id: driverId },
+      data: { status: DriverStatus.ONLINE },
+    });
+
+    const messageSuffix = dto?.reason?.trim()
+      ? ` Reason: ${dto.reason.trim()}.`
+      : '';
+    this.pushService
+      .notify(booking.userId, {
+        title: 'Booking cancelled',
+        body: `Booking #${booking.id.slice(0, 8)} was cancelled by the driver.${messageSuffix}`,
+        bookingId: booking.id,
+        url: `/users/bookings/${booking.id}`,
+      })
+      .catch(() => {});
+
+    return this.toDriverBookingResponse(updated);
+  }
+
+  async updateBooking(driverId: string, bookingId: string, dto: UpdateDriverBookingDto) {
+    if (dto.status && isLegacyBookingStatus(dto.status)) {
+      throw new BadRequestException(`Legacy status ${dto.status} is not allowed.`);
+    }
+
+    if (dto.status === BookingStatus.COMPLETED) {
+      throw new BadRequestException(
+        'Driver cannot mark bookings as completed.',
+      );
+    }
+
+    if (dto.status === BookingStatus.IN_PROGRESS) {
+      return this.startPickup(driverId, bookingId);
+    }
+
+    if (dto.status === BookingStatus.CANCELLED) {
+      return this.cancelBooking(driverId, bookingId);
+    }
+
+    if (dto.status === BookingStatus.COLLECTED) {
+      if (dto.actualWeightKg === null || dto.actualWeightKg === undefined) {
+        throw new BadRequestException(
+          'Weight (kg) is required when marking a booking as collected.',
+        );
+      }
+      return this.collectBooking(driverId, bookingId, {
+        weightKg: dto.actualWeightKg,
+        wasteCategoryId: dto.wasteCategoryId,
+      });
+    }
+
+    if (dto.actualWeightKg !== null && dto.actualWeightKg !== undefined) {
+      return this.collectBooking(driverId, bookingId, {
+        weightKg: dto.actualWeightKg,
+        wasteCategoryId: dto.wasteCategoryId,
+      });
+    }
+
+    throw new BadRequestException(
+      'Use start, collect, or cancel actions to update bookings.',
+    );
   }
 
   async updateStatus(driverId: string, status: DriverStatus) {
@@ -154,6 +247,25 @@ export class DriverService {
       where: { id: driverId },
       data: { status },
     });
+  }
+
+  private async getAssignedBooking(driverId: string, bookingId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        user: {
+          include: USER_PROFILE_INCLUDE,
+        },
+        wasteCategory: true,
+      },
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.driverId !== driverId) {
+      throw new ForbiddenException('Booking is not assigned to this driver');
+    }
+
+    return booking;
   }
 
   private async calculateFinalAmountLkr(wasteCategoryId: string, weightKg: number) {
@@ -178,5 +290,15 @@ export class DriverService {
         changedByRole: Role.DRIVER,
       },
     });
+  }
+
+  private toDriverBookingResponse<T extends { status: BookingStatus; user: any }>(
+    booking: T,
+  ): T {
+    return {
+      ...booking,
+      status: normalizeBookingStatus(booking.status),
+      user: flattenUser(booking.user),
+    };
   }
 }

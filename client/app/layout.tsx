@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+import { BRAND_NAME } from "@/config/branding";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -14,9 +15,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Trash2Treasure | Sri Lanka Waste Marketplace",
+  title: `${BRAND_NAME} | Sri Lanka Waste Marketplace`,
   description:
-    "Turn your waste into cash with Sri Lanka?s #1 waste marketplace.",
+    `Turn your waste into value with ${BRAND_NAME}, Sri Lanka's #1 waste marketplace.`,
   icons: {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
@@ -36,7 +37,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var stored = localStorage.getItem('t2c-theme');
+                  var stored = localStorage.getItem('t2t-theme');
                   var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   document.documentElement.setAttribute('data-theme', theme);
                   if (theme === 'dark') {

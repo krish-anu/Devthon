@@ -7,7 +7,7 @@
 set -euo pipefail
 
 echo "──────────────────────────────────"
-echo "  🚀 Trash2Cash EC2 Setup Script "
+echo "  🚀 Trash2Treasure EC2 Setup Script "
 echo "──────────────────────────────────"
 
 # ── 1. System updates ──
@@ -49,7 +49,7 @@ else
 fi
 
 # ── 6. Create app directory ──
-APP_DIR="/home/${SUDO_USER:-ubuntu}/trash2cash"
+APP_DIR="/home/${SUDO_USER:-ubuntu}/trash2treasure"
 mkdir -p "$APP_DIR"
 chown "${SUDO_USER:-ubuntu}":"${SUDO_USER:-ubuntu}" "$APP_DIR"
 echo "✅ App directory: $APP_DIR"
@@ -81,7 +81,8 @@ echo "  ✅ EC2 SETUP COMPLETE!"
 echo ""
 echo "  Next steps:"
 echo "  1. Log out & log back in (for docker group)"
-echo "  2. cd ~/trash2cash"
+echo "  2. cd ~/trash2treasure"
 echo "  3. Create .env file (or let CI/CD handle it)"
 echo "  4. Push to 'main' branch → CI/CD deploys automatically"
 echo "══════════════════════════════════════════════"
+

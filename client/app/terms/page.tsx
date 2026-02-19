@@ -90,7 +90,7 @@ export default function TermsPage() {
                 </li>
                 <li>
                   <strong>Website</strong> refers to Trash2Treasure, accessible
-                  from http://www.Trash2Cash.com
+                  from http://www.Trash2Treasure.com
                 </li>
                 <li>
                   <strong>You</strong> means the individual accessing or using
@@ -385,3 +385,4 @@ export default function TermsPage() {
     </div>
   );
 }
+

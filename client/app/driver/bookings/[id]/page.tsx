@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { Booking, BookingStatus, WasteCategory } from "@/lib/types";
+import {
+  canDriverCancel,
+  canDriverCollect,
+  canDriverStart,
+} from "@/lib/booking-status";
+import { Booking, WasteType } from "@/lib/types";
+import { getWasteById } from "@/lib/wasteTypeUtils";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,13 +31,13 @@ export default function DriverBookingDetailPage() {
     refetchInterval: 12000,
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ["waste-categories"],
-    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+  const { data: wasteTypes } = useQuery({
+    queryKey: ["waste-types"],
+    queryFn: () => apiFetch<WasteType[]>("/waste-types", {}, false),
+    staleTime: 60000,
   });
 
   const [weightKg, setWeightKg] = useState("");
-  const [finalAmount, setFinalAmount] = useState("");
   const [wasteCategoryId, setWasteCategoryId] = useState("");
 
   useEffect(() => {
@@ -41,70 +47,122 @@ export default function DriverBookingDetailPage() {
         ? String(booking.actualWeightKg)
         : "",
     );
-    setFinalAmount(
-      booking.finalAmountLkr !== null && booking.finalAmountLkr !== undefined
-        ? String(booking.finalAmountLkr)
-        : "",
-    );
     setWasteCategoryId(booking.wasteCategory?.id ?? "");
   }, [booking]);
 
-  const updateMutation = useMutation({
-    mutationFn: (payload: Record<string, unknown>) =>
-      apiFetch(`/driver/bookings/${bookingId}/update`, {
+  const refreshData = () => {
+    queryClient.invalidateQueries({ queryKey: ["driver-booking", bookingId] });
+    queryClient.invalidateQueries({ queryKey: ["driver-bookings-list"] });
+    queryClient.invalidateQueries({ queryKey: ["driver-bookings"] });
+  };
+
+  const startMutation = useMutation({
+    mutationFn: () =>
+      apiFetch(`/driver/bookings/${bookingId}/start`, {
         method: "PATCH",
-        body: JSON.stringify(payload),
       }),
     onSuccess: () => {
-      toast({ title: "Booking updated", variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["driver-booking", bookingId] });
-      queryClient.invalidateQueries({ queryKey: ["driver-bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["driver-bookings-list"] });
+      toast({ title: "Pickup started", variant: "success" });
+      refreshData();
     },
     onError: (err: any) => {
       toast({
-        title: "Update failed",
-        description: err?.message ?? "Failed to update booking.",
+        title: "Could not start pickup",
+        description: err?.message ?? "Please try again.",
         variant: "error",
       });
     },
   });
 
-  const status = booking?.status as BookingStatus | undefined;
+  const collectMutation = useMutation({
+    mutationFn: (payload: { weightKg: number; wasteCategoryId?: string }) =>
+      apiFetch(`/driver/bookings/${bookingId}/collect`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      toast({ title: "Booking collected", variant: "success" });
+      refreshData();
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Could not collect booking",
+        description: err?.message ?? "Please try again.",
+        variant: "error",
+      });
+    },
+  });
 
-  const canStart =
-    status &&
-    ["SCHEDULED", "ASSIGNED", "CREATED"].includes(status) &&
-    !updateMutation.isPending;
+  const cancelMutation = useMutation({
+    mutationFn: () =>
+      apiFetch(`/driver/bookings/${bookingId}/cancel`, {
+        method: "PATCH",
+        body: JSON.stringify({}),
+      }),
+    onSuccess: () => {
+      toast({ title: "Booking cancelled", variant: "success" });
+      refreshData();
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Could not cancel booking",
+        description: err?.message ?? "Please try again.",
+        variant: "error",
+      });
+    },
+  });
 
-  const canComplete =
-    status &&
-    ["IN_PROGRESS", "COLLECTED", "PAID"].includes(status) &&
-    !updateMutation.isPending;
+  const categoryOptions = useMemo(() => {
+    const options = [...(wasteTypes ?? [])];
+    const bookingWaste = booking?.wasteCategory;
 
-  const handleUpdate = (nextStatus?: BookingStatus) => {
-    if (!bookingId) return;
-    const payload: Record<string, unknown> = {};
-    const weightValue = Number(weightKg);
-    const amountValue = Number(finalAmount);
-
-    if (!Number.isNaN(weightValue) && weightKg !== "") {
-      payload.actualWeightKg = weightValue;
+    if (bookingWaste && !getWasteById(options, bookingWaste.id)) {
+      options.push({
+        id: bookingWaste.id,
+        name: bookingWaste.name,
+        slug: bookingWaste.slug || "",
+        description: bookingWaste.description ?? null,
+        minPriceLkrPerKg: null,
+        maxPriceLkrPerKg: null,
+        ratePerKg: null,
+      });
     }
-    if (!Number.isNaN(amountValue) && finalAmount !== "") {
-      payload.finalAmountLkr = amountValue;
+
+    return options;
+  }, [wasteTypes, booking]);
+
+  const selectedCategoryId = wasteCategoryId || booking?.wasteCategory?.id || "";
+  const selectedWasteType = getWasteById(categoryOptions, selectedCategoryId);
+  const numericWeight = Number(weightKg);
+  const computedAmount =
+    Number.isFinite(numericWeight) &&
+    numericWeight > 0 &&
+    selectedWasteType?.ratePerKg !== null &&
+    selectedWasteType?.ratePerKg !== undefined
+      ? numericWeight * selectedWasteType.ratePerKg
+      : null;
+
+  const handleCollect = () => {
+    const parsedWeight = Number(weightKg);
+    if (!Number.isFinite(parsedWeight) || parsedWeight <= 0) {
+      toast({
+        title: "Invalid weight",
+        description: "Enter a valid weight in kg.",
+        variant: "error",
+      });
+      return;
     }
-    if (wasteCategoryId) {
+
+    const payload: { weightKg: number; wasteCategoryId?: string } = {
+      weightKg: parsedWeight,
+    };
+
+    if (booking && wasteCategoryId && wasteCategoryId !== booking.wasteCategory?.id) {
       payload.wasteCategoryId = wasteCategoryId;
     }
-    if (nextStatus) {
-      payload.status = nextStatus;
-    }
 
-    updateMutation.mutate(payload);
+    collectMutation.mutate(payload);
   };
-
-  const categoryOptions = useMemo(() => categories ?? [], [categories]);
 
   if (isLoading || !booking) {
     return (
@@ -114,34 +172,46 @@ export default function DriverBookingDetailPage() {
     );
   }
 
+  const isBusy =
+    startMutation.isPending || collectMutation.isPending || cancelMutation.isPending;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs text-(--muted)">Booking</p>
-          <h1 className="text-2xl font-semibold">
-            {booking.id.slice(0, 8)}
-          </h1>
+          <h1 className="text-2xl font-semibold">{booking.id.slice(0, 8)}</h1>
         </div>
-        <StatusPill status={booking.status} />
+        <StatusPill status={booking.status} viewerRole="DRIVER" />
       </div>
 
       <Card className="p-4 space-y-2">
         <div className="text-sm text-(--muted)">Customer</div>
-        <div className="text-base font-medium">
-          {booking.user?.fullName ?? "Customer"}
-        </div>
+        <div className="text-base font-medium">{booking.user?.fullName ?? "Customer"}</div>
         <div className="text-sm text-(--muted)">Address</div>
         <div className="text-base">{booking.addressLine1}</div>
-        <div className="text-sm text-(--muted)">Scheduled</div>
+        <div className="text-sm text-(--muted)">Pickup Date/Time</div>
         <div className="text-base">
-          {new Date(booking.scheduledDate).toLocaleString()} (
-          {booking.scheduledTimeSlot})
+          {new Date(booking.scheduledDate).toLocaleDateString()} ({booking.scheduledTimeSlot})
         </div>
       </Card>
 
       <Card className="p-4 space-y-4">
         <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <label className="text-xs text-(--muted)">Waste category</label>
+            <select
+              className="h-11 w-full rounded-xl border border-(--border) bg-(--card) px-3 text-sm"
+              value={wasteCategoryId}
+              onChange={(event) => setWasteCategoryId(event.target.value)}
+            >
+              {categoryOptions.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="space-y-2">
             <label className="text-xs text-(--muted)">Weight (kg)</label>
             <Input
@@ -151,43 +221,33 @@ export default function DriverBookingDetailPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs text-(--muted)">Final amount (LKR)</label>
-            <Input
-              value={finalAmount}
-              onChange={(e) => setFinalAmount(e.target.value)}
-              placeholder="Auto-calculated if empty"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-(--muted)">Waste category</label>
-            <select
-              className="h-11 w-full rounded-xl border border-(--border) bg-(--card) px-3 text-sm"
-              value={wasteCategoryId}
-              onChange={(event) => setWasteCategoryId(event.target.value)}
-            >
-              <option value="">Select category</option>
-              {categoryOptions.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            <label className="text-xs text-(--muted)">Computed amount</label>
+            <div className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-3 text-sm flex items-center">
+              {computedAmount === null ? "LKR --" : `LKR ${computedAmount.toFixed(2)}`}
+            </div>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Button
-            variant="secondary"
-            onClick={() => handleUpdate()}
-            disabled={updateMutation.isPending}
+            onClick={() => startMutation.mutate()}
+            disabled={!canDriverStart(booking.status) || isBusy}
           >
-            Save updates
+            Start Pickup
           </Button>
-          <Button onClick={() => handleUpdate("IN_PROGRESS")} disabled={!canStart}>
-            Start pickup
+          <Button
+            variant="outline"
+            onClick={handleCollect}
+            disabled={!canDriverCollect(booking.status) || isBusy}
+          >
+            {collectMutation.isPending ? "Saving..." : "Collected / Edit"}
           </Button>
-          <Button onClick={() => handleUpdate("COMPLETED")} disabled={!canComplete}>
-            Mark completed
+          <Button
+            variant="outline"
+            onClick={() => cancelMutation.mutate()}
+            disabled={!canDriverCancel(booking.status) || isBusy}
+          >
+            Cancel
           </Button>
         </div>
       </Card>

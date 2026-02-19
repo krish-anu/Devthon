@@ -7,6 +7,7 @@
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatRequestDto, PageContextDto } from './dto/chat.dto';
+import { BRAND_NAME } from '../config/branding';
 
 const DEFAULT_MODEL = 'gemini-1.5-flash';
 const DEFAULT_API_BASE_URL = 'https://generativelanguage.googleapis.com';
@@ -93,7 +94,7 @@ export class ChatService {
       : 'Visible text: (not provided)';
 
     return [
-      'You are the Trash2Cash website assistant.',
+      `You are the ${BRAND_NAME} website assistant.`,
       'Answer using ONLY the page context below.',
       'If the answer is not in the context, say you are not sure and ask a clarifying question.',
       'Do not invent features, policies, pricing, or navigation that are not in the context.',

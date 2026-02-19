@@ -10,6 +10,9 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import cookieParser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
+import { BRAND_NAME } from './config/branding';
+
+const LOG_FILE_PREFIX = 'trash2treasure';
 
 // Polyfill: allow BigInt to be serialised by JSON.stringify (Prisma returns BigInt for Int8 columns)
 (BigInt.prototype as any).toJSON = function () {
@@ -92,7 +95,7 @@ async function bootstrap() {
         }),
         // File transport stays JSON for log processing and rotation
         new winston.transports.DailyRotateFile({
-          filename: 'logs/trash2cash-%DATE%.log',
+          filename: `logs/${LOG_FILE_PREFIX}-%DATE%.log`,
           datePattern: 'YYYY-MM-DD',
           maxFiles: '14d',
           format: winston.format.combine(
@@ -102,7 +105,7 @@ async function bootstrap() {
         }),
         // Also write a human-readable rotated log (no JSON) for quick inspection
         new winston.transports.DailyRotateFile({
-          filename: 'logs/trash2cash-readable-%DATE%.log',
+          filename: `logs/${LOG_FILE_PREFIX}-readable-%DATE%.log`,
           datePattern: 'YYYY-MM-DD',
           maxFiles: '14d',
           format: winston.format.combine(
@@ -163,8 +166,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Trash2Cash API')
-    .setDescription('REST API for Trash2Cash marketplace')
+    .setTitle(`${BRAND_NAME} API`)
+    .setDescription(`REST API for ${BRAND_NAME} marketplace`)
     .setVersion('1.0')
     .addBearerAuth()
     .build();

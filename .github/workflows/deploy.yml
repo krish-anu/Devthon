@@ -12,8 +12,8 @@ on:
 
 env:
   DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USERNAME }}
-  IMAGE_BACKEND: ${{ secrets.DOCKER_HUB_USERNAME }}/trash2cash:backend
-  IMAGE_FRONTEND: ${{ secrets.DOCKER_HUB_USERNAME }}/trash2cash:frontend
+  IMAGE_BACKEND: ${{ secrets.DOCKER_HUB_USERNAME }}/trash2treasure:backend
+  IMAGE_FRONTEND: ${{ secrets.DOCKER_HUB_USERNAME }}/trash2treasure:frontend
 
 jobs:
   # ──────────────────────────────────────────
@@ -79,7 +79,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "docker-compose.prod.yml,nginx/nginx.conf"
-          target: "~/trash2cash"
+          target: "~/trash2treasure"
 
       - name: SSH & deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -88,7 +88,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/trash2cash
+            cd ~/trash2treasure
 
             # ── Write / refresh the .env from GitHub Secrets ──
             cat > .env << 'ENVEOF'
@@ -114,7 +114,7 @@ jobs:
             RECAPTCHA_ENABLED=${{ secrets.RECAPTCHA_ENABLED }}
             TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }}
             TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}
-            PASSKEY_RP_NAME=Trash2Cash
+            PASSKEY_RP_NAME=Trash2Treasure
             PASSKEY_RP_ID=${{ secrets.PASSKEY_RP_ID }}
             PASSKEY_ORIGIN=${{ secrets.PASSKEY_ORIGIN }}
             NODE_ENV=production
@@ -130,3 +130,4 @@ jobs:
 
             # ── Clean up dangling images ──
             docker image prune -f
+

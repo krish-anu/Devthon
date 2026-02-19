@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 type Theme = 'light' | 'dark';
 
-const THEME_KEY = 't2c-theme';
+const THEME_KEY = 't2t-theme';
 
 const getSystemTheme = () =>
   window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { normalizeWasteName } from '../lib/wasteTypeUtils';
 
 @Injectable()
 export class PublicService {

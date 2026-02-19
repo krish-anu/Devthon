@@ -37,13 +37,13 @@ export default function NotificationsPage() {
   const router = useRouter();
   const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
-    queryFn: () => apiFetch<NotificationItem[]>("/notifications"),
+    queryFn: () => apiFetch<NotificationItem[]>("/users/notifications"),
     refetchInterval: 30_000, // Poll every 30s for new notifications
   });
 
   const mutation = useMutation({
     mutationFn: () =>
-      apiFetch("/notifications/mark-all-read", { method: "POST" }),
+      apiFetch("/users/notifications/mark-all-read", { method: "POST" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast({

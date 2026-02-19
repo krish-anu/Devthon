@@ -1,5 +1,8 @@
+import { normalizeWasteName } from '../lib/wasteTypeUtils';
+
 export type WasteItem = {
   categoryName: string;
+  categorySlug?: string | null;
   weightKg: number;
 };
 
@@ -41,16 +44,16 @@ export const MULTIPLIERS = {
 } as const;
 
 export function normalizeCategoryName(name: string) {
-  return (name ?? '').trim().toLowerCase();
+  return normalizeWasteName(name);
 }
 
-export function isPlasticCategory(name: string) {
-  const normalized = normalizeCategoryName(name);
+export function isPlasticCategory(name: string, slug?: string | null) {
+  const normalized = normalizeCategoryName(slug || name);
   return normalized.includes('plastic') || normalized.includes('pet');
 }
 
-export function isMetalCategory(name: string) {
-  const normalized = normalizeCategoryName(name);
+export function isMetalCategory(name: string, slug?: string | null) {
+  const normalized = normalizeCategoryName(slug || name);
   return (
     normalized.includes('metal') ||
     normalized.includes('aluminum') ||
@@ -58,17 +61,22 @@ export function isMetalCategory(name: string) {
   );
 }
 
-export function isEwasteCategory(name: string) {
-  const normalized = normalizeCategoryName(name);
+export function isEwasteCategory(name: string, slug?: string | null) {
+  const normalized = normalizeCategoryName(slug || name);
+  if (!normalized) return false;
+  if (normalized === 'e-waste') return true;
+
   return (
     normalized.includes('electronic') ||
-    /(^|[^a-z])e[\s-]?wastes?([^a-z]|$)/.test(normalized)
+    normalized.includes('ewaste') ||
+    normalized.includes('electrical-waste') ||
+    normalized.includes('reusable-electronics')
   );
 }
 
-export function getBaseRate(categoryName: string) {
-  if (isPlasticCategory(categoryName)) return BASE_POINT_RATES.plastic;
-  if (isMetalCategory(categoryName)) return BASE_POINT_RATES.metal;
+export function getBaseRate(categoryName: string, categorySlug?: string | null) {
+  if (isPlasticCategory(categoryName, categorySlug)) return BASE_POINT_RATES.plastic;
+  if (isMetalCategory(categoryName, categorySlug)) return BASE_POINT_RATES.metal;
   return 0;
 }
 
@@ -79,7 +87,7 @@ export function calculatePoints(
   let rawBasePoints = 0;
 
   const itemBreakdown = safeItems.map((item) => {
-    const rate = getBaseRate(item.categoryName);
+    const rate = getBaseRate(item.categoryName, item.categorySlug);
     const weightKg = Math.max(0, Number(item.weightKg) || 0);
     const points = weightKg * rate;
     rawBasePoints += points;

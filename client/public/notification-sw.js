@@ -1,4 +1,4 @@
-/* ─── Trash2Cash Push Notification Service Worker ─── */
+/* ─── Trash2Treasure Push Notification Service Worker ─── */
 
 self.addEventListener("install", (evt) => {
   self.skipWaiting();
@@ -12,7 +12,7 @@ self.addEventListener("activate", (evt) => {
 self.addEventListener("push", function (event) {
   const data = event.data
     ? event.data.json()
-    : { title: "Trash2Cash", body: "You have a new notification" };
+    : { title: "Trash2Treasure", body: "You have a new notification" };
 
   const options = {
     body: data.body || "",
@@ -68,3 +68,4 @@ self.addEventListener("message", (event) => {
     // ignore
   }
 });
+

@@ -190,9 +190,10 @@ export default function AdminSmsPage() {
   };
 
   const statusOptions = [
-    "SCHEDULED",
+    "CREATED",
+    "ASSIGNED",
+    "IN_PROGRESS",
     "COLLECTED",
-    "PAID",
     "COMPLETED",
     "CANCELLED",
     "REFUNDED",
@@ -413,7 +414,10 @@ export default function AdminSmsPage() {
                       LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
                     </TableCell>
                     <TableCell>
-                      <StatusPill status={booking.status as BookingStatus} />
+                      <StatusPill
+                        status={booking.status as BookingStatus}
+                        viewerRole="ADMIN"
+                      />
                     </TableCell>
                     <TableCell>
                       {new Date(booking.createdAt).toLocaleDateString()}
