@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
@@ -14,13 +14,21 @@ import { NotificationItem } from "@/lib/types";
  */
 export default function NotificationNavButton() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
 
-  // derive target path from role (fallback to users)
+  // Keep users within the current portal first; fall back to role when needed.
+  const normalizedRole = (user?.role ?? "").toUpperCase();
   const target =
-    user?.role === "DRIVER"
+    pathname?.startsWith("/admin")
+      ? "/admin/notifications"
+      : pathname?.startsWith("/driver")
+        ? "/driver/notifications"
+        : pathname?.startsWith("/users")
+          ? "/users/notifications"
+          : normalizedRole === "DRIVER"
       ? "/driver/notifications"
-      : user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
+      : normalizedRole === "ADMIN" || normalizedRole === "SUPER_ADMIN"
         ? "/admin/notifications"
         : "/users/notifications";
 

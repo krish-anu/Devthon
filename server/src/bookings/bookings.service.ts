@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BookingStatus, NotificationLevel, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseService } from '../common/supabase/supabase.service';
@@ -12,7 +13,10 @@ import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
-import { BookingImageScreeningService } from './booking-image-screening.service';
+import {
+  BookingImageScreeningResult,
+  BookingImageScreeningService,
+} from './booking-image-screening.service';
 import {
   expandBookingStatusFilter,
   getTransitionError,
@@ -27,6 +31,7 @@ export class BookingsService {
     private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
     private pushService: PushService,
+    private config: ConfigService,
     private bookingImageScreeningService: BookingImageScreeningService,
   ) {}
 
@@ -205,7 +210,10 @@ export class BookingsService {
           })
           .catch(() => {});
 
-        void this.notifyAdminsForNonWasteImages(booking).catch((error) => {
+        void this.notifyAdminsForNonWasteImages(
+          booking,
+          category?.name,
+        ).catch((error) => {
           this.transactionLogger.logError(
             'booking.image.screening.failure',
             error instanceof Error ? error : new Error(String(error)),
@@ -485,7 +493,7 @@ export class BookingsService {
     id: string;
     userId: string;
     imageUrls: string[];
-  }) {
+  }, expectedWasteCategory?: string | null) {
     const imageUrls = (booking.imageUrls ?? []).filter(Boolean);
     if (imageUrls.length === 0) return;
 
@@ -493,12 +501,30 @@ export class BookingsService {
       bookingId: booking.id,
       userId: booking.userId,
       imagesCount: imageUrls.length,
+      expectedWasteCategory: expectedWasteCategory ?? null,
     });
 
-    const screeningResults =
-      await this.bookingImageScreeningService.screenImages(imageUrls);
-    const nonWasteImages = screeningResults.filter((result) => !result.isWaste);
-    if (nonWasteImages.length === 0) {
+    const screeningResults = await this.bookingImageScreeningService.screenImages(
+      imageUrls,
+      {
+        expectedWasteCategory,
+      },
+    );
+    this.transactionLogger.logTransaction('booking.image.screening.results', {
+      bookingId: booking.id,
+      results: screeningResults.map((result) => ({
+        isWaste: result.isWaste,
+        verdict: result.verdict,
+        confidence: result.confidence,
+        source: result.verdictSource,
+        object: result.detectedObject,
+      })),
+    });
+
+    const suspiciousImages = screeningResults.filter((result) =>
+      this.shouldAlertForScreeningResult(result),
+    );
+    if (suspiciousImages.length === 0) {
       this.transactionLogger.logTransaction('booking.image.screening.clean', {
         bookingId: booking.id,
         userId: booking.userId,
@@ -518,10 +544,16 @@ export class BookingsService {
       return;
     }
 
-    const sampleDetection = nonWasteImages[0];
+    const sampleDetection = suspiciousImages[0];
     const description = sampleDetection.detectedObject || 'unknown object';
     const confidencePct = Math.round((sampleDetection.confidence ?? 0) * 100);
-    const message = `Booking #${booking.id.slice(0, 8)} has ${nonWasteImages.length} suspicious image(s). Detected: ${description} (${confidencePct}% confidence).`;
+    const expectedText = expectedWasteCategory
+      ? ` Expected: ${expectedWasteCategory}.`
+      : '';
+    const reasonText = sampleDetection.reason
+      ? ` Reason: ${sampleDetection.reason}.`
+      : '';
+    const message = `Booking #${booking.id.slice(0, 8)} has ${suspiciousImages.length} suspicious image(s). Verdict: ${sampleDetection.verdict}. Detected: ${description} (${confidencePct}% confidence).${expectedText}${reasonText}`;
 
     await Promise.allSettled(
       admins.map((admin) =>
@@ -540,8 +572,103 @@ export class BookingsService {
       {
         bookingId: booking.id,
         userId: booking.userId,
-        nonWasteCount: nonWasteImages.length,
+        nonWasteCount: suspiciousImages.length,
       },
     );
+  }
+
+  private shouldAlertForScreeningResult(result: BookingImageScreeningResult) {
+    if (result.verdictSource !== 'model') return false;
+
+    const confidence = result.confidence ?? 0;
+    if (result.verdict === 'NON_WASTE') {
+      return (
+        confidence >= this.getNonWasteAlertConfidence() ||
+        this.hasExplicitNonWasteSignal(result)
+      );
+    }
+
+    if (result.verdict === 'WASTE_BUT_DIFFERENT') {
+      return confidence >= this.getMismatchAlertConfidence();
+    }
+
+    if (result.verdict === 'UNCERTAIN') {
+      return (
+        this.shouldAlertOnUncertain() &&
+        confidence >= this.getUncertainAlertConfidence()
+      );
+    }
+
+    return false;
+  }
+
+  private getNonWasteAlertConfidence() {
+    const configured = Number.parseFloat(
+      this.config.get<string>('BOOKING_IMAGE_VISION_ALERT_CONFIDENCE') ?? '',
+    );
+    if (Number.isFinite(configured)) {
+      return Math.max(0, Math.min(1, configured));
+    }
+    return 0.45;
+  }
+
+  private getMismatchAlertConfidence() {
+    const configured = Number.parseFloat(
+      this.config.get<string>('BOOKING_IMAGE_VISION_CATEGORY_MISMATCH_CONFIDENCE') ??
+        '',
+    );
+    if (Number.isFinite(configured)) {
+      return Math.max(0, Math.min(1, configured));
+    }
+    return 0.55;
+  }
+
+  private getUncertainAlertConfidence() {
+    const configured = Number.parseFloat(
+      this.config.get<string>('BOOKING_IMAGE_VISION_UNCERTAIN_CONFIDENCE') ?? '',
+    );
+    if (Number.isFinite(configured)) {
+      return Math.max(0, Math.min(1, configured));
+    }
+    return 0.7;
+  }
+
+  private shouldAlertOnUncertain() {
+    const configured = this.config.get<string>('BOOKING_IMAGE_VISION_ALERT_ON_UNCERTAIN');
+    if (!configured) return true;
+    const normalized = configured.trim().toLowerCase();
+    return ['1', 'true', 'yes', 'on'].includes(normalized);
+  }
+
+  private hasExplicitNonWasteSignal(result: BookingImageScreeningResult) {
+    const text = `${result.detectedObject} ${result.reason}`.toLowerCase();
+    const keywords = [
+      'person',
+      'human',
+      'selfie',
+      'portrait',
+      'face',
+      'pet',
+      'dog',
+      'cat',
+      'animal',
+      'landscape',
+      'scenery',
+      'sky',
+      'beach',
+      'mountain',
+      'document',
+      'screenshot',
+      'screen',
+      'monitor',
+      'laptop',
+      'phone',
+      'not waste',
+      'non-waste',
+      'irrelevant',
+      'unrelated',
+    ];
+
+    return keywords.some((token) => text.includes(token));
   }
 }

@@ -1,15 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-type ScreeningResult = {
+export type ScreeningVerdict =
+  | 'MATCHING_WASTE'
+  | 'WASTE_BUT_DIFFERENT'
+  | 'NON_WASTE'
+  | 'UNCERTAIN';
+
+export type BookingImageScreeningResult = {
   imageUrl: string;
   isWaste: boolean;
+  verdict: ScreeningVerdict;
   detectedObject: string;
   confidence: number;
   reason: string;
+  verdictSource: 'model' | 'fallback';
+};
+
+export type ScreenImagesOptions = {
+  expectedWasteCategory?: string | null;
 };
 
 type GeminiScreeningResponse = {
+  verdict?: unknown;
   isWaste?: unknown;
   detectedObject?: unknown;
   confidence?: unknown;
@@ -28,18 +41,26 @@ export class BookingImageScreeningService {
 
   constructor(private readonly config: ConfigService) {}
 
-  async screenImages(imageUrls: string[]): Promise<ScreeningResult[]> {
+  async screenImages(
+    imageUrls: string[],
+    options: ScreenImagesOptions = {},
+  ): Promise<BookingImageScreeningResult[]> {
     const uniqueUrls = [...new Set(imageUrls.filter(Boolean))];
     if (uniqueUrls.length === 0) return [];
 
     const results = await Promise.all(
-      uniqueUrls.map(async (imageUrl) => this.screenImage(imageUrl)),
+      uniqueUrls.map(async (imageUrl) => this.screenImage(imageUrl, options)),
     );
 
-    return results.filter((item): item is ScreeningResult => Boolean(item));
+    return results.filter(
+      (item): item is BookingImageScreeningResult => Boolean(item),
+    );
   }
 
-  private async screenImage(imageUrl: string): Promise<ScreeningResult | null> {
+  private async screenImage(
+    imageUrl: string,
+    options: ScreenImagesOptions,
+  ): Promise<BookingImageScreeningResult | null> {
     if (!this.isScreeningEnabled()) {
       return null;
     }
@@ -63,22 +84,40 @@ export class BookingImageScreeningService {
         apiKey,
         imageBase64: imagePayload.base64Data,
         mimeType: imagePayload.mimeType,
+        expectedWasteCategory: options.expectedWasteCategory,
       });
 
-      const parsed = this.parseGeminiResponse(responseText);
+      const parsed = this.parseGeminiResponse(
+        responseText,
+        options.expectedWasteCategory,
+      );
       return {
         imageUrl,
-        isWaste: parsed.isWaste,
+        isWaste: this.isWasteVerdict(parsed.verdict),
+        verdict: parsed.verdict,
         detectedObject: parsed.detectedObject,
         confidence: parsed.confidence,
         reason: parsed.reason,
+        verdictSource: 'model',
       };
     } catch (error: any) {
       const message =
         error instanceof Error ? error.message : String(error ?? 'unknown');
       this.logger.warn(`Failed to screen image "${imageUrl}": ${message}`);
-      return null;
+      return {
+        imageUrl,
+        isWaste: true,
+        verdict: 'UNCERTAIN',
+        detectedObject: 'unverified image',
+        confidence: 0,
+        reason: `Vision check failed: ${message.slice(0, 180)}`,
+        verdictSource: 'fallback',
+      };
     }
+  }
+
+  private isWasteVerdict(verdict: ScreeningVerdict) {
+    return verdict === 'MATCHING_WASTE' || verdict === 'WASTE_BUT_DIFFERENT';
   }
 
   private isScreeningEnabled() {
@@ -160,6 +199,7 @@ export class BookingImageScreeningService {
     apiKey: string;
     imageBase64: string;
     mimeType: string;
+    expectedWasteCategory?: string | null;
   }) {
     const fetchFn = await this.getFetch();
     const model = this.getModel();
@@ -167,15 +207,23 @@ export class BookingImageScreeningService {
     const apiVersion = this.getApiVersion();
     const endpoint = `${apiBase}/${apiVersion}/models/${model}:generateContent?key=${params.apiKey}`;
 
+    const expectedCategoryLine = params.expectedWasteCategory
+      ? `Expected pickup category: ${params.expectedWasteCategory}.`
+      : 'Expected pickup category: not provided.';
+
     const prompt = [
       'You are validating a pickup photo for a recycling app.',
-      'Decide if the main subject is waste/recyclable material.',
+      expectedCategoryLine,
       'Return ONLY valid JSON with this exact shape:',
-      '{"isWaste": boolean, "detectedObject": string, "confidence": number, "reason": string}',
-      'Use confidence between 0 and 1.',
-      'Set isWaste=false for selfies, people portraits, pets, scenery, unrelated products, or non-waste scenes.',
-      'If uncertain, set isWaste=false.',
-      'Do not include markdown.',
+      '{"verdict": "MATCHING_WASTE|WASTE_BUT_DIFFERENT|NON_WASTE|UNCERTAIN", "isWaste": boolean, "detectedObject": string, "confidence": number, "reason": string}',
+      'Rules:',
+      '- MATCHING_WASTE: image clearly shows waste/recyclables and matches expected category.',
+      '- WASTE_BUT_DIFFERENT: image shows waste but mostly of another category.',
+      '- NON_WASTE: selfie, person, pet, scenery, unrelated products, random non-waste scene.',
+      '- UNCERTAIN: blurry/occluded/not enough signal.',
+      '- confidence must be between 0 and 1.',
+      '- If uncertain, prefer NON_WASTE or UNCERTAIN instead of MATCHING_WASTE.',
+      '- Do not include markdown.',
     ].join('\n');
 
     const response = await fetchFn(endpoint, {
@@ -198,6 +246,7 @@ export class BookingImageScreeningService {
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 256,
+          responseMimeType: 'application/json',
         },
       }),
     });
@@ -224,27 +273,45 @@ export class BookingImageScreeningService {
     return text;
   }
 
-  private parseGeminiResponse(text: string) {
+  private parseGeminiResponse(text: string, expectedCategory?: string | null) {
     const parsedJson = this.tryParseJson(text);
     if (!parsedJson) {
       return {
-        isWaste: true,
-        detectedObject: 'unknown',
-        confidence: 0.2,
+        verdict: 'UNCERTAIN' as ScreeningVerdict,
+        detectedObject: 'unverified image',
+        confidence: 0,
         reason: 'Unable to parse model output',
       };
     }
 
     const payload = parsedJson as GeminiScreeningResponse;
-    const parsedIsWaste =
-      typeof payload.isWaste === 'boolean' ? payload.isWaste : true;
-    const parsedObject =
+    const detectedObject =
       typeof payload.detectedObject === 'string' &&
       payload.detectedObject.trim().length > 0
         ? payload.detectedObject.trim()
         : 'unknown';
-    const parsedReason =
-      typeof payload.reason === 'string' ? payload.reason.trim() : '';
+    const reason = typeof payload.reason === 'string' ? payload.reason.trim() : '';
+
+    const explicitNonWaste = this.hasExplicitNonWasteSignal(detectedObject, reason);
+    let verdict = this.parseVerdict(payload.verdict);
+
+    if (!verdict) {
+      const isWaste = this.parseBoolean(payload.isWaste, !explicitNonWaste);
+      if (isWaste) {
+        verdict = 'MATCHING_WASTE';
+      } else {
+        verdict = explicitNonWaste ? 'NON_WASTE' : 'UNCERTAIN';
+      }
+    }
+
+    if (
+      verdict === 'MATCHING_WASTE' &&
+      expectedCategory &&
+      this.hasCategoryMismatchSignal(detectedObject, reason, expectedCategory)
+    ) {
+      verdict = 'WASTE_BUT_DIFFERENT';
+    }
+
     const rawConfidence =
       typeof payload.confidence === 'number'
         ? payload.confidence
@@ -254,11 +321,108 @@ export class BookingImageScreeningService {
       : 0.5;
 
     return {
-      isWaste: parsedIsWaste,
-      detectedObject: parsedObject,
+      verdict,
+      detectedObject,
       confidence,
-      reason: parsedReason,
+      reason,
     };
+  }
+
+  private parseVerdict(value: unknown): ScreeningVerdict | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toUpperCase();
+    if (normalized === 'MATCHING_WASTE') return 'MATCHING_WASTE';
+    if (normalized === 'WASTE_BUT_DIFFERENT') return 'WASTE_BUT_DIFFERENT';
+    if (normalized === 'NON_WASTE') return 'NON_WASTE';
+    if (normalized === 'UNCERTAIN') return 'UNCERTAIN';
+    if (normalized === 'NOT_WASTE' || normalized === 'NON-WASTE') {
+      return 'NON_WASTE';
+    }
+    return null;
+  }
+
+  private hasExplicitNonWasteSignal(detectedObject: string, reason: string) {
+    const text = `${detectedObject} ${reason}`.toLowerCase();
+    const keywords = [
+      'person',
+      'human',
+      'selfie',
+      'portrait',
+      'face',
+      'pet',
+      'dog',
+      'cat',
+      'animal',
+      'landscape',
+      'scenery',
+      'sky',
+      'beach',
+      'mountain',
+      'document',
+      'screenshot',
+      'screen',
+      'monitor',
+      'laptop',
+      'phone',
+      'not waste',
+      'non-waste',
+      'irrelevant',
+      'unrelated',
+    ];
+
+    return keywords.some((token) => text.includes(token));
+  }
+
+  private hasCategoryMismatchSignal(
+    detectedObject: string,
+    reason: string,
+    expectedCategory: string,
+  ) {
+    const haystack = `${detectedObject} ${reason}`.toLowerCase();
+    const normalizedExpected = expectedCategory.toLowerCase();
+    if (!normalizedExpected.trim()) return false;
+
+    // If model explicitly mentions a different category and not the expected one,
+    // treat this as category mismatch.
+    const categoryHints = [
+      'plastic',
+      'paper',
+      'glass',
+      'metal',
+      'organic',
+      'e-waste',
+      'electronic',
+      'textile',
+    ];
+
+    const foundHint = categoryHints.find((hint) => haystack.includes(hint));
+    if (!foundHint) return false;
+
+    return !haystack.includes(normalizedExpected);
+  }
+
+  private parseBoolean(value: unknown, fallback: boolean) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+      if (['yes', 'y', 'waste', 'recyclable', 'recycle'].includes(normalized)) {
+        return true;
+      }
+      if (
+        ['no', 'n', 'not_waste', 'non_waste', 'non-waste', 'irrelevant'].includes(
+          normalized,
+        )
+      ) {
+        return false;
+      }
+    }
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+    return fallback;
   }
 
   private tryParseJson(text: string) {
