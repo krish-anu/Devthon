@@ -2,6 +2,7 @@
 
 import {
   LayoutGrid,
+  Plus,
   History,
   Truck,
   Bell,
@@ -21,6 +22,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       label: "Dashboard",
       href: "/users/dashboard",
       icon: <LayoutGrid className="h-4 w-4" />,
+    },
+    {
+      label: "Book a pickup",
+      href: "/users/bookings/new",
+      icon: <Plus className="h-4 w-4" />,
     },
     {
       label: "Booking History",

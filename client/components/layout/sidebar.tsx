@@ -22,6 +22,12 @@ export function Sidebar({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const activeHref =
+    items
+      .filter(
+        (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+      )
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
 
   return (
     <aside className="sticky top-0 h-screen flex flex-col gap-4 sm:gap-6 bg-linear-to-b from-(--brand-strong) to-(--brand) p-4 sm:p-6 text-white md:rounded-r-3xl overflow-y-auto">
@@ -46,7 +52,7 @@ export function Sidebar({
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1.5 sm:gap-2 mt-1 sm:mt-2 overflow-y-auto">
         {items.map((item) => {
-          const active = pathname.startsWith(item.href);
+          const active = item.href === activeHref;
           return (
             <Link
               key={item.href}
