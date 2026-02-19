@@ -92,10 +92,10 @@ export default function CareersPage() {
             <p>
               Don't see a role that fits? Send your CV to{" "}
               <a
-                href="mailto:careers@trash2cash.lk"
+                href="mailto:careers@trash2treasure.lk"
                 className="text-brand hover:underline"
               >
-                careers@trash2cash.lk
+                careers@trash2treasure.lk
               </a>
             </p>
           </div>
@@ -104,3 +104,4 @@ export default function CareersPage() {
     </div>
   );
 }
+

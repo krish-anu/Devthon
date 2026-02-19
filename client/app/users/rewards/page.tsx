@@ -20,15 +20,6 @@ import {
 import { useAuth } from "@/components/auth/auth-provider";
 import { cn } from "@/lib/utils";
 
-const HOW_TO_EARN = [
-  { label: "Plastic (PET)", value: "10 pts/kg" },
-  { label: "Metal (Aluminum)", value: "20 pts/kg" },
-  { label: "E-waste bonus", value: "+30 per booking" },
-  { label: "Weekly pickup streak", value: "2x multiplier" },
-  { label: "First confirmed booking", value: "1.5x multiplier" },
-  { label: "Multiplier rule", value: "Highest multiplier only" },
-];
-
 function LeaderboardTable({
   title,
   subtitle,
@@ -158,7 +149,7 @@ export default function RewardsPage() {
             </p>
           </div>
           <div className="mt-4 space-y-3">
-            {HOW_TO_EARN.map((item) => (
+            {(rewards?.howToEarn ?? []).map((item) => (
               <div
                 key={item.label}
                 className="flex items-center justify-between rounded-lg border border-(--border) bg-(--card) px-3 py-2"

@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { normalizeWasteName } from '../lib/wasteTypeUtils';
 
 @Injectable()
 export class PublicService {
@@ -23,11 +24,16 @@ export class PublicService {
    * Publicly list active waste categories for client UIs.
    */
   async getWasteCategories() {
-    return this.prisma.wasteCategory.findMany({
+    const categories = await this.prisma.wasteCategory.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, description: true },
     });
+
+    return categories.map((category) => ({
+      ...category,
+      slug: normalizeWasteName(category.name),
+    }));
   }
 
   async launchNotify(email: string) {

@@ -25,6 +25,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { ScrollAnimatedSection } from "@/components/shared/scroll-animated-section";
+import { BRAND_NAME } from "@/config/branding";
 
 export default function HomePage() {
   const { data: pricingData, isLoading: pricingLoading } = useQuery({
@@ -109,13 +110,13 @@ export default function HomePage() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg font-semibold">
             <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
-              <img
-                src="/recycle%20logo.png"
-                alt="Trash2Treasure logo"
-                className="h-6 w-6 sm:h-8 sm:w-8 object-contain"
-              />
-            </div>
-            <span className="hidden sm:inline">Trash2Treasure</span>
+                <img
+                  src="/recycle%20logo.png"
+                  alt={`${BRAND_NAME} logo`}
+                  className="h-6 w-6 sm:h-8 sm:w-8 object-contain"
+                />
+              </div>
+            <span className="hidden sm:inline">{BRAND_NAME}</span>
           </div>
           <nav className="hidden lg:flex items-center gap-6 text-sm text-(--muted)">
             <a href="#how" className="hover:text-foreground transition-colors">
@@ -371,7 +372,7 @@ export default function HomePage() {
                 <span className="sm:hidden"> </span>Sri Lankan household
               </h2>
               <p className="text-sm sm:text-base md:text-lg text-(--muted)">
-                From transparent pricing to carbon tracking, Trash2Treasure
+                From transparent pricing to carbon tracking, {BRAND_NAME}
                 keeps the cycle circular.
               </p>
             </div>
@@ -490,7 +491,7 @@ export default function HomePage() {
           {[
             {
               title: "General Inquiries",
-              desc: "info@trash2cash.lk",
+              desc: "info@trash2treasure.lk",
               icon: <Mail className="h-6 w-6" />,
               action: "Email Us",
             },
@@ -552,12 +553,12 @@ export default function HomePage() {
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-(--brand)/20">
                 <img
                   src="/recycle%20logo.png"
-                  alt="Trash2Treasure logo"
+                  alt={`${BRAND_NAME} logo`}
                   className="h-8 w-8 object-contain"
                 />
               </div>
               <h4 className="text-xl font-bold text-foreground">
-                Trash2Treasure
+                {BRAND_NAME}
               </h4>
             </div>
             <p className="text-sm leading-relaxed text-(--muted)">
@@ -647,7 +648,7 @@ export default function HomePage() {
             <ul className="space-y-2 text-(--muted)">
               <li>
                 <a
-                  href="https://facebook.com/trash2cash"
+                  href="https://facebook.com/trash2treasure"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
@@ -657,7 +658,7 @@ export default function HomePage() {
               </li>
               <li>
                 <a
-                  href="https://twitter.com/trash2cash"
+                  href="https://twitter.com/trash2treasure"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
@@ -667,7 +668,7 @@ export default function HomePage() {
               </li>
               <li>
                 <a
-                  href="https://instagram.com/trash2cash"
+                  href="https://instagram.com/trash2treasure"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
@@ -677,7 +678,7 @@ export default function HomePage() {
               </li>
               <li>
                 <a
-                  href="https://linkedin.com/company/trash2cash"
+                  href="https://linkedin.com/company/trash2treasure"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
@@ -690,10 +691,11 @@ export default function HomePage() {
         </div>
 
         <div className="border-t border-(--border) py-6 text-center text-sm text-(--muted)">
-          © 2026 Trash2Treasure. All rights reserved. Making Sri Lanka greener,
+          © 2026 {BRAND_NAME}. All rights reserved. Making Sri Lanka greener,
           one pickup at a time.
         </div>
       </footer>
     </div>
   );
 }
+

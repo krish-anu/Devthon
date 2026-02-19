@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import type { User } from '@prisma/client';
 import type { StringValue } from 'ms';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
+import { BRAND_NAME } from '../config/branding';
 
 @Injectable()
 export class PasskeyService implements OnModuleInit {
@@ -50,7 +51,7 @@ export class PasskeyService implements OnModuleInit {
   /* ------------------------------------------------------------------ */
 
   private get rpName(): string {
-    return this.configService.get<string>('PASSKEY_RP_NAME') || 'Trash2Cash';
+    return this.configService.get<string>('PASSKEY_RP_NAME') || BRAND_NAME;
   }
 
   private get rpId(): string {

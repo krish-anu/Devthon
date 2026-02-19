@@ -27,6 +27,7 @@ import { SupabaseModule } from './common/supabase/supabase.module';
 import { PartnersModule } from './partners/partners.module';
 import { DriverModule } from './driver/driver.module';
 import { RewardsModule } from './rewards/rewards.module';
+import { WasteTypesModule } from './waste-types/waste-types.module';
 
 @Module({
   imports: [
@@ -55,7 +56,7 @@ import { RewardsModule } from './rewards/rewards.module';
           ),
         }),
         new winston.transports.DailyRotateFile({
-          filename: 'logs/trash2cash-%DATE%.log',
+          filename: 'logs/trash2treasure-%DATE%.log',
           datePattern: 'YYYY-MM-DD',
           maxFiles: '14d',
           format: winston.format.combine(
@@ -79,6 +80,7 @@ import { RewardsModule } from './rewards/rewards.module';
     ChatModule,
     PartnersModule,
     RewardsModule,
+    WasteTypesModule,
   ],
   controllers: [AppController],
   providers: [

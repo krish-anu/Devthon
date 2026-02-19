@@ -50,6 +50,7 @@ describe('calculatePoints', () => {
     expect(isEwasteCategory('Ewaste')).toBe(true);
     expect(isEwasteCategory('Electronics')).toBe(true);
     expect(isEwasteCategory('Reusable Electronics')).toBe(true);
+    expect(isEwasteCategory('Whatever Name', 'e-waste')).toBe(true);
     expect(isEwasteCategory('Plastic')).toBe(false);
   });
 });

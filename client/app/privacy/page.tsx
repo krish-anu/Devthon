@@ -180,10 +180,10 @@ export default function PrivacyPage() {
               <p className="mt-2">
                 By email:{" "}
                 <a
-                  href="mailto:privacy@trash2cash.lk"
+                  href="mailto:privacy@trash2treasure.lk"
                   className="text-(--brand)"
                 >
-                  privacy@trash2cash.lk
+                  privacy@trash2treasure.lk
                 </a>
               </p>
             </section>
@@ -193,3 +193,4 @@ export default function PrivacyPage() {
     </div>
   );
 }
+

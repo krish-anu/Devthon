@@ -7,10 +7,10 @@ import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   calculatePoints,
-  isEwasteCategory,
   WasteItem,
 } from './points-calculator';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
+import { getWasteById, getWasteBySlug } from '../lib/wasteTypeUtils';
 
 const CONFIRMED_STATUSES: BookingStatus[] = [BookingStatus.COMPLETED];
 
@@ -187,12 +187,24 @@ export class RewardsService {
     const items: WasteItem[] = [
       {
         categoryName: booking.wasteCategory?.name ?? 'Unknown',
+        categorySlug: (booking.wasteCategory as any)?.slug ?? null,
         weightKg: booking.actualWeightKg ?? 0,
       },
     ];
 
-    const includesEwaste = items.some((item) =>
-      isEwasteCategory(item.categoryName),
+    const bookingWasteTypes = booking.wasteCategory
+      ? [
+          {
+            id: booking.wasteCategory.id,
+            name: booking.wasteCategory.name,
+            slug: (booking.wasteCategory as any)?.slug,
+          },
+        ]
+      : [];
+
+    const bookingWaste = getWasteById(bookingWasteTypes, booking.wasteCategoryId);
+    const includesEwaste = Boolean(
+      getWasteBySlug(bookingWaste ? [bookingWaste] : bookingWasteTypes, 'e-waste'),
     );
 
     const calculation = calculatePoints({

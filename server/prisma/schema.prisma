@@ -152,6 +152,7 @@ model RoleChangeLog {
 model WasteCategory {
   id          String    @id @default(uuid())
   name        String    @unique
+  slug        String    @unique
   description String?
   isActive    Boolean   @default(true)
   bookings    Booking[]

@@ -9,7 +9,8 @@ import {
   canDriverStart,
   normalizeBookingStatus,
 } from "@/lib/booking-status";
-import { Booking, PricingItem } from "@/lib/types";
+import { Booking, WasteType } from "@/lib/types";
+import { getWasteById } from "@/lib/wasteTypeUtils";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -47,9 +48,9 @@ export default function DriverBookingsPage() {
     refetchInterval: 12000,
   });
 
-  const { data: pricing } = useQuery({
-    queryKey: ["public-pricing"],
-    queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
+  const { data: wasteTypes } = useQuery({
+    queryKey: ["waste-types"],
+    queryFn: () => apiFetch<WasteType[]>("/waste-types", {}, false),
     staleTime: 60000,
   });
 
@@ -66,23 +67,34 @@ export default function DriverBookingsPage() {
     setWasteCategoryId(selectedBooking.wasteCategory?.id ?? "");
   }, [selectedBooking]);
 
-  const pricingByCategory = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const item of pricing ?? []) {
-      const rate = (item.minPriceLkrPerKg + item.maxPriceLkrPerKg) / 2;
-      map.set(item.wasteCategory.id, rate);
+  const categoryOptions = useMemo(() => {
+    const options = [...(wasteTypes ?? [])];
+    const bookingWaste = selectedBooking?.wasteCategory;
+
+    if (bookingWaste && !getWasteById(options, bookingWaste.id)) {
+      options.push({
+        id: bookingWaste.id,
+        name: bookingWaste.name,
+        slug: bookingWaste.slug || "",
+        description: bookingWaste.description ?? null,
+        minPriceLkrPerKg: null,
+        maxPriceLkrPerKg: null,
+        ratePerKg: null,
+      });
     }
-    return map;
-  }, [pricing]);
+
+    return options;
+  }, [wasteTypes, selectedBooking]);
 
   const selectedCategoryId = wasteCategoryId || selectedBooking?.wasteCategory?.id || "";
+  const selectedWasteType = getWasteById(categoryOptions, selectedCategoryId);
   const numericWeight = Number(weightKg);
   const computedAmount =
     Number.isFinite(numericWeight) &&
     numericWeight > 0 &&
-    selectedCategoryId &&
-    pricingByCategory.has(selectedCategoryId)
-      ? numericWeight * (pricingByCategory.get(selectedCategoryId) ?? 0)
+    selectedWasteType?.ratePerKg !== null &&
+    selectedWasteType?.ratePerKg !== undefined
+      ? numericWeight * selectedWasteType.ratePerKg
       : null;
 
   const refreshBookings = () => {
@@ -280,9 +292,9 @@ export default function DriverBookingsPage() {
                 value={wasteCategoryId}
                 onChange={(event) => setWasteCategoryId(event.target.value)}
               >
-                {(pricing ?? []).map((item) => (
-                  <option key={item.wasteCategory.id} value={item.wasteCategory.id}>
-                    {item.wasteCategory.name}
+                {categoryOptions.map((waste) => (
+                  <option key={waste.id} value={waste.id}>
+                    {waste.name}
                   </option>
                 ))}
               </select>

@@ -16,6 +16,7 @@ import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 import { RewardsService } from '../rewards/rewards.service';
 import { UpdateBookingStatusDto } from '../bookings/dto/update-booking-status.dto';
 import { calculateMidpointAmountLkr } from '../bookings/booking-amount';
+import { normalizeWasteName } from '../lib/wasteTypeUtils';
 import {
   CANONICAL_BOOKING_STATUSES,
   expandBookingStatusFilter,
@@ -650,13 +651,14 @@ export class AdminService {
       return await this.prisma.wasteCategory.create({
         data: {
           name: dto.name,
+          slug: normalizeWasteName(dto.name),
           description: dto.description ?? undefined,
           isActive: dto.isActive ?? true,
-        },
+        } as any,
       });
     } catch (error: any) {
       if (error?.code === 'P2002') {
-        throw new BadRequestException('Category name already exists');
+        throw new BadRequestException('Category name or slug already exists');
       }
       throw error;
     }
@@ -664,7 +666,10 @@ export class AdminService {
 
   async updateWasteCategory(id: string, dto: AdminUpdateWasteCategoryDto) {
     const data: any = {};
-    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.name !== undefined) {
+      data.name = dto.name;
+      data.slug = normalizeWasteName(dto.name);
+    }
     if (dto.description !== undefined) data.description = dto.description;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     return this.prisma.wasteCategory.update({ where: { id }, data });

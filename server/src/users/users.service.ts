@@ -233,7 +233,7 @@ export class UsersService {
         await tx.user.update({
           where: { id: userId },
           data: {
-            email: `deleted+${userId}@deleted.trash2cash`,
+            email: `deleted+${userId}@deleted.trash2treasure`,
             passwordHash: null,
             refreshTokenHash: null,
             role: 'CUSTOMER',

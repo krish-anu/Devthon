@@ -1,4 +1,4 @@
-# 🚀 AWS EC2 Deployment Guide — Trash2Cash
+# 🚀 AWS EC2 Deployment Guide — Trash2Treasure
 
 ## Architecture
 
@@ -136,7 +136,7 @@ http://<EC2_PUBLIC_IP>/api      # → Backend API
 
 # Or SSH in and check containers
 ssh -i your-key.pem ubuntu@<EC2_PUBLIC_IP>
-cd ~/trash2cash
+cd ~/trash2treasure
 docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs -f
 ```
@@ -155,7 +155,7 @@ docker compose -f docker-compose.prod.yml logs -f
 
 ```bash
 ssh -i your-key.pem ubuntu@<EC2_PUBLIC_IP>
-cd ~/trash2cash
+cd ~/trash2treasure
 
 # Make sure containers are running (Nginx needs to serve ACME challenge)
 docker compose -f docker-compose.prod.yml up -d
@@ -175,7 +175,7 @@ docker compose -f docker-compose.prod.yml restart nginx
 # Add cron job
 sudo crontab -e
 # Add this line:
-0 3 * * * certbot renew --quiet && docker restart trash2cash-nginx-1
+0 3 * * * certbot renew --quiet && docker restart trash2treasure-nginx-1
 ```
 
 ---
@@ -210,3 +210,4 @@ docker compose -f docker-compose.prod.yml exec backend sh
 | Data Transfer   | First 100 GB/mo  | Free tier          |
 
 > 💡 **Tip:** Use a `t3.small` to start. If you need more RAM, upgrade to `t3.medium`.
+

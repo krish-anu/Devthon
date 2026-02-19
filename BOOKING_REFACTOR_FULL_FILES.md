@@ -3169,7 +3169,7 @@ async function main() {
   // Create admin user + admin profile
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@trash2cash.lk',
+      email: 'admin@trash2treasure.lk',
       passwordHash,
       role: Role.ADMIN,
     },
@@ -3179,7 +3179,7 @@ async function main() {
       id: adminUser.id,
       fullName: 'Admin Team',
       phone: '+94 77 000 0000',
-      address: 'Trash2Cash HQ, Colombo',
+      address: 'Trash2Treasure HQ, Colombo',
       approved: true,
     },
   });
@@ -3187,7 +3187,7 @@ async function main() {
   // Create customer user: Rajesh
   const rajeshUser = await prisma.user.create({
     data: {
-      email: 'rajesh@trash2cash.lk',
+      email: 'rajesh@trash2treasure.lk',
       passwordHash,
       role: Role.CUSTOMER,
     },
@@ -3206,7 +3206,7 @@ async function main() {
   // Create customer user: Samantha
   const samanthaUser = await prisma.user.create({
     data: {
-      email: 'samantha@trash2cash.lk',
+      email: 'samantha@trash2treasure.lk',
       passwordHash,
       role: Role.CUSTOMER,
     },
@@ -3225,7 +3225,7 @@ async function main() {
   // Create driver users + driver profiles (1:1 with User)
   const driverData = [
     {
-      email: 'sunil@trash2cash.lk',
+      email: 'sunil@trash2treasure.lk',
       fullName: 'Sunil Jayasinghe',
       phone: '+94 77 555 0101',
       rating: 4.8,
@@ -3234,7 +3234,7 @@ async function main() {
       status: DriverStatus.ON_PICKUP,
     },
     {
-      email: 'nimali@trash2cash.lk',
+      email: 'nimali@trash2treasure.lk',
       fullName: 'Nimali Fernando',
       phone: '+94 77 555 0202',
       rating: 4.6,
@@ -3243,7 +3243,7 @@ async function main() {
       status: DriverStatus.ONLINE,
     },
     {
-      email: 'kasun@trash2cash.lk',
+      email: 'kasun@trash2treasure.lk',
       fullName: 'Kasun Abeysekera',
       phone: '+94 77 555 0303',
       rating: 4.4,
@@ -3418,7 +3418,7 @@ async function main() {
   });
 
   await prisma.launchNotify.create({
-    data: { email: 'hello@trash2cash.lk' },
+    data: { email: 'hello@trash2treasure.lk' },
   });
 
   // Insert application config values (e.g. storage bucket) if provided via env
@@ -3523,8 +3523,8 @@ END $$;
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "logs:tail": "node scripts/pretty-logs.js logs/trash2cash-$(date +%F).log",
-    "logs:watch": "tail -f logs/trash2cash-$(date +%F).log | node scripts/pretty-logs.js -",
+    "logs:tail": "node scripts/pretty-logs.js logs/trash2treasure-$(date +%F).log",
+    "logs:watch": "tail -f logs/trash2treasure-$(date +%F).log | node scripts/pretty-logs.js -",
     "notifications:check": "ts-node src/scripts/check-notifications.ts",
     "notifications:create-for-booking": "ts-node src/scripts/create-notification-for-booking.ts",
     "rewards:backfill": "ts-node src/scripts/backfill-rewards.ts"
@@ -6611,4 +6611,5 @@ main().catch((error) => {
   process.exit(1);
 });
 ` 
+
 

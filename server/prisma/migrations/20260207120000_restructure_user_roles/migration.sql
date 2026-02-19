@@ -156,7 +156,7 @@ BEGIN
     SELECT
         d."id",
         d."name",
-        LOWER(REPLACE(d."name", ' ', '.')) || '@driver.trash2cash.lk',
+        LOWER(REPLACE(d."name", ' ', '.')) || '@driver.trash2treasure.lk',
         d."phone",
         '$2b$10$placeholder_hash_needs_reset',
         'DRIVER'::"Role",

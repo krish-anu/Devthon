@@ -22,13 +22,13 @@ services:
       - backend
       - frontend
     networks:
-      - trash2cash-network
+      - trash2treasure-network
 
   # ==========================================
   # NestJS Backend Service
   # ==========================================
   backend:
-    image: ${DOCKER_HUB_USER:-anusan2003}/trash2cash:backend
+    image: ${DOCKER_HUB_USER:-anusan2003}/trash2treasure:backend
     restart: unless-stopped
     expose:
       - "4000"
@@ -50,7 +50,7 @@ services:
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
       # Passkey / WebAuthn (set these in your environment or .env)
-      PASSKEY_RP_NAME: ${PASSKEY_RP_NAME:-Trash2Cash}
+      PASSKEY_RP_NAME: ${PASSKEY_RP_NAME:-Trash2Treasure}
       PASSKEY_RP_ID: ${PASSKEY_RP_ID}
       PASSKEY_ORIGIN: ${PASSKEY_ORIGIN}
       # Google OAuth (server-side auth-code exchange)
@@ -63,13 +63,13 @@ services:
       RECAPTCHA_MIN_SCORE: ${RECAPTCHA_MIN_SCORE:-0.5}
       RECAPTCHA_ENABLED: ${RECAPTCHA_ENABLED:-true}
     networks:
-      - trash2cash-network
+      - trash2treasure-network
 
   # ==========================================
   # Next.js Frontend Service
   # ==========================================
   frontend:
-    image: ${DOCKER_HUB_USER:-anusan2003}/trash2cash:frontend
+    image: ${DOCKER_HUB_USER:-anusan2003}/trash2treasure:frontend
     restart: unless-stopped
     expose:
       - "3000"
@@ -83,12 +83,13 @@ services:
     depends_on:
       - backend
     networks:
-      - trash2cash-network
+      - trash2treasure-network
 
 networks:
-  trash2cash-network:
+  trash2treasure-network:
     driver: bridge
 
 volumes:
   certbot-webroot:
   certbot-certs:
+
