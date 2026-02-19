@@ -21,4 +21,16 @@ export class NotificationsService {
     });
     return { success: true };
   }
+
+  /** Mark a single notification as read (user-owned or broadcast). */
+  async markRead(userId: string, notificationId: string) {
+    const { count } = await this.prisma.notification.updateMany({
+      where: {
+        id: notificationId,
+        OR: [{ userId }, { userId: null }],
+      },
+      data: { isRead: true },
+    });
+    return { success: count > 0 };
+  }
 }
