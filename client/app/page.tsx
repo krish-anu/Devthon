@@ -22,7 +22,6 @@ import {
   Wallet,
   Mail,
   Phone,
-  MessageCircle,
 } from "lucide-react";
 import { ScrollAnimatedSection } from "@/components/shared/scroll-animated-section";
 import { BRAND_NAME } from "@/config/branding";
@@ -502,10 +501,11 @@ export default function HomePage() {
               action: "Call Now",
             },
             {
-              title: "Live Chat",
-              desc: "Available 9am - 5pm",
-              icon: <MessageCircle className="h-6 w-6" />,
-              action: "Start Chat",
+              title: "Partners",
+              desc: "partners@trash2treasure.lk",
+              icon: <Users className="h-6 w-6" />,
+              action: "Become a Partner",
+              actionHref: "/partners",
             },
           ].map((item, index) => (
             <ScrollAnimatedSection key={item.title} delay={index * 100}>
@@ -518,9 +518,15 @@ export default function HomePage() {
                     {item.title}
                   </h3>
                   <p className="text-sm text-(--muted)">{item.desc}</p>
-                  <Button variant="outline" size="sm" className="mt-2">
-                    {item.action}
-                  </Button>
+                  {item.actionHref ? (
+                    <Button variant="outline" size="sm" className="mt-2" asChild>
+                      <Link href={item.actionHref}>{item.action}</Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" className="mt-2">
+                      {item.action}
+                    </Button>
+                  )}
                 </div>
               </Card>
             </ScrollAnimatedSection>
@@ -698,4 +704,3 @@ export default function HomePage() {
     </div>
   );
 }
-
