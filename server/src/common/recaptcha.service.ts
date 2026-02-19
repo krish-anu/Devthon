@@ -63,8 +63,8 @@ export class RecaptchaService {
       // In non-production environments we allow this by default to avoid blocking local development.
       if (!success && errorCodes.includes('browser-error') && allowBrowserError) {
         this.logger.warn(
-          'reCAPTCHA verify returned browser-error; allowing in non-production',
-          { nodeEnv, action, errorCodes },
+          'reCAPTCHA verify returned browser-error; allowing via RECAPTCHA_ALLOW_BROWSER_ERROR policy',
+          { nodeEnv, action, errorCodes, allowBrowserError },
         );
         return true;
       }

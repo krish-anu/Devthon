@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizeWasteName } from '../lib/wasteTypeUtils';
@@ -6,40 +12,84 @@ import { normalizeWasteName } from '../lib/wasteTypeUtils';
 @Injectable()
 export class PublicService {
   private readonly logger = new Logger(PublicService.name);
+  private readonly dbTimeoutMs: number;
 
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
-  ) {}
+  ) {
+    const configured = Number.parseInt(
+      this.config.get<string>('PUBLIC_DB_QUERY_TIMEOUT_MS') ??
+        this.config.get<string>('DB_QUERY_TIMEOUT_MS') ??
+        '',
+      10,
+    );
+    this.dbTimeoutMs = Number.isFinite(configured) && configured > 0 ? configured : 10000;
+  }
+
+  private async withDbTimeout<T>(label: string, task: () => Promise<T>): Promise<T> {
+    const startedAt = Date.now();
+    let timeoutHandle: NodeJS.Timeout | null = null;
+
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(
+            new ServiceUnavailableException(
+              `Database request timed out while loading ${label}`,
+            ),
+          );
+        }, this.dbTimeoutMs);
+      });
+
+      const result = await Promise.race([task(), timeoutPromise]);
+      this.logger.log(`Completed ${label} in ${Date.now() - startedAt}ms`);
+      return result as T;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed ${label} after ${Date.now() - startedAt}ms: ${message}`,
+      );
+      throw error;
+    } finally {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+    }
+  }
 
   async getPricing() {
-    return this.prisma.pricing.findMany({
-      where: { isActive: true },
-      include: { wasteCategory: true },
-      orderBy: { updatedAt: 'desc' },
-    });
+    return this.withDbTimeout('public pricing', () =>
+      this.prisma.pricing.findMany({
+        where: { isActive: true },
+        include: { wasteCategory: true },
+        orderBy: { updatedAt: 'desc' },
+      }),
+    );
   }
 
   /**
    * Publicly list active waste categories for client UIs.
    */
   async getWasteCategories() {
-    const categories = await this.prisma.wasteCategory.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-      select: { id: true, name: true, description: true },
-    });
-
-    return categories.map((category) => ({
-      ...category,
-      slug: normalizeWasteName(category.name),
-    }));
+    return this.withDbTimeout('public waste categories', () =>
+      this.prisma.wasteCategory.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true, description: true },
+      }),
+    );
   }
 
   async launchNotify(email: string) {
     try {
-      return await this.prisma.launchNotify.create({ data: { email } });
-    } catch (error) {
+      return await this.withDbTimeout('launch notify create', () =>
+        this.prisma.launchNotify.create({ data: { email } }),
+      );
+    } catch (error: any) {
+      if (error?.code !== 'P2002') {
+        throw error;
+      }
       throw new ConflictException('Email already registered');
     }
   }
@@ -51,10 +101,12 @@ export class PublicService {
     }
 
     // Get all active waste categories from the database
-    const categories = await this.prisma.wasteCategory.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, description: true },
-    });
+    const categories = await this.withDbTimeout('classify image categories', () =>
+      this.prisma.wasteCategory.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, description: true },
+      }),
+    );
 
     const categoryNames = categories.map(c => c.name).join(', ');
 

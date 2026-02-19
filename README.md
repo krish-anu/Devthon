@@ -146,6 +146,7 @@ JWT_REFRESH_SECRET=your_refresh_secret_here
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
+RECAPTCHA_ALLOW_BROWSER_ERROR=false
 ```
 
 Database & Migrations

@@ -40,7 +40,7 @@ function LeaderboardTable({
         </div>
       </div>
       <div className="mt-4">
-        <Table>
+        <Table className="md:min-w-[420px]">
           <TableHeader>
             <TableRow>
               <TableHead>Rank</TableHead>
@@ -119,7 +119,7 @@ export default function RewardsPage() {
               Points never expire and reset monthly for leaderboards.
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-(--border) bg-(--card) px-4 py-3">
               <p className="text-xs uppercase tracking-[0.2em] text-(--muted)">
                 Lifetime Points

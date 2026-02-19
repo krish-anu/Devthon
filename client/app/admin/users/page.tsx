@@ -231,8 +231,8 @@ export default function AdminUsersPage() {
           <SkeletonTableRows columns={7} rows={6} />
         </Card>
       ) : (
-        <Card className="overflow-x-auto">
-          <Table className="min-w-[700px]">
+        <Card>
+          <Table className="md:min-w-[700px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>

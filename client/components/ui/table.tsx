@@ -1,18 +1,49 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
+
+type TableSelectionContextValue = {
+  selectedRowId: string | null;
+  setSelectedRowId: React.Dispatch<React.SetStateAction<string | null>>;
+};
+
+const TableSelectionContext =
+  React.createContext<TableSelectionContextValue | null>(null);
 
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="w-full overflow-auto rounded-2xl border border-[color:var(--border)]">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-));
+>(({ className, ...props }, ref) => {
+  const [selectedRowId, setSelectedRowId] = React.useState<string | null>(null);
+  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+
+  const handleWheel: React.WheelEventHandler<HTMLDivElement> = (event) => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    if (wrapper.scrollWidth <= wrapper.clientWidth) return;
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+
+    wrapper.scrollLeft += event.deltaY;
+    event.preventDefault();
+  };
+
+  return (
+    <TableSelectionContext.Provider value={{ selectedRowId, setSelectedRowId }}>
+      <div
+        ref={wrapperRef}
+        className="table-scrollbar w-full max-w-full overflow-x-auto overflow-y-visible rounded-2xl border border-[color:var(--border)]"
+        onWheel={handleWheel}
+      >
+        <table
+          ref={ref}
+          className={cn("w-full min-w-full table-auto caption-bottom text-sm", className)}
+          {...props}
+        />
+      </div>
+    </TableSelectionContext.Provider>
+  );
+});
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<
@@ -45,15 +76,41 @@ TableBody.displayName = "TableBody";
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, children, ...props }, ref) => {
+>(({ className, children, onClick, ...props }, ref) => {
+  const selectionContext = React.useContext(TableSelectionContext);
+  const rowId = React.useId();
   const filteredChildren = React.Children.toArray(children).filter(
     (child) => !(typeof child === "string" && /^\s*$/.test(child as string)),
   );
+  const isSelected = selectionContext?.selectedRowId === rowId;
+
+  const handleClick: React.MouseEventHandler<HTMLTableRowElement> = (event) => {
+    onClick?.(event);
+
+    if (event.defaultPrevented || !selectionContext) return;
+    if (!event.currentTarget.querySelector("td")) return;
+
+    const target = event.target as HTMLElement | null;
+    if (
+      target?.closest(
+        "a,button,input,select,textarea,label,[role='button'],[data-row-ignore-select='true']",
+      )
+    ) {
+      return;
+    }
+
+    selectionContext.setSelectedRowId(rowId);
+  };
 
   return (
     <tr
       ref={ref}
-      className={cn("hover:bg-[color:var(--surface)]", className)}
+      className={cn(
+        "transition-colors hover:bg-[color:var(--surface)]",
+        className,
+        isSelected && "!bg-[color:var(--surface-strong)]",
+      )}
+      onClick={handleClick}
       {...props}
     >
       {filteredChildren}
@@ -69,7 +126,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "px-2 sm:px-4 py-2 sm:py-3 text-left text-[0.65rem] sm:text-xs font-semibold uppercase tracking-wide whitespace-nowrap",
+      "whitespace-normal break-words px-2 py-2 text-left text-[0.65rem] font-semibold uppercase tracking-wide sm:whitespace-nowrap sm:px-4 sm:py-3 sm:text-xs",
       className,
     )}
     {...props}
@@ -84,7 +141,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground",
+      "whitespace-normal break-words px-2 py-2 text-xs text-foreground align-top sm:whitespace-nowrap sm:px-4 sm:py-3 sm:text-sm",
       className,
     )}
     {...props}

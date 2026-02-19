@@ -359,12 +359,12 @@ export default function AssistantChatbox() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-5 right-5 z-500"
+      className="fixed bottom-3 right-3 z-500 sm:bottom-5 sm:right-5"
       data-assistant-chatbox
     >
       <div
         className={cn(
-          "pointer-events-none fixed bottom-20 right-5 w-[320px] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:w-[360px]",
+          "pointer-events-none fixed bottom-[4.5rem] right-3 left-3 w-auto max-w-[calc(100vw-1.5rem)] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:bottom-20 sm:right-5 sm:left-auto sm:w-[360px] sm:max-w-none",
           isOpen
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "translate-y-2 scale-95 opacity-0",
@@ -394,7 +394,7 @@ export default function AssistantChatbox() {
             Close
           </button>
         </div>
-        <div className="flex h-[360px] max-h-[70vh] flex-col">
+        <div className="flex h-[360px] max-h-[65vh] flex-col sm:max-h-[70vh]">
           <div
             ref={listRef}
             className={cn(
@@ -416,7 +416,7 @@ export default function AssistantChatbox() {
                 )}
                 <div
                   className={cn(
-                    "max-w-[75%] rounded-2xl px-3 py-2 leading-relaxed shadow-sm break-words",
+                    "max-w-[82%] rounded-2xl px-3 py-2 leading-relaxed shadow-sm break-words sm:max-w-[75%]",
                     message.role === "user"
                       ? "bg-[color:var(--brand)] text-white"
                       : "bg-[color:var(--surface-soft)] text-[color:var(--foreground)]",

@@ -195,8 +195,8 @@ export default function DriverBookingsPage() {
           <SkeletonTableRows columns={7} rows={5} />
         </Card>
       ) : (
-        <Card className="overflow-x-auto">
-          <Table className="min-w-[980px]">
+        <Card>
+          <Table className="md:min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking ID</TableHead>

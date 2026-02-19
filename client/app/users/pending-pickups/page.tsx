@@ -148,7 +148,7 @@ export default function PendingPickupsPage() {
         </Card>
       ) : (
         <Card>
-          <Table>
+          <Table className="md:min-w-[760px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Pickup ID</TableHead>

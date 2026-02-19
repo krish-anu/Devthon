@@ -24,7 +24,7 @@ export default function AdminDriversPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <KpiCard label="Total Drivers" value={`${stats.total}`} />
         <KpiCard label="Online Now" value={`${stats.online}`} />
         <KpiCard label="On Pickup" value={`${stats.onPickup}`} />
@@ -39,8 +39,8 @@ export default function AdminDriversPage() {
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {drivers.map((driver) => (
             <Card key={driver.id} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{driver.fullName}</h3>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-lg font-semibold break-words">{driver.fullName}</h3>
                 <span className="rounded-full border border-(--border) bg-(--surface) px-3 py-1 text-xs text-(--muted)">
                   {driver.status.replace("_", " ")}
                 </span>
