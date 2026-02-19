@@ -31,7 +31,7 @@ export default function DriverBookingsPage() {
         </Card>
       ) : (
         <Card>
-          <Table className="sm:min-w-[640px]">
+          <Table className="md:min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking</TableHead>

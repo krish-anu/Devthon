@@ -59,7 +59,7 @@ export default function DashboardPage() {
           Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}!
         </h1>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
         <KpiCard
           label="Total Earned"
           value={`LKR ${metrics.totalEarned.toFixed(0)}`}
@@ -121,7 +121,7 @@ export default function DashboardPage() {
               <SkeletonTableRows columns={6} rows={5} />
             </div>
           ) : (
-            <Table className="sm:min-w-[520px]">
+            <Table className="md:min-w-[520px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking ID</TableHead>

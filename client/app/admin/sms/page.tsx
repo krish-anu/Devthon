@@ -339,7 +339,7 @@ export default function AdminSmsPage() {
       {/* Bookings Table with Checkboxes */}
       <Card className="p-0 overflow-hidden">
         <div className="max-h-[28rem] overflow-auto">
-          <Table className="sm:min-w-[940px]">
+          <Table className="md:min-w-[940px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">

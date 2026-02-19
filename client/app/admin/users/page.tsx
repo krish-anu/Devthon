@@ -232,7 +232,7 @@ export default function AdminUsersPage() {
         </Card>
       ) : (
         <Card>
-          <Table className="sm:min-w-[700px]">
+          <Table className="md:min-w-[700px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>

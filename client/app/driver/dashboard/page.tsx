@@ -72,7 +72,7 @@ export default function DriverDashboardPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Assigned" value={`${stats.assigned}`} />
         <KpiCard label="Scheduled" value={`${stats.scheduled}`} />
         <KpiCard label="On Pickup" value={`${stats.onPickup}`} />
@@ -86,7 +86,7 @@ export default function DriverDashboardPage() {
       ) : (
         <Card>
           <div className="mt-2 overflow-x-auto">
-            <Table className="sm:min-w-[560px]">
+            <Table className="md:min-w-[560px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking</TableHead>

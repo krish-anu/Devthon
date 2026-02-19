@@ -75,7 +75,7 @@ export default function ManageRolesPage() {
         {isLoading ? (
           <div className="py-8 text-center text-(--muted)">Loading users...</div>
         ) : (
-          <Table className="sm:min-w-[720px]">
+          <Table className="md:min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>

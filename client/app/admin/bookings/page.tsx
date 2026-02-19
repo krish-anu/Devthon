@@ -268,7 +268,7 @@ export default function AdminBookingsPage() {
         </Card>
       ) : (
         <Card>
-          <Table className="sm:min-w-[800px]">
+          <Table className="md:min-w-[800px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking ID</TableHead>

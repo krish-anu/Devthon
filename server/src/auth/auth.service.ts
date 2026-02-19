@@ -21,6 +21,14 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly retryableGoogleNetworkErrorCodes = new Set([
+    'EAI_AGAIN',
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'UND_ERR_CONNECT_TIMEOUT',
+    'UND_ERR_HEADERS_TIMEOUT',
+  ]);
 
   constructor(
     private prisma: PrismaService,
@@ -308,18 +316,43 @@ export class AuthService {
       grant_type: 'authorization_code',
     });
 
-    let r: Response;
-    try {
-      r = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
-    } catch (error: any) {
-      this.logger.error(
-        'Google OAuth token exchange failed',
-        error?.message ?? error,
-      );
+    let r: Response | null = null;
+    const maxAttempts = 5;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        r = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        });
+        break;
+      } catch (error: any) {
+        const code =
+          error?.cause?.code ?? error?.code ?? error?.cause?.name ?? 'UNKNOWN';
+        const retryable = this.retryableGoogleNetworkErrorCodes.has(code);
+        const details = {
+          code,
+          message: error?.message ?? String(error),
+          cause: error?.cause?.message ?? null,
+          attempt,
+          maxAttempts,
+          retryable,
+        };
+
+        if (retryable && attempt < maxAttempts) {
+          this.logger.warn('Google OAuth token exchange network retry', details);
+          await this.sleep(250 * attempt);
+          continue;
+        }
+
+        this.logger.error('Google OAuth token exchange failed', details);
+        throw new BadRequestException(
+          'Google OAuth exchange failed. Check GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI and network access.',
+        );
+      }
+    }
+
+    if (!r) {
       throw new BadRequestException(
         'Google OAuth exchange failed. Check GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI and network access.',
       );
@@ -607,6 +640,10 @@ export class AuthService {
   private getExpires(key: string, fallback: StringValue) {
     const value = this.configService.get<string>(key) ?? fallback;
     return value as StringValue;
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
