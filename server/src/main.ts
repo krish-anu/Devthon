@@ -60,73 +60,65 @@ async function bootstrap() {
         return `\x1b[45m ${level.toUpperCase()} \x1b[0m`; // magenta background
     }
   };
-  const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger({
-      transports: [
-        // Console transport: human-friendly in non-production, JSON in production
-        new winston.transports.Console({
-          format:
-            process.env.NODE_ENV === 'production'
-              ? winston.format.combine(
-                  winston.format.timestamp(),
-                  winston.format.json(),
-                )
-              : winston.format.combine(
-                  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-                  winston.format.printf(
-                    ({ timestamp, level, message, ...meta }) => {
-                      const badge = levelBadge(level);
-                      const msg =
-                        typeof message === 'string'
-                          ? message
-                          : JSON.stringify(message);
-                      let metaStr = '';
-                      try {
-                        const keys = Object.keys(meta || {});
-                        if (keys.length)
-                          metaStr = '\n' + JSON.stringify(meta, null, 2);
-                      } catch (e) {
-                        metaStr = String(meta);
-                      }
-                      return `${timestamp} ${badge} ${msg}${metaStr}`;
-                    },
-                  ),
-                ),
-        }),
-        // File transport stays JSON for log processing and rotation
-        new winston.transports.DailyRotateFile({
-          filename: `logs/${LOG_FILE_PREFIX}-%DATE%.log`,
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '14d',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json(),
-          ),
-        }),
-        // Also write a human-readable rotated log (no JSON) for quick inspection
-        new winston.transports.DailyRotateFile({
-          filename: `logs/${LOG_FILE_PREFIX}-readable-%DATE%.log`,
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '14d',
-          format: winston.format.combine(
-            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            winston.format.printf(({ timestamp, level, message, ...meta }) => {
-              const lvl = (level || '').toUpperCase();
-              const msg =
-                typeof message === 'string' ? message : JSON.stringify(message);
-              let metaStr = '';
-              try {
-                const keys = Object.keys(meta || {});
-                if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
-              } catch (e) {
-                metaStr = String(meta);
-              }
-              return `${timestamp} [${lvl}] ${msg}${metaStr}`;
-            }),
-          ),
-        }),
-      ],
+  // Build transports conditionally so tests don't try to write log files on CI/dev
+  const transports: any[] = [
+    new winston.transports.Console({
+      format:
+        process.env.NODE_ENV === 'production'
+          ? winston.format.combine(winston.format.timestamp(), winston.format.json())
+          : winston.format.combine(
+              winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+              winston.format.printf(({ timestamp, level, message, ...meta }) => {
+                const badge = levelBadge(level);
+                const msg = typeof message === 'string' ? message : JSON.stringify(message);
+                let metaStr = '';
+                try {
+                  const keys = Object.keys(meta || {});
+                  if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
+                } catch (e) {
+                  metaStr = String(meta);
+                }
+                return `${timestamp} ${badge} ${msg}${metaStr}`;
+              }),
+            ),
     }),
+  ];
+
+  if (process.env.NODE_ENV !== 'test') {
+    transports.push(
+      new winston.transports.DailyRotateFile({
+        filename: `logs/${LOG_FILE_PREFIX}-%DATE%.log`,
+        datePattern: 'YYYY-MM-DD',
+        maxFiles: '14d',
+        format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+      }),
+    );
+    transports.push(
+      new winston.transports.DailyRotateFile({
+        filename: `logs/${LOG_FILE_PREFIX}-readable-%DATE%.log`,
+        datePattern: 'YYYY-MM-DD',
+        maxFiles: '14d',
+        format: winston.format.combine(
+          winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+          winston.format.printf(({ timestamp, level, message, ...meta }) => {
+            const lvl = (level || '').toUpperCase();
+            const msg = typeof message === 'string' ? message : JSON.stringify(message);
+            let metaStr = '';
+            try {
+              const keys = Object.keys(meta || {});
+              if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
+            } catch (e) {
+              metaStr = String(meta);
+            }
+            return `${timestamp} [${lvl}] ${msg}${metaStr}`;
+          }),
+        ),
+      }),
+    );
+  }
+
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger({ transports }),
   });
 
   // Register global request interceptor that uses the winston logger

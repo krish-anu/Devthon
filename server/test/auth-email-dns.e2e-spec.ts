@@ -12,6 +12,7 @@ describe('Auth email DNS check (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     // Apply same validation pipe as in main.ts
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
@@ -27,6 +28,8 @@ describe('Auth email DNS check (e2e)', () => {
   });
 
   it('rejects fake domains by default (DNS check enabled)', async () => {
+    // Ensure DNS check enabled for this test
+    process.env.EMAIL_DNS_CHECK = 'true';
     await createApp();
 
     const res = await request(app.getHttpServer())

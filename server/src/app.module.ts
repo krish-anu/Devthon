@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -47,24 +47,32 @@ import { WasteTypesModule } from './waste-types/waste-types.module';
     }),
     // Provide throttlers as an array to match ThrottlerGuard expectations
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60, limit: 30 }] } as any),
+    // Configure Winston transports; avoid file writes during tests
     WinstonModule.forRoot({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json(),
-          ),
-        }),
-        new winston.transports.DailyRotateFile({
-          filename: 'logs/trash2treasure-%DATE%.log',
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '14d',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json(),
-          ),
-        }),
-      ],
+      transports: (() => {
+        const t: any[] = [
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            ),
+          }),
+        ];
+        if (process.env.NODE_ENV !== 'test') {
+          t.push(
+            new winston.transports.DailyRotateFile({
+              filename: 'logs/trash2treasure-%DATE%.log',
+              datePattern: 'YYYY-MM-DD',
+              maxFiles: '14d',
+              format: winston.format.combine(
+                winston.format.timestamp(),
+                winston.format.json(),
+              ),
+            }),
+          );
+        }
+        return t;
+      })(),
     }),
     SupabaseModule,
     PrismaModule,
@@ -90,4 +98,5 @@ import { WasteTypesModule } from './waste-types/waste-types.module';
     { provide: APP_INTERCEPTOR, useClass: CacheInterceptor },
   ],
 })
+
 export class AppModule {}
