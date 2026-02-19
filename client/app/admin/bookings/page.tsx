@@ -1,10 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Loader2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
+import {
+  canAdminAssign,
+  canAdminCancel,
+  canAdminComplete,
+  canAdminRefund,
+  normalizeBookingStatus,
+} from "@/lib/booking-status";
+import { BookingStatus } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,12 +26,12 @@ import {
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
 import { SkeletonTableRows } from "@/components/shared/Skeleton";
-import { BookingStatus } from "@/lib/types";
 
-const DEFAULT_STATUS_OPTIONS: BookingStatus[] = [
-  "SCHEDULED",
+const STATUS_FILTERS: BookingStatus[] = [
+  "CREATED",
+  "ASSIGNED",
+  "IN_PROGRESS",
   "COLLECTED",
-  "PAID",
   "COMPLETED",
   "CANCELLED",
   "REFUNDED",
@@ -35,9 +43,9 @@ export default function AdminBookingsPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "thisMonth">("all");
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: drivers } = useQuery({
@@ -45,23 +53,14 @@ export default function AdminBookingsPage() {
     queryFn: () => apiFetch<any[]>("/admin/drivers"),
     refetchInterval: 15000,
   });
-  const { data: statusOptions } = useQuery({
-    queryKey: ["admin-booking-status-options"],
-    queryFn: () => apiFetch<BookingStatus[]>("/admin/bookings/status-options"),
-    staleTime: 60000,
-  });
-  const availableStatusOptions = useMemo(
-    () =>
-      statusOptions && statusOptions.length > 0
-        ? statusOptions
-        : DEFAULT_STATUS_OPTIONS,
-    [statusOptions],
-  );
 
   const driverOptions = useMemo(
-    () => (drivers ?? []).filter((d) => d.approved !== false),
+    () => (drivers ?? []).filter((driver) => driver.approved !== false),
     [drivers],
   );
+
+  const refreshBookings = () =>
+    queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
 
   const assignDriverMutation = useMutation({
     mutationFn: ({ bookingId, driverId }: { bookingId: string; driverId: string }) =>
@@ -74,7 +73,7 @@ export default function AdminBookingsPage() {
     },
     onSuccess: () => {
       toast({ title: "Driver assigned", variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      refreshBookings();
     },
     onError: (err: any) => {
       toast({
@@ -85,7 +84,7 @@ export default function AdminBookingsPage() {
     },
     onSettled: () => {
       setAssigningId(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      refreshBookings();
     },
   });
 
@@ -99,32 +98,22 @@ export default function AdminBookingsPage() {
       setStatusUpdatingId(bookingId);
     },
     onSuccess: () => {
-      toast({ title: "Status updated", variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      toast({ title: "Booking updated", variant: "success" });
+      refreshBookings();
     },
     onError: (err: any) => {
       toast({
         title: "Update failed",
-        description: err?.message ?? "Failed to update status.",
+        description: err?.message ?? "Failed to update booking.",
         variant: "error",
       });
     },
     onSettled: () => {
       setStatusUpdatingId(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      refreshBookings();
     },
   });
 
-  const handleAssign = (bookingId: string, driverId: string) => {
-    if (!driverId) return;
-    assignDriverMutation.mutate({ bookingId, driverId });
-  };
-
-  const handleStatusChange = (bookingId: string, nextStatus: BookingStatus) => {
-    updateStatusMutation.mutate({ bookingId, status: nextStatus });
-  };
-
-  // Mutation to delete booking with optimistic update + spinner
   const deleteBookingMutation = useMutation({
     mutationFn: (id: string) =>
       apiFetch(`/bookings/${id}`, {
@@ -132,13 +121,8 @@ export default function AdminBookingsPage() {
       }),
     onMutate: async (id: string) => {
       setDeletingId(id);
-      // Show a loading toast while deletion is in progress
-      const toastHandle = toast({ title: "Deleting booking...", variant: "loading" });
+      await queryClient.cancelQueries({ queryKey: ["admin-bookings", status, search, dateFilter] });
 
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["admin-bookings"] });
-
-      // Snapshot current data for rollback
       const previous = queryClient.getQueryData<any[]>([
         "admin-bookings",
         status,
@@ -146,7 +130,6 @@ export default function AdminBookingsPage() {
         dateFilter,
       ]);
 
-      // Optimistically remove the booking from the cached lists that match the current filters
       if (previous) {
         queryClient.setQueryData(
           ["admin-bookings", status, search, dateFilter],
@@ -154,40 +137,26 @@ export default function AdminBookingsPage() {
         );
       }
 
-      return { previous, toastHandle };
+      return { previous };
     },
     onError: (_err, _id, context: any) => {
-      // rollback
       queryClient.setQueryData(
         ["admin-bookings", status, search, dateFilter],
         context?.previous,
       );
       setDeletingId(null);
-      // Update the loading toast into an error toast
-      context?.toastHandle?.update?.({
-        title: "Delete failed",
-        description: "Failed to delete booking.",
-        variant: "error",
-      });
+      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
     },
-    onSuccess: (_data, _id, context: any) => {
+    onSuccess: () => {
       setDeletingId(null);
-      // Update the loading toast into a success toast
-      context?.toastHandle?.update?.({ title: "Booking deleted", variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      toast({ title: "Booking deleted", variant: "success" });
+      refreshBookings();
     },
     onSettled: () => {
       setDeletingId(null);
-      // Ensure all admin-bookings queries are refreshed
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      refreshBookings();
     },
   });
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this booking?")) {
-      deleteBookingMutation.mutate(id);
-    }
-  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-bookings", status, search, dateFilter],
@@ -196,7 +165,6 @@ export default function AdminBookingsPage() {
       if (status) params.append("status", status);
       if (search) params.append("search", search);
 
-      // Add date filter for "This Month"
       if (dateFilter === "thisMonth") {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -211,15 +179,27 @@ export default function AdminBookingsPage() {
     refetchInterval: 12000,
   });
 
+  const handleAssign = (bookingId: string, driverId: string) => {
+    if (!driverId) return;
+    assignDriverMutation.mutate({ bookingId, driverId });
+  };
+
+  const handleStatusChange = (bookingId: string, nextStatus: BookingStatus) => {
+    updateStatusMutation.mutate({ bookingId, status: nextStatus });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      deleteBookingMutation.mutate(id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-3">
-        {/* ... (existing filters) */}
         <div className="flex flex-wrap gap-2">
           <Button
-            variant={
-              dateFilter === "all" && status === "" ? "default" : "outline"
-            }
+            variant={dateFilter === "all" && status === "" ? "default" : "outline"}
             size="sm"
             onClick={() => {
               setDateFilter("all");
@@ -235,25 +215,19 @@ export default function AdminBookingsPage() {
           >
             This Month
           </Button>
-          {["SCHEDULED", "COMPLETED", "CANCELLED", "REFUNDED"].map(
-            (statusOption) => (
-              <Button
-                key={statusOption}
-                variant={
-                  status === statusOption && dateFilter === "all"
-                    ? "default"
-                    : "outline"
-                }
-                size="sm"
-                onClick={() => {
-                  setStatus(statusOption);
-                  setDateFilter("all");
-                }}
-              >
-                {statusOption}
-              </Button>
-            ),
-          )}
+          {STATUS_FILTERS.map((statusOption) => (
+            <Button
+              key={statusOption}
+              variant={status === statusOption && dateFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setStatus(statusOption);
+                setDateFilter("all");
+              }}
+            >
+              {statusOption.replaceAll("_", " ")}
+            </Button>
+          ))}
         </div>
         <Input
           placeholder="Search bookings"
@@ -268,12 +242,12 @@ export default function AdminBookingsPage() {
         </Card>
       ) : (
         <Card className="overflow-x-auto">
-          <Table className="min-w-[800px]">
+          <Table className="min-w-[980px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking ID</TableHead>
                 <TableHead>User</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Waste Type</TableHead>
                 <TableHead>Weight</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Driver</TableHead>
@@ -283,87 +257,115 @@ export default function AdminBookingsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(data ?? []).map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell>{booking.id.slice(0, 8)}</TableCell>
-                  <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
-                  <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
-                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
-                  <TableCell>
-                    LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-2">
-                      <div>{booking.driver?.fullName ?? "Unassigned"}</div>
-                      <select
-                        className="h-9 w-full rounded-md border border-(--border) bg-(--card) px-2 text-sm"
-                        value={booking.driver?.id ?? ""}
-                        onChange={(event) =>
-                          handleAssign(booking.id, event.target.value)
-                        }
-                        disabled={
-                          assigningId === booking.id || driverOptions.length === 0
-                        }
-                      >
-                        <option value="">Select driver</option>
-                        {driverOptions.map((driver) => (
-                          <option key={driver.id} value={driver.id}>
-                            {driver.fullName} ({driver.status})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-2">
-                      <StatusPill status={booking.status} />
-                      <select
-                        className="h-9 w-full rounded-md border border-(--border) bg-(--card) px-2 text-sm"
-                        value={booking.status}
-                        onChange={(event) =>
-                          handleStatusChange(
-                            booking.id,
-                            event.target.value as BookingStatus,
-                          )
-                        }
-                        disabled={statusUpdatingId === booking.id}
-                      >
-                        {[
-                          ...(availableStatusOptions.includes(
-                            booking.status as BookingStatus,
-                          )
-                            ? []
-                            : [booking.status as BookingStatus]),
-                          ...availableStatusOptions,
-                        ].map((option) => (
-                          <option key={option} value={option}>
-                            {option.replace("_", " ")}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(booking.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(booking.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      title="Delete Booking"
-                      disabled={deletingId === booking.id}
-                    >
-                      {deletingId === booking.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-red-600" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
+              {(data ?? []).map((booking) => {
+                const normalizedStatus = normalizeBookingStatus(booking.status);
+                const canAssignDriver = canAdminAssign(booking.status);
+                const canCompleteBooking = canAdminComplete(booking.status);
+                const canCancelBooking = canAdminCancel(booking.status);
+                const canRefundBooking = canAdminRefund(booking.status);
+                const hasCollectionData =
+                  booking.actualWeightKg !== null &&
+                  booking.actualWeightKg !== undefined &&
+                  booking.finalAmountLkr !== null &&
+                  booking.finalAmountLkr !== undefined;
+
+                return (
+                  <TableRow key={booking.id}>
+                    <TableCell>{booking.id.slice(0, 8)}</TableCell>
+                    <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
+                    <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
+                    <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                    <TableCell>
+                      LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <div>{booking.driver?.fullName ?? "Unassigned"}</div>
+                        <select
+                          className="h-9 w-full rounded-md border border-(--border) bg-(--card) px-2 text-sm"
+                          value={booking.driver?.id ?? ""}
+                          onChange={(event) => handleAssign(booking.id, event.target.value)}
+                          disabled={
+                            !canAssignDriver ||
+                            assigningId === booking.id ||
+                            driverOptions.length === 0
+                          }
+                        >
+                          <option value="">Select driver</option>
+                          {driverOptions.map((driver) => (
+                            <option key={driver.id} value={driver.id}>
+                              {driver.fullName} ({driver.status})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill status={booking.status} viewerRole="ADMIN" />
+                    </TableCell>
+                    <TableCell>
+                      {new Date(booking.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        {canCompleteBooking && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleStatusChange(booking.id, "COMPLETED")}
+                            disabled={statusUpdatingId === booking.id || !hasCollectionData}
+                          >
+                            Complete
+                          </Button>
+                        )}
+                        {canCancelBooking && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(booking.id, "CANCELLED")}
+                            disabled={statusUpdatingId === booking.id}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                        {canRefundBooking && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(booking.id, "REFUNDED")}
+                            disabled={statusUpdatingId === booking.id}
+                          >
+                            Refund
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(booking.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Delete Booking"
+                          disabled={deletingId === booking.id}
+                        >
+                          {deletingId === booking.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      {canCompleteBooking && !hasCollectionData && (
+                        <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                          Driver must submit weight and amount before completion.
+                        </p>
                       )}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                      {!canAssignDriver && normalizedStatus === "ASSIGNED" && (
+                        <p className="mt-1 text-xs text-(--muted)">
+                          Driver already assigned.
+                        </p>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </Card>

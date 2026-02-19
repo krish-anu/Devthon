@@ -60,8 +60,19 @@ export function isMetalCategory(name: string) {
 
 export function isEwasteCategory(name: string) {
   const normalized = normalizeCategoryName(name);
+  if (!normalized) return false;
+
+  if (
+    normalized.includes('reusable electronics') ||
+    normalized.includes('reusable electronic') ||
+    normalized.includes('electrical waste')
+  ) {
+    return true;
+  }
+
   return (
     normalized.includes('electronic') ||
+    normalized.includes('ewaste') ||
     /(^|[^a-z])e[\s-]?wastes?([^a-z]|$)/.test(normalized)
   );
 }

@@ -25,7 +25,8 @@
     "logs:tail": "node scripts/pretty-logs.js logs/trash2cash-$(date +%F).log",
     "logs:watch": "tail -f logs/trash2cash-$(date +%F).log | node scripts/pretty-logs.js -",
     "notifications:check": "ts-node src/scripts/check-notifications.ts",
-    "notifications:create-for-booking": "ts-node src/scripts/create-notification-for-booking.ts"
+    "notifications:create-for-booking": "ts-node src/scripts/create-notification-for-booking.ts",
+    "rewards:backfill": "ts-node src/scripts/backfill-rewards.ts"
   },
   "dependencies": {
     "@google-cloud/vision": "^5.3.4",

@@ -205,7 +205,7 @@ async function main() {
       postalCode: '00300',
       scheduledDate: new Date(),
       scheduledTimeSlot: '10:00 AM - 12:00 PM',
-      status: BookingStatus.SCHEDULED,
+      status: BookingStatus.CREATED,
       driverId: drivers[1].id,
     },
   });

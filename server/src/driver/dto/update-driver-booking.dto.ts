@@ -16,10 +16,4 @@ export class UpdateDriverBookingDto {
   @IsNumber()
   @Min(0)
   actualWeightKg?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  finalAmountLkr?: number;
 }

@@ -188,7 +188,7 @@ model Booking {
   confirmedAt          DateTime?
   driverId             String?
   createdAt            DateTime             @default(now())
-  status               BookingStatus        @default(SCHEDULED)
+  status               BookingStatus        @default(CREATED)
   driver               Driver?              @relation(fields: [driverId], references: [id])
   user                 User                 @relation(fields: [userId], references: [id])
   wasteCategory        WasteCategory        @relation(fields: [wasteCategoryId], references: [id])

@@ -16,7 +16,13 @@ import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 import { RewardsService } from '../rewards/rewards.service';
 import { UpdateBookingStatusDto } from '../bookings/dto/update-booking-status.dto';
 import { calculateMidpointAmountLkr } from '../bookings/booking-amount';
-import { getTransitionError } from '../bookings/booking-status';
+import {
+  CANONICAL_BOOKING_STATUSES,
+  expandBookingStatusFilter,
+  getRoleTransitionError,
+  isLegacyBookingStatus,
+  normalizeBookingStatus,
+} from '../bookings/booking-status';
 
 type ActorContext = { sub: string; role: Role };
 const CLOSED_BOOKING_STATUSES = new Set<BookingStatus>([
@@ -26,20 +32,20 @@ const CLOSED_BOOKING_STATUSES = new Set<BookingStatus>([
 ]);
 const PRE_ASSIGN_BOOKING_STATUSES = new Set<BookingStatus>([
   BookingStatus.CREATED,
-  BookingStatus.SCHEDULED,
 ]);
 const DRIVER_REQUIRED_BOOKING_STATUSES = new Set<BookingStatus>([
   BookingStatus.ASSIGNED,
   BookingStatus.IN_PROGRESS,
   BookingStatus.COLLECTED,
-  BookingStatus.PAID,
   BookingStatus.COMPLETED,
 ]);
-const BOOKING_STATUSES = Object.values(BookingStatus) as BookingStatus[];
+const BOOKING_STATUSES = [...CANONICAL_BOOKING_STATUSES];
+const BOOKING_STATUS_ENUM_VALUES = Object.values(BookingStatus) as BookingStatus[];
 const LEGACY_SAFE_BOOKING_STATUSES: BookingStatus[] = [
-  BookingStatus.SCHEDULED,
+  BookingStatus.CREATED,
+  BookingStatus.ASSIGNED,
+  BookingStatus.IN_PROGRESS,
   BookingStatus.COLLECTED,
-  BookingStatus.PAID,
   BookingStatus.COMPLETED,
   BookingStatus.CANCELLED,
   BookingStatus.REFUNDED,
@@ -547,7 +553,7 @@ export class AdminService {
     const where: Prisma.BookingWhereInput = {};
 
     if (query.status) {
-      where.status = query.status;
+      where.status = { in: expandBookingStatusFilter(query.status) };
     }
 
     if (query.userId) {
@@ -589,7 +595,7 @@ export class AdminService {
     );
 
     return bookings.map((booking) => ({
-      ...booking,
+      ...this.normalizeBookingForRead(booking),
       user: flattenUser(booking.user),
     }));
   }
@@ -679,6 +685,7 @@ export class AdminService {
       include: { wasteCategory: true, driver: true },
     });
     if (!existing) throw new NotFoundException('Booking not found');
+    const existingStatus = normalizeBookingStatus(existing.status);
 
     const update: AdminUpdateBookingDto = { ...dto };
     const driverChanged = Boolean(
@@ -686,7 +693,7 @@ export class AdminService {
     );
 
     if (driverChanged) {
-      if (CLOSED_BOOKING_STATUSES.has(existing.status)) {
+      if (CLOSED_BOOKING_STATUSES.has(existingStatus)) {
         throw new BadRequestException('Cannot assign a driver to a closed booking');
       }
 
@@ -698,7 +705,16 @@ export class AdminService {
         throw new BadRequestException('Driver must be approved before assignment');
       }
 
-      if (!update.status && PRE_ASSIGN_BOOKING_STATUSES.has(existing.status)) {
+      if (
+        existingStatus !== BookingStatus.CREATED &&
+        existingStatus !== BookingStatus.ASSIGNED
+      ) {
+        throw new BadRequestException(
+          'Driver can only be assigned while booking is awaiting assignment.',
+        );
+      }
+
+      if (!update.status && PRE_ASSIGN_BOOKING_STATUSES.has(existingStatus)) {
         const canUseAssignedStatus = await this.isBookingStatusSupported(
           BookingStatus.ASSIGNED,
           false,
@@ -714,6 +730,14 @@ export class AdminService {
     }
 
     if (update.status) {
+      if (isLegacyBookingStatus(update.status)) {
+        throw new BadRequestException(
+          `Legacy status ${update.status} is not allowed.`,
+        );
+      }
+
+      update.status = normalizeBookingStatus(update.status);
+
       const isSupported = await this.isBookingStatusSupported(update.status, true);
       if (!isSupported) {
         throw new BadRequestException(
@@ -722,12 +746,16 @@ export class AdminService {
       }
     }
 
-    const nextStatus = update.status ?? existing.status;
+    const nextStatus = update.status ?? existingStatus;
     const shouldConfirm = nextStatus === BookingStatus.COMPLETED;
-    const statusChanged = nextStatus !== existing.status;
+    const statusChanged = nextStatus !== existingStatus;
 
     if (statusChanged) {
-      const transitionError = getTransitionError(existing.status, nextStatus);
+      const transitionError = getRoleTransitionError(
+        'ADMIN',
+        existingStatus,
+        nextStatus,
+      );
       if (transitionError) {
         throw new BadRequestException(transitionError);
       }
@@ -743,11 +771,10 @@ export class AdminService {
     }
 
     const data: any = {};
-    if (update.status) data.status = update.status;
+    if (statusChanged || existingStatus !== existing.status) data.status = nextStatus;
     if (update.driverId) data.driverId = update.driverId;
     if (update.actualWeightKg !== undefined) data.actualWeightKg = update.actualWeightKg;
     if (update.finalAmountLkr !== undefined) data.finalAmountLkr = update.finalAmountLkr;
-    if (shouldConfirm && !existing.confirmedAt) data.confirmedAt = new Date();
 
     const weightForAmount =
       update.actualWeightKg !== undefined
@@ -759,6 +786,22 @@ export class AdminService {
         weightForAmount,
       );
       if (computed !== null) data.finalAmountLkr = computed;
+    }
+
+    if (shouldConfirm) {
+      if (weightForAmount === null || weightForAmount === undefined) {
+        throw new BadRequestException(
+          'Cannot complete booking without collected weight.',
+        );
+      }
+      const amountForCompletion =
+        data.finalAmountLkr ?? existing.finalAmountLkr ?? null;
+      if (amountForCompletion === null || amountForCompletion === undefined) {
+        throw new BadRequestException(
+          'Cannot complete booking without a final amount.',
+        );
+      }
+      if (!existing.confirmedAt) data.confirmedAt = new Date();
     }
 
     const updated = await (async () => {
@@ -784,7 +827,7 @@ export class AdminService {
     })();
 
     if (statusChanged && actor) {
-      await this.recordStatusHistory(existing.id, existing.status, nextStatus, actor);
+      await this.recordStatusHistory(existing.id, existingStatus, nextStatus, actor);
     }
 
     // Push notification triggers based on what changed
@@ -832,17 +875,6 @@ export class AdminService {
             })
             .catch(() => {});
           break;
-        case 'PAID':
-          this.pushService
-            .notify(existing.userId, {
-              title: 'Payment processed',
-              body: `Payment of LKR ${updated.finalAmountLkr?.toFixed(2) ?? '0.00'} for booking #${shortId} was processed.`,
-              level: NotificationLevel.SUCCESS,
-              bookingId: id,
-              url: `/users/bookings/${id}`,
-            })
-            .catch(() => {});
-          break;
         case 'COMPLETED':
           this.pushService
             .notify(existing.userId, {
@@ -879,12 +911,13 @@ export class AdminService {
       }
     }
 
-    if (shouldConfirm) {
+    if (statusChanged && shouldConfirm) {
       await this.rewardsService.awardPointsForBooking(updated.id);
     }
 
+    const normalizedUpdated = this.normalizeBookingForRead(updated);
     return {
-      ...updated,
+      ...normalizedUpdated,
       user: undefined, // Don't leak full user in admin response
     };
   }
@@ -949,7 +982,7 @@ export class AdminService {
     if (this.bookingStatusAvailabilityLoaded) return;
 
     this.bookingStatusAvailabilityLoaded = true;
-    for (const status of BOOKING_STATUSES) {
+    for (const status of BOOKING_STATUS_ENUM_VALUES) {
       this.bookingStatusAvailability.set(status, false);
     }
 
@@ -993,20 +1026,32 @@ export class AdminService {
   private async getPendingPickupStatuses() {
     await this.loadBookingStatusAvailability();
     const candidateStatuses: BookingStatus[] = [
+      BookingStatus.CREATED,
       BookingStatus.SCHEDULED,
       BookingStatus.ASSIGNED,
       BookingStatus.IN_PROGRESS,
     ];
 
     if (!this.bookingStatusAvailabilityKnown) {
-      return [BookingStatus.SCHEDULED];
+      return [BookingStatus.CREATED];
     }
 
     const supported = candidateStatuses.filter(
       (status) => this.bookingStatusAvailability.get(status) === true,
     );
 
-    return supported.length > 0 ? supported : [BookingStatus.SCHEDULED];
+    return supported.length > 0 ? supported : [BookingStatus.CREATED];
+  }
+
+  private normalizeBookingForRead<T extends { status: BookingStatus }>(
+    booking: T,
+  ): T {
+    const normalizedStatus = normalizeBookingStatus(booking.status);
+    if (normalizedStatus === booking.status) return booking;
+    return {
+      ...booking,
+      status: normalizedStatus,
+    };
   }
 
   private isMissingColumnError(error: unknown) {

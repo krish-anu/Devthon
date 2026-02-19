@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Booking, RewardsSummary } from "@/lib/types";
+import { normalizeBookingStatus } from "@/lib/booking-status";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,8 +44,8 @@ export default function DashboardPage() {
       0,
     );
     const pending = bookings.filter((booking) =>
-      ["CREATED", "SCHEDULED", "ASSIGNED", "IN_PROGRESS"].includes(
-        booking.status,
+      ["CREATED", "ASSIGNED", "IN_PROGRESS"].includes(
+        normalizeBookingStatus(booking.status),
       ),
     ).length;
     const co2 = Math.round(totalWeight * 1.7);
@@ -151,7 +152,7 @@ export default function DashboardPage() {
                       LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
                     </TableCell> */}
                     <TableCell>
-                      <StatusPill status={booking.status} />
+                      <StatusPill status={booking.status} viewerRole="CUSTOMER" />
                     </TableCell>
                     <TableCell>
                       {new Date(booking.createdAt).toLocaleDateString()}

@@ -49,6 +49,7 @@ describe('calculatePoints', () => {
     expect(isEwasteCategory('E Waste')).toBe(true);
     expect(isEwasteCategory('Ewaste')).toBe(true);
     expect(isEwasteCategory('Electronics')).toBe(true);
+    expect(isEwasteCategory('Reusable Electronics')).toBe(true);
     expect(isEwasteCategory('Plastic')).toBe(false);
   });
 });

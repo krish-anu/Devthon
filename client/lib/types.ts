@@ -20,14 +20,15 @@ export interface User {
 
 export type BookingStatus =
   | 'CREATED'
-  | 'SCHEDULED'
   | 'ASSIGNED'
   | 'IN_PROGRESS'
   | 'COLLECTED'
-  | 'PAID'
   | 'COMPLETED'
   | 'CANCELLED'
-  | 'REFUNDED';
+  | 'REFUNDED'
+  // Legacy statuses are retained for compatibility-safe reads.
+  | 'SCHEDULED'
+  | 'PAID';
 
 export interface WasteCategory {
   id: string;
