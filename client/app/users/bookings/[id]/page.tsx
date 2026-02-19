@@ -207,7 +207,7 @@ export default function BookingDetailsPage() {
               Amount: LKR {booking?.finalAmountLkr ?? booking?.estimatedMaxAmount}
             </p>
           </div>
-        </div>
+    </div>
 
         {booking?.imageUrls && booking.imageUrls.length > 0 && (
           <div className="mt-4 grid grid-cols-4 gap-2">
