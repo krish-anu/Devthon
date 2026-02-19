@@ -187,7 +187,18 @@ export default function DriverBookingDetailPage() {
 
       <Card className="p-4 space-y-2">
         <div className="text-sm text-(--muted)">Customer</div>
-        <div className="text-base font-medium">{booking.user?.fullName ?? "Customer"}</div>
+        <div className="text-base font-medium">
+          {booking.user?.fullName ?? "Customer"}
+        </div>
+
+        {booking.imageUrls && booking.imageUrls.length > 0 && (
+          <div className="mt-2 flex gap-2">
+            {booking.imageUrls!.map((src) => (
+              <img key={src} src={src} className="h-12 w-12 rounded-md object-cover" alt="booking" />
+            ))}
+          </div>
+        )}
+
         <div className="text-sm text-(--muted)">Address</div>
         <div className="text-base">{booking.addressLine1}</div>
         <div className="text-sm text-(--muted)">Pickup Date/Time</div>

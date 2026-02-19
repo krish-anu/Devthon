@@ -57,6 +57,7 @@ export interface Booking {
   addressLine1: string;
   city: string;
   postalCode: string;
+  imageUrls?: string[];
   scheduledDate: string;
   scheduledTimeSlot: string;
   status: BookingStatus;

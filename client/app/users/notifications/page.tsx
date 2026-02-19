@@ -58,7 +58,23 @@ export default function NotificationsPage() {
   const items = data ?? [];
   const unreadCount = items.filter((n) => !n.isRead).length;
 
-  const handleClick = (item: NotificationItem) => {
+  const handleClick = async (item: NotificationItem) => {
+    // optimistic UI update
+    queryClient.setQueryData<NotificationItem[] | undefined>(["notifications"], (old) =>
+      (old ?? []).map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
+    );
+
+    // ensure header badge refreshes
+    queryClient.invalidateQueries({ queryKey: ["notifications", "header-unread-count"] });
+
+    try {
+      await apiFetch(`/notifications/${item.id}/mark-read`, { method: "POST" });
+    } catch (err) {
+      // revert / refresh on error
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "header-unread-count"] });
+    }
+
     if (item.bookingId) {
       router.push(`/users/bookings/${item.bookingId}`);
     }
@@ -98,7 +114,7 @@ export default function NotificationsPage() {
               key={item.id}
               className={`flex flex-col gap-2 transition-colors ${
                 !item.isRead
-                  ? "border-l-4 border-l-green-500 bg-(--card)/80"
+                  ? "bg-green-50"
                   : "opacity-75"
               } ${item.bookingId ? "cursor-pointer hover:shadow-md" : ""}`}
               onClick={() => handleClick(item)}

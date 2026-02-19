@@ -138,6 +138,10 @@ export class BookingsService {
               addressLine1: dto.addressLine1,
               city: dto.city,
               postalCode: dto.postalCode,
+              imageUrls: [
+                ...(it.images ?? []),
+                ...(dto.images ?? []),
+              ],
               specialInstructions: dto.specialInstructions,
               scheduledDate: new Date(dto.scheduledDate),
               scheduledTimeSlot: dto.scheduledTimeSlot,
@@ -177,6 +181,7 @@ export class BookingsService {
             supabaseData.location = `SRID=4326;POINT(${dto.lng} ${dto.lat})`;
           }
 
+          supabaseData.imageUrls = booking.imageUrls ?? [];
           await this.supabaseService.upsertRow('bookings', supabaseData);
 
           return booking;

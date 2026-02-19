@@ -432,6 +432,38 @@ section[id], [id] {
   pointer-events: none;
 }
 
+/* Lag-spin (initial loading) animation — main logo + trailing ring */
+@keyframes lag-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(200deg) scale(1.02); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes lag-spin-lag {
+  0% { transform: rotate(0deg); opacity: 0.6; }
+  40% { transform: rotate(140deg); opacity: 0.35; }
+  100% { transform: rotate(360deg); opacity: 0.6; }
+}
+
+.lag-spin {
+  animation: lag-spin 1s cubic-bezier(.22,.9,.3,1) infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.lag-spin-lag {
+  animation: lag-spin-lag 1.8s cubic-bezier(.22,.9,.3,1) infinite;
+  will-change: transform, opacity;
+  filter: blur(0.2px);
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lag-spin,
+  .lag-spin-lag { animation: none !important; }
+}
+
+
 /* Respect user preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .assistant-bounce,

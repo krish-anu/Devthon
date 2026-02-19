@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, ServiceUnavailableException } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, ServiceUnavailableException, Param } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 import { PushService } from './push.service';
@@ -20,6 +20,11 @@ export class NotificationsController {
   @Post('mark-all-read')
   markAllRead(@Req() req: any) {
     return this.notificationsService.markAllRead(req.user.sub);
+  }
+
+  @Post(':id/mark-read')
+  markRead(@Req() req: any, @Param('id') id: string) {
+    return this.notificationsService.markRead(req.user.sub, id);
   }
 
   /** Returns the VAPID public key so the client can subscribe */
