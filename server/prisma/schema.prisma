@@ -179,6 +179,7 @@ model Booking {
   addressLine1         String
   city                 String
   postalCode           String
+  imageUrls            String[]             @default([])
   specialInstructions  String?
   scheduledDate        DateTime
   scheduledTimeSlot    String

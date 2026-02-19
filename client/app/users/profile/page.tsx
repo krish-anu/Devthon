@@ -77,22 +77,23 @@ export default function ProfilePage() {
       const filename = `${Date.now()}_${file.name}`;
       const path = `avatars/${user?.id ?? "unknown"}/${filename}`;
       const bucket = getBucketName();
-      if (!supabase) throw new Error("Supabase not configured");
+      const sb = supabase();
+      if (!sb) throw new Error("Supabase not configured");
 
-      const { data: uploadData, error: uploadErr } = await supabase.storage
+      const { data: uploadData, error: uploadErr } = await sb.storage
         .from(bucket)
         .upload(path, file as File, { upsert: true });
       if (uploadErr) throw uploadErr;
 
       // Build public URL (requires bucket to have public policy) – fall back to signed URL when needed
-      const { data: publicData } = supabase.storage
+      const { data: publicData } = sb.storage
         .from(bucket)
         .getPublicUrl(path);
       let url = (publicData as any)?.publicUrl ?? null;
 
       // If bucket is private or getPublicUrl returned no public URL, create a signed URL (24h)
       if (!url) {
-        const { data: signedData, error: signedErr } = await supabase.storage
+        const { data: signedData, error: signedErr } = await sb.storage
           .from(bucket)
           .createSignedUrl(path, 60 * 60 * 24);
         if (signedErr) throw signedErr;

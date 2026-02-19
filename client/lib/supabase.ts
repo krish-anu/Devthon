@@ -1,21 +1,21 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let supabase: SupabaseClient | null = null;
+let _supabase: SupabaseClient | null = null;
 
-function initSupabase(): SupabaseClient | null {
+function getSupabase(): SupabaseClient | null {
   if (typeof window === 'undefined') return null;
+  if (_supabase) return _supabase;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return null;
   try {
-    return createClient(url, anonKey);
+    _supabase = createClient(url, anonKey);
+    return _supabase;
   } catch (err) {
     console.warn('Supabase init failed', err);
     return null;
   }
 }
-
-if (typeof window !== 'undefined') supabase = initSupabase();
 
 export function getBucketName() {
   return (
@@ -25,4 +25,9 @@ export function getBucketName() {
   );
 }
 
-export default supabase;
+export function getBookingsBucketName() {
+  return process.env.NEXT_PUBLIC_SUPABASE_BOOKINGS_BUCKET || 'bookings';
+}
+
+export { getSupabase };
+export default getSupabase;

@@ -19,6 +19,11 @@ export class BookingItemDto {
   @Type(() => Number)
   @Min(0.1)
   quantityKg: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 }
 
 export class CreateBookingDto {
@@ -36,6 +41,11 @@ export class CreateBookingDto {
 
   @IsString()
   postalCode: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 
   @IsString()
   phone: string;

@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
+import supabase, { getBookingsBucketName } from "@/lib/supabase";
 import { useAuth } from "@/components/auth/auth-provider";
 import MapComponent from "@/components/shared/map";
 
@@ -49,6 +50,8 @@ export default function NewBookingPage() {
     queryKey: ["public-pricing"],
     queryFn: () => apiFetch<PricingItem[]>("/public/pricing", {}, false),
   });
+
+
 
   const { data: categories } = useQuery({
     queryKey: ["public-waste-categories"],
@@ -477,25 +480,85 @@ export default function NewBookingPage() {
     }
 
     setIsSubmitting(true);
+
+    // Helper: upload files to Supabase and return public/signed URLs
+    const uploadFiles = async (files: File[] | undefined) => {
+      if (!files || files.length === 0) return [] as string[];
+      const sb = supabase();
+      if (!sb) {
+        // Supabase not configured on client – skip uploads
+        return [] as string[];
+      }
+      const bucket = getBookingsBucketName();
+
+      const urls: string[] = [];
+      for (const file of files) {
+        const filename = `${Date.now()}_${file.name}`;
+        const path = `bookings/${user?.id ?? 'unknown'}/${filename}`;
+        const { data: uploadData, error: uploadErr } = await sb.storage
+          .from(bucket)
+          .upload(path, file as File, { upsert: true });
+        if (uploadErr) {
+          throw uploadErr;
+        }
+
+        const { data: publicData } = sb.storage.from(bucket).getPublicUrl(path);
+        let url = (publicData as any)?.publicUrl ?? null;
+        if (!url) {
+          const { data: signedData, error: signedErr } = await sb.storage
+            .from(bucket)
+            .createSignedUrl(path, 60 * 60 * 24);
+          if (signedErr) throw signedErr;
+          url = (signedData as any)?.signedUrl ?? null;
+        }
+        if (url) urls.push(url);
+      }
+      return urls;
+    };
+
     try {
+      // Upload category-specific images first
+      const categoryUploads: Record<string, string[]> = {};
+      for (const s of selectedItems) {
+        const catId = s.item.wasteCategory.id;
+        const imgs = categoryImages[catId] ?? [];
+        if (imgs.length > 0) {
+          const files = imgs.map((i) => i.file);
+          categoryUploads[catId] = await uploadFiles(files);
+        } else {
+          categoryUploads[catId] = [];
+        }
+      }
+
+      // Upload unassigned images (those in uploadedImages but not in any categoryImages)
+      const assignedIds = new Set<string>();
+      Object.values(categoryImages).forEach((arr) => arr.forEach((i) => assignedIds.add(i.id)));
+      const unassigned = uploadedImages.filter((ui) => !assignedIds.has(ui.id));
+      const unassignedUrls = await uploadFiles(unassigned.map((u) => u.file));
+
+      const itemsPayload = selectedItems.map((s) => ({
+        wasteCategoryId: s.item.wasteCategory.id,
+        quantityKg: isPaperCategory ? weightRange?.min || 0 : s.quantity,
+        images: categoryUploads[s.item.wasteCategory.id] ?? [],
+      }));
+
       await apiFetch("/bookings", {
         method: "POST",
         body: JSON.stringify({
-          items: selectedItems.map((s) => ({
-            wasteCategoryId: s.item.wasteCategory.id,
-            quantityKg: isPaperCategory ? weightRange?.min || 0 : s.quantity,
-          })),
+          items: itemsPayload,
+          images: unassignedUrls,
           addressLine1,
           city,
           postalCode,
-          specialInstructions,
+          ...(specialInstructions ? { specialInstructions } : {}),
           scheduledDate,
           scheduledTimeSlot,
           phone: normalizeSriLankaPhone(phoneNumber),
-          lat: mapLat,
-          lng: mapLng,
+          ...(mapLat != null ? { lat: mapLat } : {}),
+          ...(mapLng != null ? { lng: mapLng } : {}),
         }),
       });
+
       toast({
         title: "Booking confirmed",
         description: "Your pickup is scheduled.",
@@ -505,7 +568,7 @@ export default function NewBookingPage() {
     } catch (error: any) {
       toast({
         title: "Booking failed",
-        description: error?.message,
+        description: error?.message || "Could not upload images or create booking",
         variant: "error",
       });
     } finally {

@@ -17,6 +17,13 @@ import { StatusPill } from "@/components/shared/status-pill";
 import { Phone, MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
+const steps = [
+  "Booking Confirmed",
+  "Driver Assigned",
+  "Driver En Route",
+  "Pickup Complete",
+];
+
 const mapContainerStyle = {
   height: "100%",
   width: "100%",
@@ -200,6 +207,25 @@ export default function BookingDetailsPage() {
               Amount: LKR {booking?.finalAmountLkr ?? booking?.estimatedMaxAmount}
             </p>
           </div>
+
+        {booking?.imageUrls && booking.imageUrls.length > 0 && (
+          <div className="mt-4 grid grid-cols-4 gap-2">
+            {booking.imageUrls!.map((src) => (
+              <img key={src} src={src} className="h-20 w-full rounded-md object-cover" alt="booking" />
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-4">
+          {steps.map((step, index) => (
+            <div
+              key={step}
+              className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3"
+            >
+              <p className="text-xs text-(--muted)">Step {index + 1}</p>
+              <p className="text-sm font-semibold">{step}</p>
+            </div>
+          ))}
         </div>
         {isPaymentDue && (
           <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
