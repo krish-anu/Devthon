@@ -281,7 +281,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-slate-200 dark:border-slate-700" />
               </div>
               <div className="relative flex justify-center text-[0.65rem] sm:text-xs">
-                <span className="bg-white dark:bg-slate-900 px-2 text-slate-500">
+                <span className="bg-white dark:bg-slate-900 px-2 text-white">
                   or continue with email
                 </span>
               </div>
