@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
@@ -8,7 +8,7 @@ import { Booking, PricingItem, WasteCategory } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import Loading from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
@@ -127,6 +127,7 @@ export default function NewBookingPage() {
     );
   }, [selectedItems]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const categoryFileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const estimate = useMemo(() => {
     if (selectedItems.length === 0) return { min: 0, max: 0 };
@@ -644,6 +645,13 @@ export default function NewBookingPage() {
                 const catId = item.wasteCategory.id;
                 const imgsForCat = categoryImages[catId] ?? [];
 
+                const triggerCategoryFilePicker = () => {
+                  const inputEl = categoryFileInputsRef.current[catId];
+                  if (inputEl) {
+                    inputEl.click();
+                  }
+                };
+
                 const toggleSelection = () => {
                   const exists = selectedItems.find((s) => s.id === item.id);
                   if (exists) {
@@ -653,6 +661,8 @@ export default function NewBookingPage() {
                       ...prev,
                       { id: item.id, item, quantity: 1 },
                     ]);
+                    // Prompt for images immediately after selecting a category
+                    triggerCategoryFilePicker();
                   }
                 };
 
@@ -683,6 +693,9 @@ export default function NewBookingPage() {
                           type="file"
                           accept="image/*"
                           multiple
+                          ref={(el) => {
+                            categoryFileInputsRef.current[catId] = el;
+                          }}
                           onChange={(e) => {
                             e.stopPropagation();
                             handleCategoryFileSelect(catId, e.target.files);
@@ -690,19 +703,7 @@ export default function NewBookingPage() {
                           }}
                           className="sr-only"
                         />
-                        <svg
-                          className="h-4 w-4 text-(--muted)"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l4-4h10l4 4M5 8v10a1 1 0 001 1h12a1 1 0 001-1V8M8 12l2 2 4-4"
-                          />
-                        </svg>
+                        <Camera className="h-4 w-4 text-(--muted)" aria-hidden />
                       </label>
 
                       {imgsForCat.length > 0 && (
