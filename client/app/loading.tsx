@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--background)]">
       <div className="flex flex-col items-center gap-4">
-        <div className="relative flex items-center justify-center w-24 h-24">
+        <div className="relative flex items-center justify-center w-28 h-28">
           {/* lagging outer ring */}
           <span
             className="absolute inset-0 m-auto rounded-full border opacity-30 lag-spin-lag"
