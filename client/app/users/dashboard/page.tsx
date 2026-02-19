@@ -59,7 +59,7 @@ export default function DashboardPage() {
           Welcome back, {user?.fullName?.split(" ")[0] ?? "User"}!
         </h1>
       </div>
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
         <KpiCard
           label="Total Earned"
           value={`LKR ${metrics.totalEarned.toFixed(0)}`}
@@ -115,13 +115,13 @@ export default function DashboardPage() {
             <Link href="/users/bookings">View all</Link>
           </Button>
         </div>
-        <div className="mt-3 sm:mt-4 overflow-x-auto -mx-6 sm:mx-0">
+        <div className="mt-3 overflow-x-auto sm:mt-4">
           {isLoading ? (
             <div className="p-6">
               <SkeletonTableRows columns={6} rows={5} />
             </div>
           ) : (
-            <Table className="min-w-[600px]">
+            <Table className="sm:min-w-[520px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking ID</TableHead>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                 {!bookings.length && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={4}
                       className="text-center text-(--muted)"
                     >
                       No bookings yet.

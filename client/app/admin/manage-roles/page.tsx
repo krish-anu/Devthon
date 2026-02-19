@@ -52,14 +52,19 @@ export default function ManageRolesPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="flex items-center justify-between p-4">
+      <Card className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Manage Roles</h2>
           <p className="text-sm text-(--muted)">View all users and change roles (Super Admin only).</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Input placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <label className="text-sm text-(--muted)">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
+          <Input
+            className="w-full sm:w-72"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <label className="text-sm text-(--muted) sm:whitespace-nowrap">
             <input type="checkbox" className="mr-2" checked={nonCustomerOnly} onChange={(e) => setNonCustomerOnly(e.target.checked)} />
             Show non-customers only
           </label>
@@ -70,7 +75,7 @@ export default function ManageRolesPage() {
         {isLoading ? (
           <div className="py-8 text-center text-(--muted)">Loading users...</div>
         ) : (
-          <Table className="min-w-180">
+          <Table className="sm:min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>

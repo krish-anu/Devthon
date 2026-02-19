@@ -66,7 +66,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="notifications-page space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold">Notifications</h2>
           {unreadCount > 0 && (
@@ -80,6 +80,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => mutation.mutate()}
             disabled={unreadCount === 0}
+            className="w-full sm:w-auto"
           >
             Mark all as read
           </Button>
@@ -102,10 +103,10 @@ export default function NotificationsPage() {
               } ${item.bookingId ? "cursor-pointer hover:shadow-md" : ""}`}
               onClick={() => handleClick(item)}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-2">
                   {levelIcon[item.level]}
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
+                  <h3 className="truncate text-lg font-semibold">{item.title}</h3>
                 </div>
                 <div className="flex items-center gap-2">
                   {item.bookingId && (

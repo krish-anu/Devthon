@@ -19,7 +19,7 @@ export function AppShell({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-background text-foreground">
       {/* Sidebar fixed on large screens and flush to the left */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:block z-30">
         {sidebar}
@@ -34,7 +34,7 @@ export function AppShell({
             onClick={() => setMobileSidebarOpen(false)}
             aria-label="Close sidebar"
           />
-          <div className="relative h-full w-72 max-w-[80%]">
+          <div className="relative h-full w-[85vw] max-w-xs sm:max-w-sm">
             <div className="absolute right-4 top-4 z-10">
               <button
                 type="button"
@@ -67,7 +67,12 @@ export function AppShell({
       {/* Full-width header bar (fixed at top). Inner container keeps content aligned */}
       {header && (
         <header className="fixed top-0 left-0 right-0 border-b border-(--border) bg-(--surface-soft) h-16 z-20">
-          <div className={cn("mx-auto h-16 flex items-center w-full max-w-7xl px-6", hasSidebar ? "lg:pl-64" : undefined)}>
+          <div
+            className={cn(
+              "mx-auto flex h-16 w-full max-w-7xl items-center px-3 sm:px-6",
+              hasSidebar ? "lg:pl-64" : undefined,
+            )}
+          >
             <button
               type="button"
               className="mr-3 flex h-10 w-10 items-center justify-center rounded-full border border-(--border) text-(--ink) lg:hidden"
@@ -115,14 +120,14 @@ export function AppShell({
       {/* Main content gets left padding on large screens and top padding when header exists to account for the fixed header */}
       <div
         className={cn(
-          "mx-auto w-full max-w-7xl",
+          "mx-auto w-full max-w-7xl overflow-x-hidden",
           hasSidebar ? "lg:pl-64" : undefined,
           Boolean(header) ? "pt-16" : undefined,
         )}
       >
-        <div className="flex min-h-screen">
-          <div className="flex-1">
-            <main className={cn("space-y-6 px-3 sm:px-6 py-4 sm:py-6", className)}>
+        <div className="flex min-h-screen min-w-0">
+          <div className="min-w-0 flex-1">
+            <main className={cn("min-w-0 space-y-6 px-3 py-4 sm:px-6 sm:py-6", className)}>
               {children}
             </main>
           </div>

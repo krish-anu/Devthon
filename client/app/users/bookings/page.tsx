@@ -129,7 +129,7 @@ export default function BookingHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4">
+      <Card className="flex flex-col gap-3 p-4 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <select className="h-11 rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--muted)">
             <option>Last 30 Days</option>
@@ -165,20 +165,20 @@ export default function BookingHistoryPage() {
             <option value="REFUNDED">Refunded</option>
           </select>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Input
-            className="min-w-45"
+            className="w-full sm:w-64"
             placeholder="Search bookings"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <Button variant="outline" onClick={exportCsv}>
+          <Button variant="outline" onClick={exportCsv} className="w-full sm:w-auto">
             Export CSV
           </Button>
         </div>
       </Card>
 
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <KpiCard label="Total Bookings" value={`${metrics.total}`} />
         <KpiCard label="Completed" value={`${metrics.completed}`} />
         <KpiCard
@@ -196,8 +196,8 @@ export default function BookingHistoryPage() {
           <SkeletonTableRows columns={7} rows={6} />
         </Card>
       ) : (
-        <Card className="overflow-x-auto">
-          <Table className="min-w-180">
+        <Card>
+          <Table className="sm:min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking ID</TableHead>
@@ -205,7 +205,9 @@ export default function BookingHistoryPage() {
                 <TableHead>Weight</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>                <TableHead>Actions</TableHead>              </TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
               {bookings.map((booking) => (
@@ -263,7 +265,7 @@ export default function BookingHistoryPage() {
               )}
             </TableBody>
           </Table>
-          <div className="mt-4 flex items-center justify-between text-sm text-(--muted)">
+          <div className="mt-4 flex flex-col gap-3 text-sm text-(--muted) sm:flex-row sm:items-center sm:justify-between">
             <span>Page 1 of 1</span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">

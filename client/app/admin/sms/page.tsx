@@ -201,7 +201,7 @@ export default function AdminSmsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <MessageSquare className="h-6 w-6 text-(--brand)" />
           <div>
@@ -212,7 +212,7 @@ export default function AdminSmsPage() {
           </div>
         </div>
         {balanceData?.data && (
-          <div className="rounded-lg border bg-card px-4 py-2 text-sm">
+          <div className="w-full rounded-lg border bg-card px-4 py-2 text-sm sm:w-auto">
             <span className="text-muted-foreground">SMS Balance: </span>
             <span className="font-bold text-emerald-600">
               {typeof balanceData.data === "object"
@@ -267,7 +267,7 @@ export default function AdminSmsPage() {
 
         {/* Date and search filters */}
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={dateFilter === "thisWeek" ? "default" : "outline"}
               size="sm"
@@ -292,11 +292,11 @@ export default function AdminSmsPage() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <label className="text-xs text-muted-foreground">From</label>
             <Input
               type="date"
-              className="w-40"
+              className="w-full sm:w-40"
               value={fromDate}
               onChange={(e) => {
                 setFromDate(e.target.value);
@@ -304,11 +304,11 @@ export default function AdminSmsPage() {
               }}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <label className="text-xs text-muted-foreground">To</label>
             <Input
               type="date"
-              className="w-40"
+              className="w-full sm:w-40"
               value={toDate}
               onChange={(e) => {
                 setToDate(e.target.value);
@@ -319,12 +319,17 @@ export default function AdminSmsPage() {
 
           <Input
             placeholder="Search bookings..."
-            className="max-w-xs"
+            className="w-full sm:max-w-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="w-full sm:w-auto"
+          >
             <RefreshCw className="h-4 w-4 mr-1" />
             Refresh
           </Button>
@@ -333,8 +338,8 @@ export default function AdminSmsPage() {
 
       {/* Bookings Table with Checkboxes */}
       <Card className="p-0 overflow-hidden">
-        <div className="max-h-96 overflow-auto">
-          <Table>
+        <div className="max-h-[28rem] overflow-auto">
+          <Table className="sm:min-w-[940px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
@@ -423,11 +428,11 @@ export default function AdminSmsPage() {
 
       {/* Compose and Send */}
       <Card className="p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="font-semibold">Compose Message</h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCheck className="h-4 w-4" />
-            <span>{selectedPhones.size} recipient(s) selected</span>
+            <span className="break-words">{selectedPhones.size} recipient(s) selected</span>
           </div>
         </div>
 
@@ -459,7 +464,7 @@ export default function AdminSmsPage() {
           className="resize-none"
         />
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
             {message.length} characters
             {message.length > 160 && (
@@ -476,7 +481,7 @@ export default function AdminSmsPage() {
               selectedPhones.size === 0 ||
               !message.trim()
             }
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 sm:w-auto"
           >
             {sendSmsMutation.isPending ? (
               <>

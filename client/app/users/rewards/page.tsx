@@ -49,7 +49,7 @@ function LeaderboardTable({
         </div>
       </div>
       <div className="mt-4">
-        <Table>
+        <Table className="sm:min-w-[420px]">
           <TableHeader>
             <TableRow>
               <TableHead>Rank</TableHead>

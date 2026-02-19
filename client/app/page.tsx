@@ -284,7 +284,7 @@ export default function HomePage() {
           />
         </ScrollAnimatedSection>
         <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-3 sm:p-4">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {stats.map((stat, index) => (
               <ScrollAnimatedSection key={stat.label} delay={index * 100}>
                 <Card className="bg-(--card) text-center shadow-md">

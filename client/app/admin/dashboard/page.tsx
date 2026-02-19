@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <KpiCard
           label="Total Revenue"
           value={`LKR ${totals.totalRevenue.toFixed(0)}`}
@@ -118,7 +118,7 @@ export default function AdminDashboardPage() {
           {(data?.recentActivity ?? []).map((activity: any) => (
             <div
               key={activity.id}
-              className="flex items-center justify-between rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm"
+              className="flex flex-col gap-2 rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="font-semibold">

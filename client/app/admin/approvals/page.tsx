@@ -87,7 +87,7 @@ export default function ApprovalsPage() {
       </div>
 
       <Card>
-        <Table>
+        <Table className="sm:min-w-[820px]">
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
