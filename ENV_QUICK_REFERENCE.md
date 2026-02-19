@@ -78,6 +78,9 @@ RECAPTCHA_LOGIN_ACTION=login
 # Admin-specific action overrides (optional)
 RECAPTCHA_ADMIN_SIGNUP_ACTION=admin_signup
 RECAPTCHA_ADMIN_LOGIN_ACTION=admin_login
+# Optional override: allow transient Google `browser-error` responses
+# (default false in production, true in development)
+RECAPTCHA_ALLOW_BROWSER_ERROR=false
 # Toggle to enable/disable reCAPTCHA
 NEXT_PUBLIC_RECAPTCHA_ENABLED=true  # Client-side toggle (exposed to browser)
 RECAPTCHA_ENABLED=true               # Server-side toggle (used by backend verification)
