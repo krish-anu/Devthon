@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { NotificationItem } from "@/lib/types";
 
 /**
  * Header bell that navigates to the appropriate notifications page for the
@@ -19,12 +20,14 @@ export default function NotificationNavButton() {
   const target =
     user?.role === "DRIVER"
       ? "/driver/notifications"
-      : "/users/notifications"; // fallback to users notifications for Admin/other roles (no admin notifications page)
+      : user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
+        ? "/admin/notifications"
+        : "/users/notifications";
 
   // lightweight unread count for badge (do not poll aggressively)
   const { data } = useQuery({
     queryKey: ["notifications", "header-unread-count"],
-    queryFn: () => apiFetch<any[]>("/notifications?limit=5"),
+    queryFn: () => apiFetch<NotificationItem[]>("/notifications?limit=5"),
     staleTime: 30_000,
     refetchInterval: 30_000,
     enabled: !!user,

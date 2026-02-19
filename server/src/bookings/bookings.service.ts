@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus, NotificationLevel } from '@prisma/client';
+import { BookingStatus, NotificationLevel, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
@@ -12,6 +12,7 @@ import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import { BookingImageScreeningService } from './booking-image-screening.service';
 import {
   expandBookingStatusFilter,
   getTransitionError,
@@ -26,6 +27,7 @@ export class BookingsService {
     private supabaseService: SupabaseService,
     private transactionLogger: TransactionLogger,
     private pushService: PushService,
+    private bookingImageScreeningService: BookingImageScreeningService,
   ) {}
 
   async list(userId: string, query: BookingsQueryDto) {
@@ -202,6 +204,17 @@ export class BookingsService {
             url: `/users/bookings/${booking.id}`,
           })
           .catch(() => {});
+
+        void this.notifyAdminsForNonWasteImages(booking).catch((error) => {
+          this.transactionLogger.logError(
+            'booking.image.screening.failure',
+            error instanceof Error ? error : new Error(String(error)),
+            {
+              bookingId: booking.id,
+              userId: booking.userId,
+            },
+          );
+        });
       }
 
       return created.map((item) => this.normalizeBookingForRead(item));
@@ -466,5 +479,69 @@ export class BookingsService {
       ...booking,
       status: normalizedStatus,
     };
+  }
+
+  private async notifyAdminsForNonWasteImages(booking: {
+    id: string;
+    userId: string;
+    imageUrls: string[];
+  }) {
+    const imageUrls = (booking.imageUrls ?? []).filter(Boolean);
+    if (imageUrls.length === 0) return;
+
+    this.transactionLogger.logTransaction('booking.image.screening.start', {
+      bookingId: booking.id,
+      userId: booking.userId,
+      imagesCount: imageUrls.length,
+    });
+
+    const screeningResults =
+      await this.bookingImageScreeningService.screenImages(imageUrls);
+    const nonWasteImages = screeningResults.filter((result) => !result.isWaste);
+    if (nonWasteImages.length === 0) {
+      this.transactionLogger.logTransaction('booking.image.screening.clean', {
+        bookingId: booking.id,
+        userId: booking.userId,
+      });
+      return;
+    }
+
+    const admins = await this.prisma.user.findMany({
+      where: {
+        role: {
+          in: [Role.ADMIN, Role.SUPER_ADMIN],
+        },
+      },
+      select: { id: true },
+    });
+    if (admins.length === 0) {
+      return;
+    }
+
+    const sampleDetection = nonWasteImages[0];
+    const description = sampleDetection.detectedObject || 'unknown object';
+    const confidencePct = Math.round((sampleDetection.confidence ?? 0) * 100);
+    const message = `Booking #${booking.id.slice(0, 8)} has ${nonWasteImages.length} suspicious image(s). Detected: ${description} (${confidencePct}% confidence).`;
+
+    await Promise.allSettled(
+      admins.map((admin) =>
+        this.pushService.notify(admin.id, {
+          title: 'Manual review needed: possible non-waste image',
+          body: message,
+          level: NotificationLevel.WARNING,
+          bookingId: booking.id,
+          url: '/admin/bookings',
+        }),
+      ),
+    );
+
+    this.transactionLogger.logTransaction(
+      'booking.image.screening.non_waste_detected',
+      {
+        bookingId: booking.id,
+        userId: booking.userId,
+        nonWasteCount: nonWasteImages.length,
+      },
+    );
   }
 }
