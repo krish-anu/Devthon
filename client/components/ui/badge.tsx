@@ -7,10 +7,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-(--brand)/15 text-(--brand-strong)",
-        warning: "bg-amber-400/20 text-amber-200",
-        danger: "bg-rose-500/20 text-rose-200",
-        info: "bg-sky-500/20 text-sky-200",
+        default: "",
+        warning: "",
+        danger: "",
+        info: "",
         outline:
           "border border-[color:var(--border)] text-[color:var(--muted)]",
       },
@@ -21,14 +21,27 @@ const badgeVariants = cva(
   },
 );
 
+const badgeStyles: Record<string, React.CSSProperties> = {
+  default: { backgroundColor: 'var(--badge-default-bg)', color: 'var(--badge-default-text)' },
+  warning: { backgroundColor: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)' },
+  danger:  { backgroundColor: 'var(--badge-danger-bg)',  color: 'var(--badge-danger-text)'  },
+  info:    { backgroundColor: 'var(--badge-info-bg)',    color: 'var(--badge-info-text)'    },
+};
+
 export interface BadgeProps
   extends
     React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, style, ...props }: BadgeProps) {
+  const variantStyle = variant && variant !== 'outline' ? badgeStyles[variant] : undefined;
   return (
-    <div data-variant={variant} className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div
+      data-variant={variant}
+      className={cn(badgeVariants({ variant }), className)}
+      style={{ ...variantStyle, ...style }}
+      {...props}
+    />
   );
 }
 

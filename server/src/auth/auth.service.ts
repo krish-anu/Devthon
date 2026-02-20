@@ -16,7 +16,6 @@ import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import type { StringValue } from 'ms';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 @Injectable()
 export class AuthService {
@@ -239,15 +238,19 @@ export class AuthService {
     return r.json();
   }
 
-  // Helper: verify ID token using Google's JWKS
-  private jwks = createRemoteJWKSet(
-    new URL('https://www.googleapis.com/oauth2/v3/certs'),
-  );
+  // Helper: verify ID token using Google's JWKS (lazy-load ESM-only 'jose')
+  private jwks: any | null = null;
 
   private async verifyIdToken(idToken: string) {
     const clientId = this.getRequiredConfig('GOOGLE_CLIENT_ID');
     try {
-      const { payload } = await jwtVerify(idToken, this.jwks, {
+      const jose = await import('jose');
+      if (!this.jwks) {
+        this.jwks = jose.createRemoteJWKSet(
+          new URL('https://www.googleapis.com/oauth2/v3/certs'),
+        );
+      }
+      const { payload } = await jose.jwtVerify(idToken, this.jwks, {
         issuer: ['https://accounts.google.com', 'accounts.google.com'],
         audience: clientId,
       });
@@ -455,12 +458,15 @@ export class AuthService {
 
         const inputRole = role ?? 'CUSTOMER';
 
+        const googleAvatar = googleUser.picture ?? null;
+
         if (inputRole === 'ADMIN') {
           await tx.admin.create({
             data: {
               id: newUser.id,
               fullName: displayName,
               phone: '',
+              ...(googleAvatar ? { avatarUrl: googleAvatar } : {}),
             },
           });
         } else if (inputRole === 'DRIVER') {
@@ -470,18 +476,17 @@ export class AuthService {
               fullName: displayName,
               phone: '',
               vehicle: 'Not specified',
+              ...(googleAvatar ? { avatarUrl: googleAvatar } : {}),
             },
           });
         } else {
-          // Avoid setting avatarUrl at creation to be compatible with databases that
-          // may not have the avatarUrl column yet (pre-migration). Update avatar
-          // later in a safe, separate operation.
           await tx.customer.create({
             data: {
               id: newUser.id,
               fullName: displayName,
               phone: '',
               type: 'HOUSEHOLD',
+              ...(googleAvatar ? { avatarUrl: googleAvatar } : {}),
             } as any,
           });
         }
@@ -536,12 +541,17 @@ export class AuthService {
       // Existing user — update avatar if Google provides one (or it changed).
       if (googleUser.picture) {
         try {
-          const avatarFromDb = (user as any).customer?.avatarUrl ?? null;
+          const profile = (user as any).customer || (user as any).driver || (user as any).admin;
+          const avatarFromDb = profile?.avatarUrl ?? null;
           if (avatarFromDb !== googleUser.picture) {
-            await this.prisma.customer.update({
-              where: { id: user!.id },
-              data: { avatarUrl: googleUser.picture } as any,
-            });
+            const updateData = { avatarUrl: googleUser.picture } as any;
+            if (user!.role === 'DRIVER') {
+              await this.prisma.driver.update({ where: { id: user!.id }, data: updateData });
+            } else if (user!.role === 'ADMIN') {
+              await this.prisma.admin.update({ where: { id: user!.id }, data: updateData });
+            } else {
+              await this.prisma.customer.update({ where: { id: user!.id }, data: updateData });
+            }
 
             // refresh the user object for return
             user = await this.prisma.user.findUnique({
@@ -552,7 +562,7 @@ export class AuthService {
             // Sync updated avatar to Supabase as well
             const userWithProfile = await this.prisma.user.findUnique({
               where: { id: user!.id },
-              include: { customer: true },
+              include: { customer: true, driver: true, admin: true },
             });
             await this.syncUserToSupabase(userWithProfile ?? user);
           }

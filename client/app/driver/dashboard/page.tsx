@@ -105,7 +105,7 @@ export default function DriverDashboardPage() {
                   <TableRow key={b.id}>
                     <TableCell>{b.id.slice(0, 8)}</TableCell>
                     <TableCell>{b.addressLine1}</TableCell>
-                    <TableCell>{b.actualWeightKg ?? "-"} kg</TableCell>
+                    <TableCell>{b.actualWeightKg ?? "0"} kg</TableCell>
                     <TableCell>
                       <StatusPill status={b.status} viewerRole="DRIVER" />
                     </TableCell>

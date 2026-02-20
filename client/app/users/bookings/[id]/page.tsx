@@ -201,7 +201,7 @@ export default function BookingDetailsPage() {
           <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
             <p className="text-xs text-(--muted)">Collected Details</p>
             <p className="text-sm font-semibold">
-              {booking?.actualWeightKg ?? "-"} kg
+              {booking?.actualWeightKg ?? "0"} kg
             </p>
             <p className="text-xs text-(--muted)">
               Amount: LKR {booking?.finalAmountLkr ?? booking?.estimatedMaxAmount}

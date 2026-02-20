@@ -17,19 +17,24 @@ export function Avatar({
   // If a src is provided but fails to load, fall back to initials placeholder
   if (src && !failed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={alt}
-        onError={() => setFailed(true)}
-        className={`${className} rounded-full object-cover p-1 border border-[color:var(--brand)] dark:border-[color:var(--brand)]`}
-      />
+      <div
+        className={`${className} rounded-full p-1 border border-(--brand) dark:border-(--brand) bg-(--card) overflow-hidden`}
+        aria-hidden={false}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          onError={() => setFailed(true)}
+          className="w-full h-full rounded-full object-cover object-center"
+        />
+      </div>
     );
   }
 
   return (
     <div
-      className={`${className} rounded-full bg-(--brand)/20 flex items-center justify-center text-xl font-semibold text-white border border-[color:var(--brand)] p-1`}
+      className={`${className} rounded-full bg-(--brand)/20 flex items-center justify-center text-xl font-semibold text-white border border-(--brand) p-1`}
       aria-hidden
     >
       {initials || "U"}

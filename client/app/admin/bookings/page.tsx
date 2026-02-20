@@ -274,7 +274,7 @@ export default function AdminBookingsPage() {
                     <TableCell>{booking.id.slice(0, 8)}</TableCell>
                     <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
                     <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
-                    <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                    <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
                     <TableCell>
                       LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
                     </TableCell>
