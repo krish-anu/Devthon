@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards, ServiceUnavailableException, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+  ServiceUnavailableException,
+  Param,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 import { PushService } from './push.service';
@@ -35,7 +44,10 @@ export class NotificationsController {
     if (!publicKey) {
       // Return a structured error payload so clients can detect this specific case.
       throw new (require('@nestjs/common').HttpException)(
-        { error: 'VAPID_NOT_CONFIGURED', message: 'VAPID public key not configured on server' },
+        {
+          error: 'VAPID_NOT_CONFIGURED',
+          message: 'VAPID public key not configured on server',
+        },
         503,
       );
     }

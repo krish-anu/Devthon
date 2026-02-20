@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot } from "lucide-react";
@@ -7,6 +7,11 @@ import remarkGfm from "remark-gfm";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/components/auth/auth-provider";
 import { getPageContext, PageContext } from "@/lib/page-context";
+import {
+  ASSISTANT_BOOKING_DRAFT_KEY,
+  AssistantBookingDraft,
+  isAssistantBookingDraft,
+} from "@/lib/assistant-booking-draft";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "t2c-assistant-chat";
@@ -20,14 +25,26 @@ const LANGUAGE_OPTIONS: Array<{
   label: string;
 }> = [
   { value: "EN", label: "English" },
-  { value: "SI", label: "Sinhala (සිංහල)" },
-  { value: "TA", label: "Tamil (தமிழ்)" },
+  { value: "SI", label: "සිංහල" },
+  { value: "TA", label: "தமிழ்" },
 ];
 
 const WELCOME_MESSAGES: Record<AssistantLanguage, string> = {
-  EN: "Hi 👋 I'm your Trash2Treasure AI assistant. How can I help you?",
-  SI: "ආයුබෝවන් 👋 මම ඔබගේ Trash2Treasure AI සහායකයා. මට ඔබට කොහොමද උදව් කරන්න පුළුවන්?",
-  TA: "வணக்கம் 👋 நான் உங்கள் Trash2Treasure AI உதவியாளர். நான் எப்படி உதவலாம்?",
+  EN: "Hi! I'm your Trash2Treasure AI assistant. How can I help you?",
+  SI: "ආයුබෝවන්! මම Trash2Treasure AI සහායකයා. ඔබට මම කෙසේ උදව් කළ හැකිද?",
+  TA: "வணக்கம்! நான் Trash2Treasure AI உதவியாளர். நான் உங்களுக்கு எப்படி உதவலாம்?",
+};
+
+const LOGIN_REQUIRED_MESSAGE_BY_LANGUAGE: Record<AssistantLanguage, string> = {
+  EN: "Please log in first to create a pickup booking. After login, I will ask the same questions as the booking form and prefill it for you.",
+  SI: "පිකප් බුකින් එකක් සෑදීමට පළමුව ලොගින් වන්න. ලොගින් වූ පසු, බුකින් ෆෝමයේම ප්‍රශ්න අසමින් පෙර පුරවන්නම්.",
+  TA: "பிக்கப் பதிவு உருவாக்க முதலில் உள்நுழையவும். உள்நுழைந்த பிறகு, பதிவு படிவத்தில் உள்ள அதே கேள்விகளை கேட்டு முன்பூர்த்தி செய்கிறேன்.",
+};
+
+const SIGN_IN_LABEL_BY_LANGUAGE: Record<AssistantLanguage, string> = {
+  EN: "Sign in",
+  SI: "පිවිසෙන්න",
+  TA: "உள்நுழையவும்",
 };
 
 const QUICK_COMMANDS_BY_LANGUAGE: Record<
@@ -35,6 +52,7 @@ const QUICK_COMMANDS_BY_LANGUAGE: Record<
   Array<{ label: string; prompt: string }>
 > = {
   EN: [
+    { label: "Book a pickup", prompt: "Create a new pickup booking" },
     { label: "My bookings", prompt: "Show my bookings" },
     { label: "My points", prompt: "Show my points and rewards summary" },
     { label: "Pending pickups", prompt: "Show my pending pickups" },
@@ -45,36 +63,22 @@ const QUICK_COMMANDS_BY_LANGUAGE: Record<
     },
   ],
   SI: [
+    { label: "නව පිකප් වෙන්කරන්න", prompt: "නව පිකප් බුකින් එකක් සාදන්න" },
     { label: "මගේ බුකින්", prompt: "මගේ බුකින් පෙන්වන්න" },
-    {
-      label: "මගේ පොයින්ට්ස්",
-      prompt: "මගේ පොයින්ට් සහ ත්‍යාග සාරාංශය පෙන්වන්න",
-    },
-    { label: "පොරොත්තුවේ එකතු කිරීම්", prompt: "මගේ අපේක්ෂිත එකතු කිරීම් පෙන්වන්න" },
-    { label: "ත්‍යාග ක්‍රමය", prompt: "ත්‍යාග ක්‍රමය වැඩ කරන හැටි විස්තර කරන්න" },
+    { label: "මගේ ලකුණු", prompt: "මගේ ලකුණු සහ ත්‍යාග සාරාංශය පෙන්වන්න" },
+    { label: "අපේක්ෂිත පිකප්", prompt: "මගේ අපේක්ෂිත පිකප් පෙන්වන්න" },
+    { label: "ත්‍යාග ක්‍රමය", prompt: "ත්‍යාග ක්‍රමය ක්‍රියාකරන ආකාරය පැහැදිලි කරන්න" },
     { label: "අපද්‍රව්‍ය සහ මිල", prompt: "අපද්‍රව්‍ය වර්ග සහ මිල ගණන් පෙන්වන්න" },
   ],
   TA: [
+    { label: "பிக்கப் பதிவு", prompt: "புதிய பிக்கப் முன்பதிவு உருவாக்கு" },
     { label: "என் முன்பதிவுகள்", prompt: "என் முன்பதிவுகளை காட்டு" },
-    {
-      label: "என் பாயிண்ட்ஸ்",
-      prompt: "என் பாயிண்ட்ஸ் மற்றும் பரிசு சுருக்கத்தை காட்டு",
-    },
-    {
-      label: "நிலுவை சேகரிப்புகள்",
-      prompt: "என் நிலுவையில் உள்ள சேகரிப்புகளை காட்டு",
-    },
-    {
-      label: "பரிசு விதிகள்",
-      prompt: "பரிசு முறை எப்படி வேலை செய்கிறது என்று விளக்கு",
-    },
-    {
-      label: "கழிவு வகைகள் & விலை",
-      prompt: "கழிவு வகைகள் மற்றும் விலை விகிதங்களை காட்டு",
-    },
+    { label: "என் புள்ளிகள்", prompt: "என் புள்ளிகள் மற்றும் பரிசு சுருக்கத்தை காட்டு" },
+    { label: "நிலுவை பிக்கப்", prompt: "என் நிலுவையில் உள்ள பிக்கப்புகளை காட்டு" },
+    { label: "பரிசு எப்படி?", prompt: "பரிசு திட்டம் எப்படி செயல்படுகிறது என்பதை விளக்கு" },
+    { label: "கழிவு & விலை", prompt: "கழிவு வகைகள் மற்றும் விலை விவரங்களை காட்டு" },
   ],
 };
-
 const WELCOME_MESSAGE_VALUES = new Set(Object.values(WELCOME_MESSAGES));
 const BLOCKED_PROTOCOLS = new Set([
   "chrome-extension:",
@@ -91,6 +95,13 @@ type ChatApiResponse = {
   reply: string;
   mode?: "knowledge" | "data" | "mixed";
   responseLanguage?: AssistantLanguage;
+  suggestedActions?: Array<{ label: string; href: string }>;
+  bookingDraft?: AssistantBookingDraft;
+};
+
+type ChatSuggestedAction = {
+  label: string;
+  href: string;
 };
 
 type ChatMessage = {
@@ -179,9 +190,42 @@ function stripSourcesFooter(content: string) {
   return content.replace(/\n+Sources:\s*[\s\S]*$/i, "").trim();
 }
 
+function hasCorruptedLanguageText(content: string) {
+  return /\?{3,}/.test(content) || /(?:Ã|â€|à¶|à®|à¯|à·)/.test(content);
+}
+
 function isRelativeUrl(value: string) {
   if (value.startsWith("//")) return false;
   return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value);
+}
+
+function isSafeInternalHref(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/")) return false;
+  if (trimmed.startsWith("//")) return false;
+  return true;
+}
+
+function isBookingCreationIntent(text: string) {
+  const q = text.toLowerCase();
+  const isHowToQuestion =
+    /\bhow to\b/.test(q) || /\bhow do i\b/.test(q) || /\bhow can i\b/.test(q);
+  if (isHowToQuestion) return false;
+
+  const hasCreation =
+    /\b(create|new|book|schedule|arrange|request)\b/.test(q) &&
+    /\b(pickup|pick up|collection|collect)\b/.test(q);
+  const direct =
+    /\bbook\s+(a\s+)?pickup\b/.test(q) ||
+    /\bcreate booking\b/.test(q) ||
+    /\bnew booking\b/.test(q) ||
+    /\bpick\s*up\b/.test(q);
+  const lookupOnly =
+    /\b(my bookings|booking history|booking status|pending pickups|show bookings|list bookings)\b/.test(
+      q,
+    );
+
+  return !lookupOnly && (hasCreation || direct);
 }
 
 function toSafeRequestUrl(rawUrl: string) {
@@ -228,6 +272,7 @@ export default function AssistantChatbox() {
   const [input, setInput] = useState("");
   const [languagePreference, setLanguagePreference] =
     useState<AssistantLanguage>("EN");
+  const [suggestedActions, setSuggestedActions] = useState<ChatSuggestedAction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
   const sessionIdRef = useRef<string>("");
@@ -256,7 +301,16 @@ export default function AssistantChatbox() {
       try {
         const parsed = JSON.parse(stored) as ChatMessage[];
         if (Array.isArray(parsed)) {
-          setMessages(parsed.slice(-MAX_MESSAGES));
+          const hasCorruptedCache = parsed.some(
+            (message) =>
+              typeof message?.content === "string" &&
+              hasCorruptedLanguageText(message.content),
+          );
+          if (hasCorruptedCache) {
+            window.sessionStorage.removeItem(STORAGE_KEY);
+          } else {
+            setMessages(parsed.slice(-MAX_MESSAGES));
+          }
         }
       } catch {
         // ignore malformed storage
@@ -406,6 +460,23 @@ export default function AssistantChatbox() {
     setMessages((prev) => [...prev, userMessage].slice(-MAX_MESSAGES));
     setInput("");
     setIsLoading(true);
+    setSuggestedActions([]);
+
+    if (isBookingCreationIntent(outgoing) && !user) {
+      const assistantMessage: ChatMessage = {
+        id: createId(),
+        role: "assistant",
+        content: LOGIN_REQUIRED_MESSAGE_BY_LANGUAGE[languagePreference],
+        createdAt: Date.now(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage].slice(-MAX_MESSAGES));
+      setSuggestedActions([
+        { label: SIGN_IN_LABEL_BY_LANGUAGE[languagePreference], href: "/login" },
+      ]);
+      setIsLoading(false);
+      return;
+    }
 
     const pageContext = getSafePageContext();
     pageContextRef.current = pageContext;
@@ -432,6 +503,28 @@ export default function AssistantChatbox() {
           preferredLanguage: languagePreference,
         }),
       });
+
+      const safeActions = (response.suggestedActions ?? [])
+        .filter(
+          (action): action is ChatSuggestedAction =>
+            Boolean(action?.label) &&
+            typeof action.label === "string" &&
+            typeof action.href === "string" &&
+            isSafeInternalHref(action.href),
+        )
+        .slice(0, 4);
+      setSuggestedActions(safeActions);
+
+      if (
+        typeof window !== "undefined" &&
+        response.bookingDraft &&
+        isAssistantBookingDraft(response.bookingDraft)
+      ) {
+        window.sessionStorage.setItem(
+          ASSISTANT_BOOKING_DRAFT_KEY,
+          JSON.stringify(response.bookingDraft),
+        );
+      }
 
       const assistantMessage: ChatMessage = {
         id: createId(),
@@ -595,6 +688,20 @@ export default function AssistantChatbox() {
                 </button>
               ))}
             </div>
+            {suggestedActions.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {suggestedActions.map((action) => (
+                  <a
+                    key={`${action.label}-${action.href}`}
+                    href={action.href}
+                    className="rounded-full border border-[color:var(--brand)] bg-[color:var(--brand)]/10 px-2 py-1 text-[11px] font-medium text-[color:var(--foreground)] transition hover:bg-[color:var(--brand)]/20"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {action.label}
+                  </a>
+                ))}
+              </div>
+            )}
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -648,3 +755,4 @@ export default function AssistantChatbox() {
     </div>
   );
 }
+

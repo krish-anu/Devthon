@@ -10,6 +10,7 @@ import {
   canAdminCancel,
   canAdminComplete,
   canAdminRefund,
+  isBookingCompleted,
   normalizeBookingStatus,
 } from "@/lib/booking-status";
 import { BookingStatus } from "@/lib/types";
@@ -263,6 +264,7 @@ export default function AdminBookingsPage() {
                 const canCompleteBooking = canAdminComplete(booking.status);
                 const canCancelBooking = canAdminCancel(booking.status);
                 const canRefundBooking = canAdminRefund(booking.status);
+                const isCompleted = isBookingCompleted(booking.status);
                 const hasCollectionData =
                   booking.actualWeightKg !== null &&
                   booking.actualWeightKg !== undefined &&
@@ -274,9 +276,16 @@ export default function AdminBookingsPage() {
                     <TableCell>{booking.id.slice(0, 8)}</TableCell>
                     <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
                     <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
-                    <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
                     <TableCell>
-                      LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                      {isCompleted && typeof booking.actualWeightKg === "number"
+                        ? `${booking.actualWeightKg} kg`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      LKR{" "}
+                      {isCompleted && typeof booking.finalAmountLkr === "number"
+                        ? booking.finalAmountLkr.toFixed(2)
+                        : "0.00"}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-2">

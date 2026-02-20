@@ -11,6 +11,23 @@ export type SuggestedAction = {
   href: string;
 };
 
+export type BookingAssistantDraft = {
+  wasteCategoryId?: string;
+  wasteCategoryName?: string;
+  quantityKg?: number;
+  weightRangeLabel?: string;
+  addressLine1?: string;
+  city?: string;
+  postalCode?: string;
+  phone?: string;
+  specialInstructions?: string;
+  scheduledDate?: string;
+  scheduledTimeSlot?: string;
+  lat?: number;
+  lng?: number;
+  locationPicked?: boolean;
+};
+
 export type AuthContext = {
   isAuthenticated: boolean;
   userId: string | null;

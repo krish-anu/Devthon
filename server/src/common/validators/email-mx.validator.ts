@@ -1,4 +1,10 @@
-import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 import { resolveMx, resolve4, resolve6 } from 'dns/promises';
 
 const cache = new Map<string, { expires: number; ok: boolean }>();
@@ -68,8 +74,10 @@ export class IsEmailDomainDeliverableConstraint implements ValidatorConstraintIn
   }
 }
 
-export function IsEmailDomainDeliverable(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+export function IsEmailDomainDeliverable(
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName,

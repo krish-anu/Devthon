@@ -38,6 +38,10 @@ export function normalizeBookingStatus(status: BookingStatus): CanonicalBookingS
   return LEGACY_STATUS_MAP[status] ?? (status as CanonicalBookingStatus);
 }
 
+export function isBookingCompleted(status: BookingStatus) {
+  return normalizeBookingStatus(status) === "COMPLETED";
+}
+
 export function getBookingStatusLabel(
   status: BookingStatus,
   viewerRole?: UserRole,

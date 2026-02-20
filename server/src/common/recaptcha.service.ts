@@ -14,7 +14,9 @@ export class RecaptchaService {
   async verify(token: string | undefined | null, action?: string) {
     const enabled = this.configService.get<string>('RECAPTCHA_ENABLED');
     if (enabled && enabled.toLowerCase() === 'false') {
-      this.logger.warn('RECAPTCHA disabled via RECAPTCHA_ENABLED=false — skipping verification');
+      this.logger.warn(
+        'RECAPTCHA disabled via RECAPTCHA_ENABLED=false — skipping verification',
+      );
       return true;
     }
 
@@ -50,7 +52,8 @@ export class RecaptchaService {
       const errorCodes = Array.isArray(json['error-codes'])
         ? json['error-codes']
         : [];
-      const nodeEnv = this.configService.get<string>('NODE_ENV') ?? 'development';
+      const nodeEnv =
+        this.configService.get<string>('NODE_ENV') ?? 'development';
       const allowBrowserErrorRaw = this.configService.get<string>(
         'RECAPTCHA_ALLOW_BROWSER_ERROR',
       );
@@ -61,7 +64,11 @@ export class RecaptchaService {
 
       // Google may return browser-error for transient client/network failures.
       // In non-production environments we allow this by default to avoid blocking local development.
-      if (!success && errorCodes.includes('browser-error') && allowBrowserError) {
+      if (
+        !success &&
+        errorCodes.includes('browser-error') &&
+        allowBrowserError
+      ) {
         this.logger.warn(
           'reCAPTCHA verify returned browser-error; allowing via RECAPTCHA_ALLOW_BROWSER_ERROR policy',
           { nodeEnv, action, errorCodes, allowBrowserError },
@@ -86,7 +93,7 @@ export class RecaptchaService {
 
       return passed;
     } catch (err) {
-      this.logger.warn('reCAPTCHA verification error', err as any);
+      this.logger.warn('reCAPTCHA verification error', err);
       return false;
     }
   }

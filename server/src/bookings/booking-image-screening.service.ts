@@ -52,8 +52,8 @@ export class BookingImageScreeningService {
       uniqueUrls.map(async (imageUrl) => this.screenImage(imageUrl, options)),
     );
 
-    return results.filter(
-      (item): item is BookingImageScreeningResult => Boolean(item),
+    return results.filter((item): item is BookingImageScreeningResult =>
+      Boolean(item),
     );
   }
 
@@ -263,8 +263,7 @@ export class BookingImageScreeningService {
       data?.candidates?.[0]?.content?.parts
         ?.map((part: any) => part?.text)
         .filter(Boolean)
-        .join('') ||
-      '';
+        .join('') || '';
 
     if (!text.trim()) {
       throw new Error('Gemini returned an empty payload.');
@@ -290,9 +289,13 @@ export class BookingImageScreeningService {
       payload.detectedObject.trim().length > 0
         ? payload.detectedObject.trim()
         : 'unknown';
-    const reason = typeof payload.reason === 'string' ? payload.reason.trim() : '';
+    const reason =
+      typeof payload.reason === 'string' ? payload.reason.trim() : '';
 
-    const explicitNonWaste = this.hasExplicitNonWasteSignal(detectedObject, reason);
+    const explicitNonWaste = this.hasExplicitNonWasteSignal(
+      detectedObject,
+      reason,
+    );
     let verdict = this.parseVerdict(payload.verdict);
 
     if (!verdict) {
@@ -411,9 +414,14 @@ export class BookingImageScreeningService {
         return true;
       }
       if (
-        ['no', 'n', 'not_waste', 'non_waste', 'non-waste', 'irrelevant'].includes(
-          normalized,
-        )
+        [
+          'no',
+          'n',
+          'not_waste',
+          'non_waste',
+          'non-waste',
+          'irrelevant',
+        ].includes(normalized)
       ) {
         return false;
       }

@@ -14,12 +14,14 @@ export class WasteTypesService {
     });
 
     return categories.map((category) => {
-      const activePricing = category.pricing?.isActive ? category.pricing : null;
+      const activePricing = category.pricing?.isActive
+        ? category.pricing
+        : null;
       const minPriceLkrPerKg = activePricing?.minPriceLkrPerKg ?? null;
       const maxPriceLkrPerKg = activePricing?.maxPriceLkrPerKg ?? null;
       const ratePerKg =
         minPriceLkrPerKg !== null && maxPriceLkrPerKg !== null
-          ? Math.round((((minPriceLkrPerKg + maxPriceLkrPerKg) / 2) * 100)) / 100
+          ? Math.round(((minPriceLkrPerKg + maxPriceLkrPerKg) / 2) * 100) / 100
           : null;
 
       return {

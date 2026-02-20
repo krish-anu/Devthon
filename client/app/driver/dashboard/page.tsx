@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { normalizeBookingStatus } from "@/lib/booking-status";
+import { isBookingCompleted, normalizeBookingStatus } from "@/lib/booking-status";
 import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/shared/kpi-card";
 import Loading from "@/components/shared/Loading";
@@ -105,7 +105,12 @@ export default function DriverDashboardPage() {
                   <TableRow key={b.id}>
                     <TableCell>{b.id.slice(0, 8)}</TableCell>
                     <TableCell>{b.addressLine1}</TableCell>
-                    <TableCell>{b.actualWeightKg ?? "0"} kg</TableCell>
+                    <TableCell>
+                      {isBookingCompleted(b.status) &&
+                      typeof b.actualWeightKg === "number"
+                        ? `${b.actualWeightKg} kg`
+                        : "-"}
+                    </TableCell>
                     <TableCell>
                       <StatusPill status={b.status} viewerRole="DRIVER" />
                     </TableCell>

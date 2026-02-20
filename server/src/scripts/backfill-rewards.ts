@@ -17,7 +17,7 @@ async function main() {
   try {
     const rewardsService = app.get(RewardsService);
     const result = await rewardsService.backfillMissingPoints(limit);
-    // eslint-disable-next-line no-console
+
     console.log('Rewards backfill result:', result);
   } finally {
     await app.close();
@@ -25,7 +25,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  // eslint-disable-next-line no-console
   console.error('Rewards backfill failed:', error);
   process.exit(1);
 });

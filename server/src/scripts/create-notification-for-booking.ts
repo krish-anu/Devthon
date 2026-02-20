@@ -17,7 +17,9 @@ async function main() {
   const params = parseArgs();
   const bookingId = params.bookingId;
   if (!bookingId) {
-    console.error('Usage: ts-node src/scripts/create-notification-for-booking.ts --bookingId=<id> [--title=...] [--message=...]');
+    console.error(
+      'Usage: ts-node src/scripts/create-notification-for-booking.ts --bookingId=<id> [--title=...] [--message=...]',
+    );
     process.exit(2);
   }
 
@@ -28,7 +30,9 @@ async function main() {
   }
 
   const title = params.title ?? 'Booking completed (manual) 🎉';
-  const message = params.message ?? `Your pickup #${booking.id.slice(0, 8)} is complete (manual).`;
+  const message =
+    params.message ??
+    `Your pickup #${booking.id.slice(0, 8)} is complete (manual).`;
 
   const created = await prisma.notification.create({
     data: {

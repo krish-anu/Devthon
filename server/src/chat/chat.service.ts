@@ -1,4 +1,3 @@
-
 import {
   BadRequestException,
   HttpException,
@@ -16,6 +15,7 @@ import { ChatToolsService } from './chat.tools.service';
 import { ChatRequestDto, PageContextDto } from './dto/chat.dto';
 import {
   AuthContext,
+  BookingAssistantDraft,
   ChatLanguage,
   ChatLanguagePreference,
   ChatMode,
@@ -42,6 +42,50 @@ const CHAT_LANGUAGE_PREFERENCES = new Set<ChatLanguagePreference>([
 const CHAT_LANGUAGE_CODES = new Set<ChatLanguage>(['EN', 'SI', 'TA']);
 
 const PENDING_STATUSES = new Set(['CREATED', 'ASSIGNED', 'IN_PROGRESS']);
+const BOOKING_FORM_ROUTE = '/users/bookings/new';
+const BOOKING_TIME_SLOTS = [
+  '8:00 AM - 10:00 AM',
+  '10:00 AM - 12:00 PM',
+  '1:00 PM - 3:00 PM',
+  '3:00 PM - 5:00 PM',
+  '6:00 PM - 8:00 PM',
+] as const;
+const PAPER_WEIGHT_RANGES = [
+  { label: '1-5 kg', min: 1, max: 5 },
+  { label: '5-10 kg', min: 5, max: 10 },
+  { label: '10-20 kg', min: 10, max: 20 },
+  { label: '20-50 kg', min: 20, max: 50 },
+  { label: '50+ kg', min: 50, max: 80 },
+] as const;
+
+type BookingDraftField =
+  | 'wasteCategory'
+  | 'quantityKg'
+  | 'weightRangeLabel'
+  | 'addressLine1'
+  | 'city'
+  | 'postalCode'
+  | 'phone'
+  | 'scheduledDate'
+  | 'scheduledTimeSlot'
+  | 'specialInstructions';
+
+type BookingAssistantState = {
+  active: boolean;
+  draft: BookingAssistantDraft;
+  awaitingField: BookingDraftField | null;
+  askedOptionalSpecialInstructions: boolean;
+  readyToPrefill: boolean;
+};
+
+type BookingAssistantTurnResult = {
+  reply: string;
+  state: BookingAssistantState;
+  bookingDraft?: BookingAssistantDraft;
+  suggestedActions: SuggestedAction[];
+  sources: string[];
+  calledTools: string[];
+};
 
 type ToolContext = {
   blocks: string[];
@@ -53,13 +97,21 @@ type ToolContext = {
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
-  private readonly buckets = new Map<string, { count: number; resetAt: number }>();
+  private readonly buckets = new Map<
+    string,
+    { count: number; resetAt: number }
+  >();
   private readonly windowMs = 60_000;
   private readonly maxRequests = 12;
   private resolvedModel: string | null = null;
   private readonly sessionMemory = new Map<
     string,
-    { history: StoredChatMessage[]; language: ChatLanguage; updatedAt: number }
+    {
+      history: StoredChatMessage[];
+      language: ChatLanguage;
+      bookingAssistant?: BookingAssistantState;
+      updatedAt: number;
+    }
   >();
 
   constructor(
@@ -91,7 +143,11 @@ export class ChatService {
     const pageContext = this.normalizeContext(payload.pageContext);
 
     this.cleanupExpiredSessions();
-    const sessionKey = this.resolveSessionKey(payload.sessionId, auth, clientIp);
+    const sessionKey = this.resolveSessionKey(
+      payload.sessionId,
+      auth,
+      clientIp,
+    );
     const existingSession = this.sessionMemory.get(sessionKey);
     const memoryHistory = this.getSessionHistory(sessionKey, payload, question);
     const responseLanguage = this.resolveResponseLanguage(
@@ -101,14 +157,46 @@ export class ChatService {
       existingSession?.language,
     );
 
+    const bookingTurn = await this.handleBookingAssistantTurn({
+      question,
+      auth,
+      state: existingSession?.bookingAssistant,
+      responseLanguage,
+    });
+
+    if (bookingTurn) {
+      const reply = bookingTurn.reply.trim();
+      const nextHistory = [
+        ...memoryHistory,
+        { role: 'user' as const, content: question },
+        { role: 'assistant' as const, content: reply },
+      ].slice(-MAX_SESSION_MESSAGES);
+
+      this.sessionMemory.set(sessionKey, {
+        history: nextHistory,
+        language: responseLanguage,
+        bookingAssistant: bookingTurn.state,
+        updatedAt: Date.now(),
+      });
+
+      return {
+        reply,
+        mode: 'data' as ChatMode,
+        sources: bookingTurn.sources,
+        suggestedActions: bookingTurn.suggestedActions,
+        toolCalls: bookingTurn.calledTools,
+        responseLanguage,
+        bookingDraft: bookingTurn.bookingDraft,
+      };
+    }
+
     const knowledgeChunks = await this.knowledgeService.search(
       question,
       KNOWLEDGE_TOP_K,
     );
 
-    const dynamicKnowledgeContext = await this.collectDynamicKnowledgeContext(
-      question,
-    );
+    const dynamicKnowledgeContext =
+      await this.collectDynamicKnowledgeContext(question);
 
     const dataContext = await this.collectDataToolContext(question, auth, mode);
 
@@ -159,6 +247,7 @@ export class ChatService {
     this.sessionMemory.set(sessionKey, {
       history: nextHistory,
       language: responseLanguage,
+      bookingAssistant: existingSession?.bookingAssistant,
       updatedAt: Date.now(),
     });
 
@@ -325,6 +414,1095 @@ export class ChatService {
     if (language === 'SI') return 'Sinhala';
     if (language === 'TA') return 'Tamil';
     return 'English';
+  }
+
+  private createEmptyBookingAssistantState(): BookingAssistantState {
+    return {
+      active: true,
+      draft: {},
+      awaitingField: null,
+      askedOptionalSpecialInstructions: false,
+      readyToPrefill: false,
+    };
+  }
+
+  private async handleBookingAssistantTurn(params: {
+    question: string;
+    auth: AuthContext;
+    state?: BookingAssistantState;
+    responseLanguage: ChatLanguage;
+  }): Promise<BookingAssistantTurnResult | null> {
+    const question = params.question.trim();
+    const q = question.toLowerCase();
+    const locale = this.getBookingLocalePack(params.responseLanguage);
+    const hasActiveFlow = Boolean(params.state?.active);
+    const shouldStart = this.isBookingCreationIntent(q);
+
+    if (!hasActiveFlow && !shouldStart) {
+      return null;
+    }
+
+    if (hasActiveFlow && this.isBookingAssistantCancelIntent(q)) {
+      return {
+        reply: locale.cancelledReply,
+        state: {
+          active: false,
+          draft: {},
+          awaitingField: null,
+          askedOptionalSpecialInstructions: false,
+          readyToPrefill: false,
+        },
+        suggestedActions: [
+          { label: locale.actionGoToBookingHistory, href: '/users/bookings' },
+        ],
+        sources: ['assistant:booking-form-flow'],
+        calledTools: [],
+      };
+    }
+
+    if (!params.auth.isAuthenticated || !params.auth.userId) {
+      return {
+        reply: locale.signInFirstReply,
+        state: {
+          active: false,
+          draft: {},
+          awaitingField: null,
+          askedOptionalSpecialInstructions: false,
+          readyToPrefill: false,
+        },
+        suggestedActions: [{ label: locale.actionSignIn, href: '/login' }],
+        sources: ['assistant:booking-form-flow'],
+        calledTools: [],
+      };
+    }
+
+    if (params.auth.role !== Role.CUSTOMER) {
+      return {
+        reply: locale.customerOnlyReply,
+        state: {
+          active: false,
+          draft: {},
+          awaitingField: null,
+          askedOptionalSpecialInstructions: false,
+          readyToPrefill: false,
+        },
+        suggestedActions: [
+          { label: locale.actionGoToBookingHistory, href: '/users/bookings' },
+        ],
+        sources: ['assistant:booking-form-flow'],
+        calledTools: [],
+      };
+    }
+
+    let state = params.state?.active
+      ? {
+          ...params.state,
+          draft: { ...params.state.draft },
+        }
+      : this.createEmptyBookingAssistantState();
+
+    if (this.isBookingAssistantResetIntent(q)) {
+      state = this.createEmptyBookingAssistantState();
+    }
+
+    const sources = ['assistant:booking-form-flow'];
+    const calledTools: string[] = [];
+
+    let wasteTypes: Array<{ id: string; name: string; slug?: string | null }> =
+      [];
+    try {
+      const rows = await this.chatTools.getWasteTypesAndRates();
+      wasteTypes = (rows ?? []).map((row: any) => ({
+        id: String(row.id),
+        name: String(row.name),
+        slug:
+          typeof row.slug === 'string' && row.slug.trim().length > 0
+            ? row.slug
+            : null,
+      }));
+      calledTools.push('getWasteTypesAndRates');
+      sources.push('db:waste_types_and_rates');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.debug(
+        `Booking assistant could not load waste types from DB: ${message}`,
+      );
+    }
+
+    const extraction = this.extractBookingDraftFromMessage({
+      question,
+      awaitingField: state.awaitingField,
+      currentDraft: state.draft,
+      wasteTypes,
+    });
+    state.draft = {
+      ...state.draft,
+      ...extraction.patch,
+    };
+    state.draft = this.applyBookingQuantityDefaults(state.draft);
+
+    const missingFields = this.getMissingBookingFields(state.draft);
+
+    if (
+      missingFields.length === 0 &&
+      !state.askedOptionalSpecialInstructions &&
+      state.awaitingField !== 'specialInstructions'
+    ) {
+      state.awaitingField = 'specialInstructions';
+      state.askedOptionalSpecialInstructions = true;
+
+      const reply = [locale.allRequiredFieldsCaptured, locale.specialInstructionsPrompt].join(
+        '\n\n',
+      );
+
+      return {
+        reply,
+        state,
+        suggestedActions: [],
+        sources,
+        calledTools,
+      };
+    }
+
+    if (
+      state.awaitingField === 'specialInstructions' &&
+      state.askedOptionalSpecialInstructions &&
+      missingFields.length === 0
+    ) {
+      if (!state.draft.specialInstructions) {
+        const normalized = question.trim();
+        if (normalized && !this.isSkipSpecialInstructionsIntent(normalized)) {
+          state.draft.specialInstructions = normalized;
+        } else {
+          state.draft.specialInstructions = '';
+        }
+      }
+    }
+
+    const finalMissing = this.getMissingBookingFields(state.draft);
+
+    if (finalMissing.length > 0) {
+      const nextField = finalMissing[0];
+      state.awaitingField = nextField;
+      state.readyToPrefill = false;
+      state.active = true;
+
+      const prompt = this.getBookingPromptForField(
+        nextField,
+        state.draft,
+        wasteTypes,
+        params.responseLanguage,
+      );
+      const captured = this.formatBookingCapturedFields(
+        state.draft,
+        params.responseLanguage,
+      );
+      const intro = captured
+        ? `${locale.capturedSoFarLabel}\n${captured}`
+        : locale.collectStepByStepIntro;
+
+      return {
+        reply: `${intro}\n\n${prompt}`,
+        state,
+        suggestedActions: [
+          { label: locale.actionOpenBookingForm, href: BOOKING_FORM_ROUTE },
+        ],
+        sources,
+        calledTools,
+      };
+    }
+
+    state.awaitingField = null;
+    state.readyToPrefill = true;
+    state.active = false;
+
+    const bookingDraft = this.normalizeBookingDraftForPrefill(state.draft);
+    const summary = this.formatBookingDraftSummary(
+      bookingDraft,
+      params.responseLanguage,
+    );
+
+    const reply = [
+      locale.prefillReadyTitle,
+      locale.reviewSummaryLabel,
+      summary,
+      '',
+      locale.beforeConfirmTitle,
+      `- ${locale.beforeConfirmSelectLocation}`,
+      `- ${locale.beforeConfirmAcceptTerms}`,
+    ].join('\n');
+
+    return {
+      reply,
+      state,
+      bookingDraft,
+      suggestedActions: [
+        { label: locale.actionOpenPrefilledBookingForm, href: BOOKING_FORM_ROUTE },
+      ],
+      sources,
+      calledTools,
+    };
+  }
+
+  private isBookingCreationIntent(q: string) {
+    const isHowToQuestion =
+      /\bhow to\b/.test(q) || /\bhow do i\b/.test(q) || /\bhow can i\b/.test(q);
+    if (isHowToQuestion) return false;
+
+    const hasCreationSignal =
+      /\b(create|new|book|schedule|arrange|request)\b/.test(q) &&
+      /\b(pickup|pick up|collection|collect)\b/.test(q);
+
+    const directPickupSignal =
+      /\bpick\s*up\b/.test(q) ||
+      /\bbook\s+(a\s+)?pickup\b/.test(q) ||
+      /\bnew booking\b/.test(q) ||
+      /\bcreate booking\b/.test(q);
+
+    const isLikelyLookup =
+      /\b(my bookings|booking history|booking status|pending pickups|show bookings|list bookings)\b/.test(
+        q,
+      );
+
+    if (isLikelyLookup) return false;
+    return hasCreationSignal || directPickupSignal;
+  }
+
+  private isBookingAssistantCancelIntent(q: string) {
+    return /\b(cancel|stop|exit|never mind|nevermind)\b/.test(q);
+  }
+
+  private isBookingAssistantResetIntent(q: string) {
+    return /\b(start over|reset|clear)\b/.test(q);
+  }
+
+  private isSkipSpecialInstructionsIntent(value: string) {
+    return /\b(none|no|skip|nope|nothing)\b/i.test(value.trim());
+  }
+
+  private extractBookingDraftFromMessage(params: {
+    question: string;
+    awaitingField: BookingDraftField | null;
+    currentDraft: BookingAssistantDraft;
+    wasteTypes: Array<{ id: string; name: string; slug?: string | null }>;
+  }) {
+    const patch: Partial<BookingAssistantDraft> = {};
+    const question = params.question.trim();
+
+    const wasteMatch = this.matchWasteCategoryFromText(
+      question,
+      params.wasteTypes,
+    );
+    if (wasteMatch) {
+      patch.wasteCategoryId = wasteMatch.id;
+      patch.wasteCategoryName = wasteMatch.name;
+    }
+
+    const nextDraft = { ...params.currentDraft, ...patch };
+    const paperCategory = this.isPaperCategoryName(nextDraft.wasteCategoryName);
+
+    if (paperCategory) {
+      const weightRange = this.parseWeightRangeFromText(question);
+      if (weightRange) {
+        patch.weightRangeLabel = weightRange.label;
+        patch.quantityKg = weightRange.min;
+      } else {
+        const qty = this.parseQuantityKgFromText(question);
+        if (qty !== null) {
+          const inferredRange = this.getWeightRangeForQuantity(qty);
+          patch.weightRangeLabel = inferredRange.label;
+          patch.quantityKg = inferredRange.min;
+        }
+      }
+    } else {
+      const qty = this.parseQuantityKgFromText(question);
+      if (qty !== null) {
+        patch.quantityKg = qty;
+      }
+    }
+
+    const parsedDate = this.parseScheduledDateFromText(question);
+    if (parsedDate) {
+      patch.scheduledDate = parsedDate;
+    }
+
+    const parsedSlot = this.parseTimeSlotFromText(question);
+    if (parsedSlot) {
+      patch.scheduledTimeSlot = parsedSlot;
+    }
+
+    const shouldParsePostalCode = this.shouldParsePostalCodeFromMessage(
+      question,
+      params.awaitingField,
+    );
+    if (shouldParsePostalCode) {
+      const parsedPostal = this.parsePostalCodeFromText(question);
+      if (parsedPostal) {
+        patch.postalCode = parsedPostal;
+      }
+    }
+
+    const parsedPhone = this.parsePhoneFromText(question);
+    if (parsedPhone) {
+      patch.phone = parsedPhone;
+    }
+
+    const parsedCity = this.parseCityFromText(question);
+    if (parsedCity) {
+      patch.city = parsedCity;
+    }
+
+    if (params.awaitingField === 'addressLine1') {
+      const address = this.extractAddressLineFromText(question);
+      if (address) {
+        patch.addressLine1 = address;
+      }
+    }
+
+    if (params.awaitingField === 'city' && !patch.city) {
+      const city = this.cleanSingleLine(question, 80);
+      if (city.length >= 2) {
+        patch.city = city;
+      }
+    }
+
+    if (params.awaitingField === 'postalCode' && !patch.postalCode) {
+      const postal = question.replace(/\D/g, '');
+      if (postal.length >= 4 && postal.length <= 6) {
+        patch.postalCode = postal;
+      }
+    }
+
+    if (params.awaitingField === 'phone' && !patch.phone) {
+      const phone = this.normalizePhoneInput(question);
+      if (phone) {
+        patch.phone = phone;
+      }
+    }
+
+    if (params.awaitingField === 'specialInstructions') {
+      if (this.isSkipSpecialInstructionsIntent(question)) {
+        patch.specialInstructions = '';
+      } else {
+        patch.specialInstructions = this.cleanSingleLine(question, 400);
+      }
+    }
+
+    if (params.awaitingField === 'scheduledDate' && !patch.scheduledDate) {
+      const fallbackDate = this.parseDateFromNumericInput(question);
+      if (fallbackDate) {
+        patch.scheduledDate = fallbackDate;
+      }
+    }
+
+    if (
+      params.awaitingField === 'scheduledTimeSlot' &&
+      !patch.scheduledTimeSlot
+    ) {
+      const fallbackSlot = this.parseTimeSlotFromText(question);
+      if (fallbackSlot) {
+        patch.scheduledTimeSlot = fallbackSlot;
+      }
+    }
+
+    if (params.awaitingField === 'quantityKg' && !patch.quantityKg) {
+      const maybeNumber = Number.parseFloat(question);
+      if (Number.isFinite(maybeNumber) && maybeNumber > 0) {
+        patch.quantityKg = Math.max(0.1, Math.min(500, maybeNumber));
+      }
+    }
+
+    return { patch };
+  }
+
+  private getMissingBookingFields(draft: BookingAssistantDraft) {
+    const missing: BookingDraftField[] = [];
+
+    if (!draft.wasteCategoryId) {
+      missing.push('wasteCategory');
+    }
+
+    if (!draft.addressLine1) missing.push('addressLine1');
+    if (!draft.city) missing.push('city');
+    if (!draft.postalCode) missing.push('postalCode');
+    if (!draft.phone) missing.push('phone');
+    if (!draft.scheduledDate) missing.push('scheduledDate');
+    if (
+      !draft.scheduledTimeSlot ||
+      !BOOKING_TIME_SLOTS.includes(
+        draft.scheduledTimeSlot as (typeof BOOKING_TIME_SLOTS)[number],
+      )
+    ) {
+      missing.push('scheduledTimeSlot');
+    }
+
+    return missing;
+  }
+
+  private getBookingLocalePack(language: ChatLanguage) {
+    const slotOptions = BOOKING_TIME_SLOTS.map((slot) => `- ${slot}`).join('\n');
+
+    if (language === 'TA') {
+      return {
+        cancelledReply:
+          'பதிவு அமைப்பு ரத்து செய்யப்பட்டது. மீண்டும் தொடங்க "புதிய பதிவு உருவாக்கு" என்று சொல்லுங்கள்.',
+        signInFirstReply:
+          'பிக்கப் பதிவு செய்ய முதலில் உள்நுழையவும். உள்நுழைந்த பிறகு பதிவு உருவாக்க சொல்லுங்கள்; நான் படிப்படியாக விவரங்களை கேட்கிறேன்.',
+        customerOnlyReply:
+          'உதவியாளர் மூலம் பதிவு உருவாக்குதல் CUSTOMER கணக்குகளுக்கு மட்டுமே கிடைக்கும். தயவுசெய்து customer கணக்கைப் பயன்படுத்தவும்.',
+        allRequiredFieldsCaptured:
+          'சரி. படிவத்திற்குத் தேவையான கட்டாய விவரங்கள் அனைத்தும் கிடைத்துவிட்டன.',
+        specialInstructionsPrompt:
+          'சிறப்பு குறிப்புகள் (விருப்பம்): கேட் கோடு, landmark, அணுகல் குறிப்பு போன்றவற்றை பகிரவும், அல்லது "none" என்று பதிலளிக்கவும்.',
+        capturedSoFarLabel: 'இதுவரை பெற்ற விவரங்கள்:',
+        collectStepByStepIntro: 'நான் உங்கள் பதிவு விவரங்களை படிப்படியாக சேகரிக்கிறேன்.',
+        prefillReadyTitle:
+          'சரி. நம் உரையாடலை வைத்து பதிவு விவரங்களை முன்பூர்த்தி செய்துவிட்டேன்.',
+        reviewSummaryLabel: 'இந்த சுருக்கத்தை சரிபார்க்கவும்:',
+        beforeConfirmTitle: 'உறுதிப்படுத்துவதற்கு முன் படிவத்தில் செய்ய வேண்டியது:',
+        beforeConfirmSelectLocation:
+          'வரைபடத்தில் pickup இடத்தைத் தேர்வு/உறுதிப்படுத்தவும்.',
+        beforeConfirmAcceptTerms: 'விதிமுறைகள் மற்றும் நிபந்தனைகளை ஏற்கவும்.',
+        actionGoToBookingHistory: 'பதிவு வரலாற்றுக்கு செல்லவும்',
+        actionSignIn: 'உள்நுழையவும்',
+        actionOpenBookingForm: 'பதிவு படிவத்தைத் திறக்கவும்',
+        actionOpenPrefilledBookingForm:
+          'முன்பூர்த்தி செய்யப்பட்ட பதிவு படிவத்தைத் திறக்கவும்',
+        promptWasteCategoryWithSamples: (sample: string) =>
+          `கழிவு வகைகளை தேர்வு செய்யவும்: எந்த வகையை சேர்க்க வேண்டும்? கிடைக்கும் உதாரணங்கள்: ${sample}.`,
+        promptWasteCategory:
+          'கழிவு வகைகளை தேர்வு செய்யவும்: எந்த கழிவு வகையை சேர்க்க வேண்டும்?',
+        promptWeightRange: [
+          'காகித எடை மதிப்பீடு: ஒரு வரம்பைத் தேர்வு செய்யவும்.',
+          '- 1-5 kg',
+          '- 5-10 kg',
+          '- 10-20 kg',
+          '- 20-50 kg',
+          '- 50+ kg',
+        ].join('\n'),
+        promptQuantity: (category: string) =>
+          `அளவை பதிவு செய்யவும்: ${category} க்கான மதிப்பிடப்பட்ட எடை எத்தனை kg? (உதாரணம்: 6 kg)`,
+        promptStreetAddress: 'தெரு முகவரி *: பிக்கப் செய்ய வேண்டிய தெரு முகவரி என்ன?',
+        promptCity: 'நகர் *: பிக்கப் இடம் எந்த நகரத்தில் உள்ளது?',
+        promptPostalCode: 'ZIP *: அஞ்சல் குறியீடு என்ன?',
+        promptPhoneNumber:
+          'தொலைபேசி எண் *: பிக்கப் ஒருங்கிணைப்புக்கு எந்த எண்ணை பயன்படுத்த வேண்டும்?',
+        promptScheduledDate:
+          'தேதியை தேர்வு செய்யவும்: எந்த தேதியில் பிக்கப் வேண்டும்? (உதாரணம்: நாளை அல்லது 2026-02-21)',
+        promptScheduledTimeSlot: ['நேர இடைவெளியைத் தேர்வு செய்யவும்:', slotOptions].join(
+          '\n',
+        ),
+        fieldWasteCategory: 'கழிவு வகை',
+        fieldStreetAddress: 'தெரு முகவரி',
+        fieldCity: 'நகர்',
+        fieldPostalCode: 'அஞ்சல் குறியீடு',
+        fieldPhoneNumber: 'தொலைபேசி எண்',
+        fieldScheduledDate: 'திட்டமிட்ட தேதி',
+        fieldTimeSlot: 'நேர இடைவெளி',
+        fieldSpecialInstructions: 'சிறப்பு குறிப்புகள்',
+      };
+    }
+
+    if (language === 'SI') {
+      return {
+        cancelledReply:
+          'වෙන්කිරීම් සැකසුම අවලංගු කළා. නැවත ආරම්භ කිරීමට "නව බුකින් එකක් සාදන්න" කියන්න.',
+        signInFirstReply:
+          'පිකප් බුකින් එකක් සාදන්න පෙර කරුණාකර පළමුව ලොගින් වන්න. ලොගින් වූ පසු බුකින් එකක් සාදන්න කියන්න; මම පියවරෙන් පියවර තොරතුරු අසමි.',
+        customerOnlyReply:
+          'assistant මඟින් බුකින් සෑදීම CUSTOMER ගිණුම් සඳහා පමණක් ලබාදේ. කරුණාකර customer ගිණුමක් භාවිතා කරන්න.',
+        allRequiredFieldsCaptured:
+          'හොඳයි. ෆෝමයට අවශ්‍ය සියලු අනිවාර්ය තොරතුරු මට ලැබුණා.',
+        specialInstructionsPrompt:
+          'විශේෂ උපදෙස් (විකල්ප): gate code, landmark, access note වැනි දේ දිය හැකිය, නැත්නම් "none" ලෙස පිළිතුරු දෙන්න.',
+        capturedSoFarLabel: 'මේ දක්වා ලබාගත් තොරතුරු:',
+        collectStepByStepIntro: 'මම ඔබගේ බුකින් තොරතුරු පියවරෙන් පියවර එකතු කරමි.',
+        prefillReadyTitle:
+          'හොඳයි. අපගේ සංවාදය අනුව බුකින් තොරතුරු පෙර පුරවා ඇත.',
+        reviewSummaryLabel: 'කරුණාකර මෙම සාරාංශය පරීක්ෂා කරන්න:',
+        beforeConfirmTitle: 'තහවුරු කිරීමට පෙර ෆෝමයෙන් කළ යුතු දේ:',
+        beforeConfirmSelectLocation: 'සිතියමෙන් pickup ස්ථානය තෝරා/තහවුරු කරන්න.',
+        beforeConfirmAcceptTerms: 'නියම හා කොන්දේසි පිළිගන්න.',
+        actionGoToBookingHistory: 'බුකින් ඉතිහාසයට යන්න',
+        actionSignIn: 'පිවිසෙන්න',
+        actionOpenBookingForm: 'බුකින් ෆෝමය අරින්න',
+        actionOpenPrefilledBookingForm: 'පෙර පුරවා ඇති බුකින් ෆෝමය අරින්න',
+        promptWasteCategoryWithSamples: (sample: string) =>
+          `අපද්‍රව්‍ය වර්ග තෝරන්න: එක් කිරීමට අවශ්‍ය වර්ගය කුමක්ද? ලැබෙන උදාහරණ: ${sample}.`,
+        promptWasteCategory:
+          'අපද්‍රව්‍ය වර්ග තෝරන්න: එක් කිරීමට අවශ්‍ය අපද්‍රව්‍ය වර්ගය කුමක්ද?',
+        promptWeightRange: [
+          'කඩදාසි බර ඇස්තමේන්තුව: එක් පරාසයක් තෝරන්න.',
+          '- 1-5 kg',
+          '- 5-10 kg',
+          '- 10-20 kg',
+          '- 20-50 kg',
+          '- 50+ kg',
+        ].join('\n'),
+        promptQuantity: (category: string) =>
+          `ප්‍රමාණය ඇතුළත් කරන්න: ${category} සඳහා ඇස්තමේන්තු බර කොපමණද? (උදාහරණය: 6 kg)`,
+        promptStreetAddress: 'වීදි ලිපිනය *: පිකප් සඳහා වීදි ලිපිනය කුමක්ද?',
+        promptCity: 'නගරය *: පිකප් ස්ථානය පිහිටියේ කුමන නගරයේද?',
+        promptPostalCode: 'ZIP *: තැපැල් කේතය කුමක්ද?',
+        promptPhoneNumber:
+          'දුරකථන අංකය *: පිකප් සම්බන්ධීකරණයට භාවිතා කරන අංකය කුමක්ද?',
+        promptScheduledDate:
+          'දිනය තෝරන්න: පිකප් කිරීමට අවශ්‍ය දිනය කුමක්ද? (උදාහරණය: හෙට හෝ 2026-02-21)',
+        promptScheduledTimeSlot: ['වේලා පරාසය තෝරන්න:', slotOptions].join('\n'),
+        fieldWasteCategory: 'අපද්‍රව්‍ය වර්ගය',
+        fieldStreetAddress: 'වීදි ලිපිනය',
+        fieldCity: 'නගරය',
+        fieldPostalCode: 'ZIP',
+        fieldPhoneNumber: 'දුරකථන අංකය',
+        fieldScheduledDate: 'නියමිත දිනය',
+        fieldTimeSlot: 'වේලා පරාසය',
+        fieldSpecialInstructions: 'විශේෂ උපදෙස්',
+      };
+    }
+
+    return {
+      cancelledReply:
+        'Booking setup cancelled. If you want to start again, say: "Create a new booking".',
+      signInFirstReply:
+        'To create a pickup booking, please sign in first. After signing in, ask me to create a booking and I will collect the same form details step-by-step.',
+      customerOnlyReply:
+        'Booking creation in assistant is available for CUSTOMER accounts only. Please use a customer account to create pickup bookings.',
+      allRequiredFieldsCaptured:
+        'Great. I have all required booking fields from the form.',
+      specialInstructionsPrompt:
+        'Special Instructions (Optional): Please share any pickup notes (gate code, landmark, access note), or reply "none".',
+      capturedSoFarLabel: 'Captured so far:',
+      collectStepByStepIntro: 'I will collect your booking details step-by-step.',
+      prefillReadyTitle:
+        'Great. I have prefilled the booking details from our conversation.',
+      reviewSummaryLabel: 'Please review this summary:',
+      beforeConfirmTitle: 'Next in the form before confirming:',
+      beforeConfirmSelectLocation:
+        'Select/confirm pickup location on the map.',
+      beforeConfirmAcceptTerms: 'Accept Terms and Conditions.',
+      actionGoToBookingHistory: 'Go to Booking History',
+      actionSignIn: 'Sign in',
+      actionOpenBookingForm: 'Open Booking Form',
+      actionOpenPrefilledBookingForm: 'Open Prefilled Booking Form',
+      promptWasteCategoryWithSamples: (sample: string) =>
+        `Select Waste Categories: Which category should I add? Available examples: ${sample}.`,
+      promptWasteCategory:
+        'Select Waste Categories: Which waste category should I add?',
+      promptWeightRange: [
+        'Estimate Weight of the Papers: choose one range.',
+        '- 1-5 kg',
+        '- 5-10 kg',
+        '- 10-20 kg',
+        '- 20-50 kg',
+        '- 50+ kg',
+      ].join('\n'),
+      promptQuantity: (category: string) =>
+        `Enter Quantities: What is the estimated quantity for ${category} in kg? (Example: 6 kg)`,
+      promptStreetAddress: 'Street Address *: What is the pickup street address?',
+      promptCity: 'City *: Which city is the pickup location in?',
+      promptPostalCode: 'ZIP *: What is the postal code?',
+      promptPhoneNumber:
+        'Phone Number *: What contact number should we use for pickup coordination?',
+      promptScheduledDate:
+        'Select Date: Which pickup date do you want? (Example: tomorrow or 2026-02-21)',
+      promptScheduledTimeSlot: ['Select Time Slot: choose one.', slotOptions].join(
+        '\n',
+      ),
+      fieldWasteCategory: 'Waste category',
+      fieldStreetAddress: 'Street Address',
+      fieldCity: 'City',
+      fieldPostalCode: 'ZIP',
+      fieldPhoneNumber: 'Phone Number',
+      fieldScheduledDate: 'Scheduled Date',
+      fieldTimeSlot: 'Time Slot',
+      fieldSpecialInstructions: 'Special Instructions',
+    };
+  }
+
+  private getBookingPromptForField(
+    field: BookingDraftField,
+    draft: BookingAssistantDraft,
+    wasteTypes: Array<{ id: string; name: string; slug?: string | null }>,
+    language: ChatLanguage,
+  ) {
+    const locale = this.getBookingLocalePack(language);
+
+    if (field === 'wasteCategory') {
+      const sample = wasteTypes
+        .map((item) => item.name)
+        .slice(0, 6)
+        .join(', ');
+      return sample
+        ? locale.promptWasteCategoryWithSamples(sample)
+        : locale.promptWasteCategory;
+    }
+
+    if (field === 'weightRangeLabel') {
+      return locale.promptWeightRange;
+    }
+
+    if (field === 'quantityKg') {
+      const category = draft.wasteCategoryName ?? 'selected category';
+      return locale.promptQuantity(category);
+    }
+
+    if (field === 'addressLine1') {
+      return locale.promptStreetAddress;
+    }
+
+    if (field === 'city') {
+      return locale.promptCity;
+    }
+
+    if (field === 'postalCode') {
+      return locale.promptPostalCode;
+    }
+
+    if (field === 'phone') {
+      return locale.promptPhoneNumber;
+    }
+
+    if (field === 'scheduledDate') {
+      return locale.promptScheduledDate;
+    }
+
+    if (field === 'scheduledTimeSlot') {
+      return locale.promptScheduledTimeSlot;
+    }
+
+    return locale.specialInstructionsPrompt;
+  }
+
+  private formatBookingCapturedFields(
+    draft: BookingAssistantDraft,
+    language: ChatLanguage,
+  ) {
+    const locale = this.getBookingLocalePack(language);
+    const lines: string[] = [];
+
+    if (draft.wasteCategoryName) {
+      lines.push(`- ${locale.fieldWasteCategory}: ${draft.wasteCategoryName}`);
+    }
+
+    if (draft.addressLine1)
+      lines.push(`- ${locale.fieldStreetAddress}: ${draft.addressLine1}`);
+    if (draft.city) lines.push(`- ${locale.fieldCity}: ${draft.city}`);
+    if (draft.postalCode)
+      lines.push(`- ${locale.fieldPostalCode}: ${draft.postalCode}`);
+    if (draft.phone) lines.push(`- ${locale.fieldPhoneNumber}: ${draft.phone}`);
+    if (draft.scheduledDate)
+      lines.push(`- ${locale.fieldScheduledDate}: ${draft.scheduledDate}`);
+    if (draft.scheduledTimeSlot) {
+      lines.push(`- ${locale.fieldTimeSlot}: ${draft.scheduledTimeSlot}`);
+    }
+    if (draft.specialInstructions) {
+      lines.push(
+        `- ${locale.fieldSpecialInstructions}: ${draft.specialInstructions}`,
+      );
+    }
+
+    return lines.join('\n');
+  }
+
+  private normalizeBookingDraftForPrefill(draft: BookingAssistantDraft) {
+    const normalizedDate = this.parseDateFromNumericInput(
+      draft.scheduledDate ?? '',
+    );
+    const draftWithQuantityDefaults = this.applyBookingQuantityDefaults(draft);
+
+    return {
+      wasteCategoryId: draftWithQuantityDefaults.wasteCategoryId,
+      wasteCategoryName: draftWithQuantityDefaults.wasteCategoryName,
+      quantityKg: draftWithQuantityDefaults.quantityKg,
+      weightRangeLabel: draftWithQuantityDefaults.weightRangeLabel,
+      addressLine1: draftWithQuantityDefaults.addressLine1,
+      city: draftWithQuantityDefaults.city,
+      postalCode: draftWithQuantityDefaults.postalCode,
+      phone: draftWithQuantityDefaults.phone,
+      specialInstructions: draftWithQuantityDefaults.specialInstructions,
+      scheduledDate: normalizedDate || draftWithQuantityDefaults.scheduledDate,
+      scheduledTimeSlot: draftWithQuantityDefaults.scheduledTimeSlot,
+      lat: draftWithQuantityDefaults.lat,
+      lng: draftWithQuantityDefaults.lng,
+      locationPicked: Boolean(draftWithQuantityDefaults.locationPicked),
+    } satisfies BookingAssistantDraft;
+  }
+
+  private formatBookingDraftSummary(
+    draft: BookingAssistantDraft,
+    language: ChatLanguage,
+  ) {
+    const locale = this.getBookingLocalePack(language);
+    const lines: string[] = [];
+
+    lines.push(
+      `- ${locale.fieldWasteCategory}: ${draft.wasteCategoryName ?? 'N/A'}`,
+    );
+    lines.push(
+      `- ${locale.fieldStreetAddress}: ${draft.addressLine1 ?? 'N/A'}`,
+    );
+    lines.push(`- ${locale.fieldCity}: ${draft.city ?? 'N/A'}`);
+    lines.push(`- ${locale.fieldPostalCode}: ${draft.postalCode ?? 'N/A'}`);
+    lines.push(`- ${locale.fieldPhoneNumber}: ${draft.phone ?? 'N/A'}`);
+    lines.push(
+      `- ${locale.fieldScheduledDate}: ${draft.scheduledDate ?? 'N/A'}`,
+    );
+    lines.push(`- ${locale.fieldTimeSlot}: ${draft.scheduledTimeSlot ?? 'N/A'}`);
+    if (draft.specialInstructions) {
+      lines.push(
+        `- ${locale.fieldSpecialInstructions}: ${draft.specialInstructions}`,
+      );
+    }
+
+    return lines.join('\n');
+  }
+
+  private matchWasteCategoryFromText(
+    text: string,
+    wasteTypes: Array<{ id: string; name: string; slug?: string | null }>,
+  ) {
+    const q = text.toLowerCase();
+    if (!q.trim()) return null;
+
+    const candidates = [...wasteTypes].sort(
+      (a, b) => b.name.length - a.name.length,
+    );
+
+    for (const item of candidates) {
+      const name = item.name.toLowerCase();
+      const slug = (item.slug ?? '').toLowerCase();
+      const normalizedSlug = slug.replace(/-/g, ' ').trim();
+
+      if (name && q.includes(name)) {
+        return { id: item.id, name: item.name };
+      }
+
+      if (normalizedSlug && q.includes(normalizedSlug)) {
+        return { id: item.id, name: item.name };
+      }
+    }
+
+    const fallbackKeywords = [
+      'plastic',
+      'paper',
+      'cardboard',
+      'metal',
+      'glass',
+      'e-waste',
+      'electronic',
+      'organic',
+    ];
+    const hinted = fallbackKeywords.find((keyword) => q.includes(keyword));
+    if (!hinted) return null;
+
+    const fuzzy = candidates.find((item) =>
+      item.name.toLowerCase().includes(hinted),
+    );
+    if (!fuzzy) return null;
+
+    return { id: fuzzy.id, name: fuzzy.name };
+  }
+
+  private parseQuantityKgFromText(text: string) {
+    const explicit = text.match(
+      /(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|කිලෝ|kilo|kilos)\b/i,
+    );
+    if (explicit) {
+      const value = Number.parseFloat(explicit[1]);
+      if (Number.isFinite(value) && value > 0) {
+        return Math.max(0.1, Math.min(500, value));
+      }
+    }
+
+    return null;
+  }
+
+  private parsePostalCodeFromText(text: string) {
+    const match = text.match(/\b\d{4,6}\b/);
+    return match ? match[0] : null;
+  }
+
+  private parsePhoneFromText(text: string) {
+    const match = text.match(/(?:\+94|94|0)\s*\d{2}\s*\d{3}\s*\d{4}\b/);
+    if (!match) return null;
+    return this.normalizePhoneInput(match[0]);
+  }
+
+  private normalizePhoneInput(value: string) {
+    const raw = value.trim();
+    if (!raw) return null;
+
+    const cleaned = raw.replace(/[^\d+]/g, '');
+    if (cleaned.startsWith('+94') && cleaned.length >= 12) {
+      return `+94${cleaned.slice(3, 12)}`;
+    }
+    if (cleaned.startsWith('94') && cleaned.length >= 11) {
+      return `+94${cleaned.slice(2, 11)}`;
+    }
+    if (cleaned.startsWith('0') && cleaned.length >= 10) {
+      return cleaned.slice(0, 10);
+    }
+    if (cleaned.length >= 9) {
+      return cleaned.slice(0, 15);
+    }
+
+    return null;
+  }
+
+  private parseCityFromText(text: string) {
+    const match = text.match(/\bin\s+([A-Za-z][A-Za-z\s.-]{1,50})$/i);
+    if (!match) return null;
+    return this.cleanSingleLine(match[1], 80);
+  }
+
+  private parseScheduledDateFromText(text: string) {
+    const q = text.toLowerCase();
+    const today = this.getTodayDate();
+
+    if (/\bday after tomorrow\b/.test(q)) {
+      return this.formatDateInput(this.addDays(today, 2));
+    }
+    if (/\btomorrow\b/.test(q)) {
+      return this.formatDateInput(this.addDays(today, 1));
+    }
+    if (/\btoday\b/.test(q)) {
+      return this.formatDateInput(today);
+    }
+
+    return this.parseDateFromNumericInput(text);
+  }
+
+  private parseDateFromNumericInput(text: string) {
+    const ymd = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+    if (ymd) {
+      const candidate = this.createDateParts(
+        Number(ymd[1]),
+        Number(ymd[2]),
+        Number(ymd[3]),
+      );
+      if (candidate) return this.formatDateInput(candidate);
+    }
+
+    const dmy = text.match(/\b(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{2,4}))?\b/);
+    if (dmy) {
+      const day = Number(dmy[1]);
+      const month = Number(dmy[2]);
+      const maybeYear = dmy[3] ? Number(dmy[3]) : new Date().getFullYear();
+      const year =
+        maybeYear < 100
+          ? 2000 + maybeYear
+          : Number.isFinite(maybeYear)
+            ? maybeYear
+            : new Date().getFullYear();
+      const candidate = this.createDateParts(year, month, day);
+      if (candidate) return this.formatDateInput(candidate);
+    }
+
+    return null;
+  }
+
+  private parseTimeSlotFromText(text: string) {
+    const q = text.toLowerCase();
+
+    const exact = BOOKING_TIME_SLOTS.find((slot) =>
+      q.includes(slot.toLowerCase()),
+    );
+    if (exact) return exact;
+
+    if (/\bmorning\b/.test(q)) return '8:00 AM - 10:00 AM';
+    if (/\bnoon\b|\bmidday\b/.test(q)) return '10:00 AM - 12:00 PM';
+    if (/\bafternoon\b/.test(q)) return '1:00 PM - 3:00 PM';
+    if (/\bevening\b|\bnight\b/.test(q)) return '6:00 PM - 8:00 PM';
+
+    const timeMatch = q.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
+    if (timeMatch) {
+      const hour12 = Number(timeMatch[1]);
+      const ampm = timeMatch[3];
+      const hour24 =
+        ampm === 'pm' && hour12 !== 12
+          ? hour12 + 12
+          : ampm === 'am' && hour12 === 12
+            ? 0
+            : hour12;
+
+      if (hour24 >= 8 && hour24 < 10) return '8:00 AM - 10:00 AM';
+      if (hour24 >= 10 && hour24 < 12) return '10:00 AM - 12:00 PM';
+      if (hour24 >= 13 && hour24 < 15) return '1:00 PM - 3:00 PM';
+      if (hour24 >= 15 && hour24 < 17) return '3:00 PM - 5:00 PM';
+      if (hour24 >= 18 && hour24 < 20) return '6:00 PM - 8:00 PM';
+    }
+
+    return null;
+  }
+
+  private parseWeightRangeFromText(text: string) {
+    const q = text.toLowerCase();
+
+    const exact = PAPER_WEIGHT_RANGES.find(
+      (range) =>
+        q.includes(range.label.toLowerCase().replace(/\s+/g, '')) ||
+        q.includes(range.label.toLowerCase()),
+    );
+    if (exact) return exact;
+
+    const dash = q.match(/\b(\d{1,3})\s*-\s*(\d{1,3})\s*kg?\b/);
+    if (dash) {
+      const min = Number(dash[1]);
+      const max = Number(dash[2]);
+      const found = PAPER_WEIGHT_RANGES.find(
+        (range) => range.min === min && range.max === max,
+      );
+      if (found) return found;
+    }
+
+    const qty = this.parseQuantityKgFromText(text);
+    if (qty !== null) {
+      return this.getWeightRangeForQuantity(qty);
+    }
+
+    return null;
+  }
+
+  private getWeightRangeForQuantity(quantityKg: number) {
+    return (
+      PAPER_WEIGHT_RANGES.find(
+        (range) => quantityKg >= range.min && quantityKg <= range.max,
+      ) ?? PAPER_WEIGHT_RANGES[PAPER_WEIGHT_RANGES.length - 1]
+    );
+  }
+
+  private getWeightRangeByLabel(label?: string) {
+    if (!label) return null;
+    const normalized = label.toLowerCase().replace(/\s+/g, '');
+    return (
+      PAPER_WEIGHT_RANGES.find(
+        (range) => range.label.toLowerCase().replace(/\s+/g, '') === normalized,
+      ) ?? null
+    );
+  }
+
+  private isPaperCategoryName(value?: string) {
+    const lower = (value ?? '').toLowerCase();
+    return lower.includes('paper') || lower.includes('cardboard');
+  }
+
+  private shouldParsePostalCodeFromMessage(
+    message: string,
+    awaitingField: BookingDraftField | null,
+  ) {
+    const hasPostalKeyword =
+      /\b(zip|zip code|postal|postal code|postcode)\b/i.test(message);
+    if (hasPostalKeyword) {
+      return true;
+    }
+
+    if (awaitingField === 'phone') return false;
+
+    return (
+      awaitingField === null ||
+      awaitingField === 'addressLine1' ||
+      awaitingField === 'city' ||
+      awaitingField === 'postalCode'
+    );
+  }
+
+  private applyBookingQuantityDefaults(draft: BookingAssistantDraft) {
+    const next: BookingAssistantDraft = { ...draft };
+    const paperCategory = this.isPaperCategoryName(next.wasteCategoryName);
+
+    if (paperCategory) {
+      if (next.weightRangeLabel) {
+        const selectedRange = this.getWeightRangeByLabel(next.weightRangeLabel);
+        if (!next.quantityKg || next.quantityKg <= 0) {
+          next.quantityKg = selectedRange?.min ?? 1;
+        }
+      } else if (next.quantityKg && next.quantityKg > 0) {
+        const inferredRange = this.getWeightRangeForQuantity(next.quantityKg);
+        next.weightRangeLabel = inferredRange.label;
+        next.quantityKg = inferredRange.min;
+      } else {
+        next.weightRangeLabel = PAPER_WEIGHT_RANGES[0].label;
+        next.quantityKg = PAPER_WEIGHT_RANGES[0].min;
+      }
+      return next;
+    }
+
+    if (!next.quantityKg || next.quantityKg <= 0) {
+      next.quantityKg = 1;
+    }
+    return next;
+  }
+
+  private cleanSingleLine(value: string, maxLength: number) {
+    return value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+  }
+
+  private extractAddressLineFromText(text: string) {
+    const normalized = this.cleanSingleLine(text, 160);
+    if (!normalized) return null;
+
+    const withoutLeadingLabel = normalized.replace(
+      /^(street address|address|pickup address|location)\s*[:\-]?\s*/i,
+      '',
+    );
+    const candidate = this.cleanSingleLine(withoutLeadingLabel, 160);
+
+    // Avoid accepting pure acknowledgements as an address.
+    if (/^(yes|ok|okay|sure|done|next|continue)$/i.test(candidate)) {
+      return null;
+    }
+
+    // Accept short but realistic addresses (e.g. "No 7", "12/A") to avoid
+    // blocking the flow at street-address step.
+    const hasLetterOrDigit = /[\p{L}\p{N}]/u.test(candidate);
+    if (!hasLetterOrDigit || candidate.length < 3) {
+      return null;
+    }
+
+    return candidate;
+  }
+
+  private getTodayDate() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  private addDays(base: Date, days: number) {
+    const next = new Date(base);
+    next.setDate(next.getDate() + days);
+    return next;
+  }
+
+  private createDateParts(year: number, month: number, day: number) {
+    if (
+      !Number.isFinite(year) ||
+      !Number.isFinite(month) ||
+      !Number.isFinite(day)
+    ) {
+      return null;
+    }
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
+    }
+
+    const date = new Date(year, month - 1, day);
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  }
+
+  private formatDateInput(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private cleanupExpiredSessions() {
@@ -583,7 +1761,10 @@ export class ChatService {
       }
     }
 
-    if (auth.role === Role.DRIVER && /\bunassigned\b|\bnot assigned\b/.test(q)) {
+    if (
+      auth.role === Role.DRIVER &&
+      /\bunassigned\b|\bnot assigned\b/.test(q)
+    ) {
       context.blocks.push(
         'Permission check: drivers can only access bookings assigned to themselves. Unassigned booking details were not returned.',
       );
@@ -706,11 +1887,7 @@ export class ChatService {
       `- Phone: ${profile.phone ?? 'Not set'}`,
       `- Total points (profile): ${profile.totalPoints ?? 'N/A'}`,
       `- Approved: ${
-        profile.approved === null
-          ? 'N/A'
-          : profile.approved
-            ? 'yes'
-            : 'no'
+        profile.approved === null ? 'N/A' : profile.approved ? 'yes' : 'no'
       }`,
     ].join('\n');
   }
@@ -735,7 +1912,9 @@ export class ChatService {
     lines.push('- Recent items:');
     for (const item of rows) {
       lines.push(
-        `  - #${item.id.slice(0, 8)} | ${item.status} | ${new Date(item.scheduledDate)
+        `  - #${item.id.slice(0, 8)} | ${item.status} | ${new Date(
+          item.scheduledDate,
+        )
           .toISOString()
           .slice(0, 10)} ${item.scheduledTimeSlot} | ${item.wasteCategory}`,
       );
@@ -757,7 +1936,9 @@ export class ChatService {
       lines.push('- Recent reward transactions:');
       for (const row of recent) {
         lines.push(
-          `  - Booking #${String(row.bookingId).slice(0, 8)} | +${row.pointsAwarded} pts | ${new Date(row.awardedAt)
+          `  - Booking #${String(row.bookingId).slice(0, 8)} | +${row.pointsAwarded} pts | ${new Date(
+            row.awardedAt,
+          )
             .toISOString()
             .slice(0, 10)}`,
         );
@@ -810,8 +1991,8 @@ export class ChatService {
   }
 
   private formatAdminSummary(data: any) {
-    const statusEntries = Object.entries(data.countsByStatus ?? {}).sort((a, b) =>
-      a[0].localeCompare(b[0]),
+    const statusEntries = Object.entries(data.countsByStatus ?? {}).sort(
+      (a, b) => a[0].localeCompare(b[0]),
     );
 
     const lines = [
@@ -1240,7 +2421,9 @@ export class ChatService {
       const flash = supported.find((entry: any) =>
         /flash/i.test(entry?.name || ''),
       );
-      const pro = supported.find((entry: any) => /pro/i.test(entry?.name || ''));
+      const pro = supported.find((entry: any) =>
+        /pro/i.test(entry?.name || ''),
+      );
       const pick = flash || pro || supported[0];
       return pick?.name ? this.normalizeModelName(pick.name) : null;
     } catch (error: any) {
@@ -1309,4 +2492,3 @@ export class ChatService {
     this.buckets.set(ip, existing);
   }
 }
-

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BookingStatus, DriverStatus, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
@@ -68,7 +73,12 @@ export class DriverService {
       },
     });
 
-    await this.recordStatusHistory(booking.id, currentStatus, nextStatus, driverId);
+    await this.recordStatusHistory(
+      booking.id,
+      currentStatus,
+      nextStatus,
+      driverId,
+    );
     await this.prisma.driver.update({
       where: { id: driverId },
       data: { status: DriverStatus.ON_PICKUP },
@@ -122,7 +132,12 @@ export class DriverService {
 
     const statusChanged = currentStatus !== nextStatus;
     if (statusChanged) {
-      await this.recordStatusHistory(booking.id, currentStatus, nextStatus, driverId);
+      await this.recordStatusHistory(
+        booking.id,
+        currentStatus,
+        nextStatus,
+        driverId,
+      );
       await this.prisma.driver.update({
         where: { id: driverId },
         data: {
@@ -174,7 +189,12 @@ export class DriverService {
       },
     });
 
-    await this.recordStatusHistory(booking.id, currentStatus, nextStatus, driverId);
+    await this.recordStatusHistory(
+      booking.id,
+      currentStatus,
+      nextStatus,
+      driverId,
+    );
     await this.prisma.driver.update({
       where: { id: driverId },
       data: { status: DriverStatus.ONLINE },
@@ -195,9 +215,15 @@ export class DriverService {
     return this.toDriverBookingResponse(updated);
   }
 
-  async updateBooking(driverId: string, bookingId: string, dto: UpdateDriverBookingDto) {
+  async updateBooking(
+    driverId: string,
+    bookingId: string,
+    dto: UpdateDriverBookingDto,
+  ) {
     if (dto.status && isLegacyBookingStatus(dto.status)) {
-      throw new BadRequestException(`Legacy status ${dto.status} is not allowed.`);
+      throw new BadRequestException(
+        `Legacy status ${dto.status} is not allowed.`,
+      );
     }
 
     if (dto.status === BookingStatus.COMPLETED) {
@@ -240,7 +266,9 @@ export class DriverService {
 
   async updateStatus(driverId: string, status: DriverStatus) {
     if (!MANUAL_DRIVER_STATUSES.has(status)) {
-      throw new BadRequestException('Driver status can only be ONLINE or OFFLINE');
+      throw new BadRequestException(
+        'Driver status can only be ONLINE or OFFLINE',
+      );
     }
 
     return this.prisma.driver.update({
@@ -268,7 +296,10 @@ export class DriverService {
     return booking;
   }
 
-  private async calculateFinalAmountLkr(wasteCategoryId: string, weightKg: number) {
+  private async calculateFinalAmountLkr(
+    wasteCategoryId: string,
+    weightKg: number,
+  ) {
     const pricing = await this.prisma.pricing.findUnique({
       where: { wasteCategoryId },
     });
@@ -292,9 +323,9 @@ export class DriverService {
     });
   }
 
-  private toDriverBookingResponse<T extends { status: BookingStatus; user: any }>(
-    booking: T,
-  ): T {
+  private toDriverBookingResponse<
+    T extends { status: BookingStatus; user: any },
+  >(booking: T): T {
     return {
       ...booking,
       status: normalizeBookingStatus(booking.status),

@@ -1,5 +1,16 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BookingStatus, CustomerType, NotificationLevel, Prisma, Role } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  BookingStatus,
+  CustomerType,
+  NotificationLevel,
+  Prisma,
+  Role,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../notifications/push.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
@@ -41,7 +52,9 @@ const DRIVER_REQUIRED_BOOKING_STATUSES = new Set<BookingStatus>([
   BookingStatus.COMPLETED,
 ]);
 const BOOKING_STATUSES = [...CANONICAL_BOOKING_STATUSES];
-const BOOKING_STATUS_ENUM_VALUES = Object.values(BookingStatus) as BookingStatus[];
+const BOOKING_STATUS_ENUM_VALUES = Object.values(
+  BookingStatus,
+) as BookingStatus[];
 const LEGACY_SAFE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.CREATED,
   BookingStatus.ASSIGNED,
@@ -108,7 +121,10 @@ const LEGACY_USER_PROFILE_INCLUDE = {
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
-  private readonly bookingStatusAvailability = new Map<BookingStatus, boolean>();
+  private readonly bookingStatusAvailability = new Map<
+    BookingStatus,
+    boolean
+  >();
   private bookingStatusAvailabilityLoaded = false;
   private bookingStatusAvailabilityKnown = false;
 
@@ -153,8 +169,8 @@ export class AdminService {
 
     const useTransactions = revenueCount > 0;
     const totalRevenue = useTransactions
-      ? revenueAgg._sum.amountLkr ?? 0
-      : completedAgg._sum.finalAmountLkr ?? 0;
+      ? (revenueAgg._sum.amountLkr ?? 0)
+      : (completedAgg._sum.finalAmountLkr ?? 0);
 
     let revenueByDay: Array<{ date: string; revenue: number }> = [];
 
@@ -203,7 +219,10 @@ export class AdminService {
       revenueByDay = last7Days.map((date) => {
         const key = date.toISOString().slice(0, 10);
         const sum = completed
-          .filter((b) => (b.confirmedAt ?? b.createdAt).toISOString().slice(0, 10) === key)
+          .filter(
+            (b) =>
+              (b.confirmedAt ?? b.createdAt).toISOString().slice(0, 10) === key,
+          )
           .reduce((acc, cur) => acc + (cur.finalAmountLkr ?? 0), 0);
         return { date: key, revenue: sum };
       });
@@ -488,7 +507,9 @@ export class AdminService {
       fullName: d.fullName,
       phone: d.phone,
       email: d.user?.email ?? '',
-      avatar: d.user ? (d.user as any).avatar ?? (d.user as any).avatarUrl ?? null : null,
+      avatar: d.user
+        ? ((d.user as any).avatar ?? (d.user as any).avatarUrl ?? null)
+        : null,
       rating: d.rating,
       pickupCount: d.pickupCount,
       vehicle: d.vehicle,
@@ -685,7 +706,11 @@ export class AdminService {
    * Admin updates a booking (assign driver, change status, set final weight/amount).
    * Sends push notifications to the customer (and driver if assigned).
    */
-  async updateBooking(id: string, dto: AdminUpdateBookingDto, actor: ActorContext) {
+  async updateBooking(
+    id: string,
+    dto: AdminUpdateBookingDto,
+    actor: ActorContext,
+  ) {
     const existing = await this.prisma.booking.findUnique({
       where: { id },
       include: { wasteCategory: true, driver: true },
@@ -700,7 +725,9 @@ export class AdminService {
 
     if (driverChanged) {
       if (CLOSED_BOOKING_STATUSES.has(existingStatus)) {
-        throw new BadRequestException('Cannot assign a driver to a closed booking');
+        throw new BadRequestException(
+          'Cannot assign a driver to a closed booking',
+        );
       }
 
       const driver = await this.prisma.driver.findUnique({
@@ -708,7 +735,9 @@ export class AdminService {
       });
       if (!driver) throw new BadRequestException('Driver not found');
       if (!driver.approved) {
-        throw new BadRequestException('Driver must be approved before assignment');
+        throw new BadRequestException(
+          'Driver must be approved before assignment',
+        );
       }
 
       if (
@@ -744,7 +773,10 @@ export class AdminService {
 
       update.status = normalizeBookingStatus(update.status);
 
-      const isSupported = await this.isBookingStatusSupported(update.status, true);
+      const isSupported = await this.isBookingStatusSupported(
+        update.status,
+        true,
+      );
       if (!isSupported) {
         throw new BadRequestException(
           `Status ${update.status} is not available in the current database schema. Run migrations and restart the backend.`,
@@ -768,24 +800,28 @@ export class AdminService {
     }
 
     const hasDriver =
-      update.driverId !== undefined ? Boolean(update.driverId) : Boolean(existing.driverId);
-    if (
-      DRIVER_REQUIRED_BOOKING_STATUSES.has(nextStatus) &&
-      !hasDriver
-    ) {
-      throw new BadRequestException('Assign a driver before advancing this booking');
+      update.driverId !== undefined
+        ? Boolean(update.driverId)
+        : Boolean(existing.driverId);
+    if (DRIVER_REQUIRED_BOOKING_STATUSES.has(nextStatus) && !hasDriver) {
+      throw new BadRequestException(
+        'Assign a driver before advancing this booking',
+      );
     }
 
     const data: any = {};
-    if (statusChanged || existingStatus !== existing.status) data.status = nextStatus;
+    if (statusChanged || existingStatus !== existing.status)
+      data.status = nextStatus;
     if (update.driverId) data.driverId = update.driverId;
-    if (update.actualWeightKg !== undefined) data.actualWeightKg = update.actualWeightKg;
-    if (update.finalAmountLkr !== undefined) data.finalAmountLkr = update.finalAmountLkr;
+    if (update.actualWeightKg !== undefined)
+      data.actualWeightKg = update.actualWeightKg;
+    if (update.finalAmountLkr !== undefined)
+      data.finalAmountLkr = update.finalAmountLkr;
 
     const weightForAmount =
       update.actualWeightKg !== undefined
         ? update.actualWeightKg
-        : existing.actualWeightKg ?? null;
+        : (existing.actualWeightKg ?? null);
     if (data.finalAmountLkr === undefined && weightForAmount !== null) {
       const computed = await this.calculateFinalAmountLkr(
         existing.wasteCategoryId,
@@ -818,7 +854,8 @@ export class AdminService {
           include: { wasteCategory: true, driver: true },
         });
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         if (
           update.status &&
           errorMessage.includes('invalid input value for enum') &&
@@ -833,7 +870,12 @@ export class AdminService {
     })();
 
     if (statusChanged && actor) {
-      await this.recordStatusHistory(existing.id, existingStatus, nextStatus, actor);
+      await this.recordStatusHistory(
+        existing.id,
+        existingStatus,
+        nextStatus,
+        actor,
+      );
     }
 
     // Push notification triggers based on what changed
@@ -842,7 +884,9 @@ export class AdminService {
 
     // Driver was just assigned
     if (update.driverId && update.driverId !== existing.driverId) {
-      const driver = await this.prisma.driver.findUnique({ where: { id: update.driverId } });
+      const driver = await this.prisma.driver.findUnique({
+        where: { id: update.driverId },
+      });
       // Notify customer
       this.pushService
         .notify(existing.userId, {
@@ -1062,17 +1106,17 @@ export class AdminService {
 
   private isMissingColumnError(error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return (
-      message.includes('column') &&
-      message.includes('does not exist')
-    );
+    return message.includes('column') && message.includes('does not exist');
   }
 
   private async findManyBookingsWithUserProfile(
     args: Prisma.BookingFindManyArgs,
     context: string,
   ) {
-    const includeWithoutUser = { ...(args.include ?? {}) } as Record<string, unknown>;
+    const includeWithoutUser = { ...(args.include ?? {}) } as Record<
+      string,
+      unknown
+    >;
     delete includeWithoutUser.user;
 
     const run = (user: Prisma.UserDefaultArgs) =>
@@ -1132,7 +1176,10 @@ export class AdminService {
         url: `/users/bookings/${id}`,
       });
     } catch (err) {
-      this.logger.error(`Failed to send test completed notification for booking=${id} user=${booking.userId}`, err as Error);
+      this.logger.error(
+        `Failed to send test completed notification for booking=${id} user=${booking.userId}`,
+        err as Error,
+      );
       throw err;
     }
 
@@ -1148,7 +1195,11 @@ export class AdminService {
     const [admins, drivers] = (await Promise.all([
       this.prisma.admin.findMany({
         where: { approved: false } as any,
-        include: { user: { select: { id: true, email: true, role: true, createdAt: true } } },
+        include: {
+          user: {
+            select: { id: true, email: true, role: true, createdAt: true },
+          },
+        },
       }),
       this.prisma.driver.findMany({
         // Cast `where` because TypeScript's generated types may be stale during hot-reload
@@ -1187,9 +1238,15 @@ export class AdminService {
     if (!user) throw new NotFoundException('User not found');
 
     if (user.admin) {
-      await this.prisma.admin.update({ where: { id }, data: { approved: true } as any });
+      await this.prisma.admin.update({
+        where: { id },
+        data: { approved: true } as any,
+      });
     } else if (user.driver) {
-      await this.prisma.driver.update({ where: { id }, data: { approved: true } as any });
+      await this.prisma.driver.update({
+        where: { id },
+        data: { approved: true } as any,
+      });
     } else {
       throw new BadRequestException('User is neither an admin nor a driver');
     }
@@ -1236,9 +1293,11 @@ export class AdminService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    await this.prisma.user.update({ where: { id }, data: { role: role as Role } });
+    await this.prisma.user.update({
+      where: { id },
+      data: { role: role as Role },
+    });
 
     return { success: true, message: `Role changed to ${role}` };
   }
-
 }

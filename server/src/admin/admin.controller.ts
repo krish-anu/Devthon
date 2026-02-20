@@ -152,7 +152,10 @@ export class AdminController {
   }
 
   @Patch('waste-categories/:id')
-  updateWasteCategory(@Param('id') id: string, @Body() dto: AdminUpdateWasteCategoryDto) {
+  updateWasteCategory(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateWasteCategoryDto,
+  ) {
     return this.adminService.updateWasteCategory(id, dto);
   }
 
@@ -206,5 +209,4 @@ export class AdminController {
   changeUserRole(@Param('id') id: string, @Body('role') role: string) {
     return this.adminService.changeUserRole(id, role);
   }
-
 }

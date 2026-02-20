@@ -24,10 +24,14 @@ export class PublicService {
         '',
       10,
     );
-    this.dbTimeoutMs = Number.isFinite(configured) && configured > 0 ? configured : 10000;
+    this.dbTimeoutMs =
+      Number.isFinite(configured) && configured > 0 ? configured : 10000;
   }
 
-  private async withDbTimeout<T>(label: string, task: () => Promise<T>): Promise<T> {
+  private async withDbTimeout<T>(
+    label: string,
+    task: () => Promise<T>,
+  ): Promise<T> {
     const startedAt = Date.now();
     let timeoutHandle: NodeJS.Timeout | null = null;
 
@@ -101,18 +105,21 @@ export class PublicService {
     }
 
     // Get all active waste categories from the database
-    const categories = await this.withDbTimeout('classify image categories', () =>
-      this.prisma.wasteCategory.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true, description: true },
-      }),
+    const categories = await this.withDbTimeout(
+      'classify image categories',
+      () =>
+        this.prisma.wasteCategory.findMany({
+          where: { isActive: true },
+          select: { id: true, name: true, description: true },
+        }),
     );
 
-    const categoryNames = categories.map(c => c.name).join(', ');
+    const categoryNames = categories.map((c) => c.name).join(', ');
 
     try {
       // Call Gemini Vision API
-      const fetchFn = (global as any).fetch || (await import('node-fetch')).default;
+      const fetchFn =
+        (global as any).fetch || (await import('node-fetch')).default;
       const model = 'gemini-1.5-flash';
       const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`;
 
@@ -153,7 +160,9 @@ Respond with just the category name.`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        this.logger.error(`Gemini Vision API error: ${response.status} ${errorText}`);
+        this.logger.error(
+          `Gemini Vision API error: ${response.status} ${errorText}`,
+        );
         throw new BadRequestException('Image classification failed');
       }
 
@@ -172,11 +181,12 @@ Respond with just the category name.`;
 
       if (!matchedCategory) {
         // Try partial match
-        const partialMatch = categories.find((c) =>
-          detectedText.toLowerCase().includes(c.name.toLowerCase()) ||
-          c.name.toLowerCase().includes(detectedText.toLowerCase())
+        const partialMatch = categories.find(
+          (c) =>
+            detectedText.toLowerCase().includes(c.name.toLowerCase()) ||
+            c.name.toLowerCase().includes(detectedText.toLowerCase()),
         );
-        
+
         if (partialMatch) {
           return {
             categoryId: partialMatch.id,
