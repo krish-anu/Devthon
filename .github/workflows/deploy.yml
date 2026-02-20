@@ -114,6 +114,9 @@ jobs:
             RECAPTCHA_ENABLED=${{ secrets.RECAPTCHA_ENABLED }}
             TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }}
             TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}
+            VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
+            VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
+            VAPID_SUBJECT=${{ secrets.VAPID_SUBJECT }}
             PASSKEY_RP_NAME=Trash2Treasure
             PASSKEY_RP_ID=${{ secrets.PASSKEY_RP_ID }}
             PASSKEY_ORIGIN=${{ secrets.PASSKEY_ORIGIN }}
@@ -130,4 +133,3 @@ jobs:
 
             # ── Clean up dangling images ──
             docker image prune -f
-

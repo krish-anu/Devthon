@@ -49,6 +49,10 @@ services:
 
       TEXTLK_API_TOKEN: ${TEXTLK_API_TOKEN}
       TEXTLK_SENDER_ID: ${TEXTLK_SENDER_ID:-TextLKDemo}
+      # Web Push (VAPID)
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@trash2treasure.lk}
       # Passkey / WebAuthn (set these in your environment or .env)
       PASSKEY_RP_NAME: ${PASSKEY_RP_NAME:-Trash2Treasure}
       PASSKEY_RP_ID: ${PASSKEY_RP_ID}
@@ -98,4 +102,3 @@ networks:
 volumes:
   certbot-webroot:
   certbot-certs:
-
