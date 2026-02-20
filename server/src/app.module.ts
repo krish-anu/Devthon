@@ -2,7 +2,6 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
@@ -28,6 +27,7 @@ import { PartnersModule } from './partners/partners.module';
 import { DriverModule } from './driver/driver.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { WasteTypesModule } from './waste-types/waste-types.module';
+import { AuthAwareCacheInterceptor } from './common/interceptors/auth-aware-cache.interceptor';
 
 @Module({
   imports: [
@@ -98,7 +98,7 @@ import { WasteTypesModule } from './waste-types/waste-types.module';
     AppService,
     CacheExampleService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_INTERCEPTOR, useClass: CacheInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: AuthAwareCacheInterceptor },
   ],
 })
 export class AppModule {}
