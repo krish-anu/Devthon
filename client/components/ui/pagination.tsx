@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { Button } from '@/components/ui/button';
+import * as React from "react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   nextCursor?: string | null;
@@ -11,14 +11,32 @@ type Props = {
   loading?: boolean;
 };
 
-export default function Pagination({ nextCursor, prevCursor, onNext, onPrev, limit = 10, onLimitChange, loading }: Props) {
+export default function Pagination({
+  nextCursor,
+  prevCursor,
+  onNext,
+  onPrev,
+  limit = 10,
+  onLimitChange,
+  loading,
+}: Props) {
   return (
     <div className="mt-4 flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <Button size="sm" variant="outline" onClick={onPrev} disabled={!prevCursor || loading}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onPrev}
+          disabled={!prevCursor || loading}
+        >
           Previous
         </Button>
-        <Button size="sm" variant="outline" onClick={onNext} disabled={!nextCursor || loading}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onNext}
+          disabled={!nextCursor || loading}
+        >
           Next
         </Button>
       </div>

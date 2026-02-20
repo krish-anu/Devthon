@@ -69,13 +69,24 @@ export async function cursorPaginate<T extends { id: CursorId }>(
     });
     const ordered = items.reverse();
     const hasMore = ordered.length === limit;
-    const nextCursor = ordered.length ? encodeCursor({ id: ordered[ordered.length - 1].id }) : null;
-    const prevCursor = ordered.length ? encodeCursor({ id: ordered[0].id }) : null;
-    return { items: ordered, nextCursor: hasMore ? nextCursor : null, prevCursor, hasMore };
+    const nextCursor = ordered.length
+      ? encodeCursor({ id: ordered[ordered.length - 1].id })
+      : null;
+    const prevCursor = ordered.length
+      ? encodeCursor({ id: ordered[0].id })
+      : null;
+    return {
+      items: ordered,
+      nextCursor: hasMore ? nextCursor : null,
+      prevCursor,
+      hasMore,
+    };
   }
 
   // Default / `after` handling (forward pagination)
-  const cursorPayload = args.after ? decodeCursor<{ id: string }>(args.after) : null;
+  const cursorPayload = args.after
+    ? decodeCursor<{ id: string }>(args.after)
+    : null;
   const cursorId = cursorPayload?.id;
   const items = await findManyFn({
     where,
@@ -86,8 +97,15 @@ export async function cursorPaginate<T extends { id: CursorId }>(
   });
 
   const hasMore = items.length === limit;
-  const nextCursor = items.length ? encodeCursor({ id: items[items.length - 1].id }) : null;
+  const nextCursor = items.length
+    ? encodeCursor({ id: items[items.length - 1].id })
+    : null;
   const prevCursor = items.length ? encodeCursor({ id: items[0].id }) : null;
 
-  return { items, nextCursor: hasMore ? nextCursor : null, prevCursor, hasMore };
+  return {
+    items,
+    nextCursor: hasMore ? nextCursor : null,
+    prevCursor,
+    hasMore,
+  };
 }

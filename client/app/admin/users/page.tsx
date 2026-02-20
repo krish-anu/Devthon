@@ -7,7 +7,11 @@ import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
-import { formatPhoneForDisplay, isValidSriLankaPhone, normalizeSriLankaPhone } from "@/lib/phone";
+import {
+  formatPhoneForDisplay,
+  isValidSriLankaPhone,
+  normalizeSriLankaPhone,
+} from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -17,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Pagination from '@/components/ui/pagination';
+import Pagination from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,13 +90,15 @@ export default function AdminUsersPage() {
     queryKey: ["admin-users", search, type, afterCursor, beforeCursor, limit],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.append('limit', String(limit));
-      if (search) params.append('search', search);
-      if (type !== 'ALL') params.append('type', type);
-      if (afterCursor) params.append('after', afterCursor);
-      if (beforeCursor) params.append('before', beforeCursor);
+      params.append("limit", String(limit));
+      if (search) params.append("search", search);
+      if (type !== "ALL") params.append("type", type);
+      if (afterCursor) params.append("after", afterCursor);
+      if (beforeCursor) params.append("before", beforeCursor);
 
-      const res = await apiFetch<User[] | AdminUsersResponse>(`/admin/users?${params.toString()}`);
+      const res = await apiFetch<User[] | AdminUsersResponse>(
+        `/admin/users?${params.toString()}`,
+      );
 
       // Support legacy array response for non-paginated callers
       if (Array.isArray(res)) {
@@ -118,7 +124,11 @@ export default function AdminUsersPage() {
       toast({ title: "User created", variant: "success" });
     },
     onError: (error: any) => {
-      toast({ title: "Create user failed", description: error?.message ?? "Failed to create user", variant: "error" });
+      toast({
+        title: "Create user failed",
+        description: error?.message ?? "Failed to create user",
+        variant: "error",
+      });
       console.error("Create user failed", error);
     },
   });
@@ -137,7 +147,11 @@ export default function AdminUsersPage() {
       toast({ title: "User updated", variant: "success" });
     },
     onError: (error: any) => {
-      toast({ title: "Update failed", description: error?.message ?? "Failed to update user", variant: "error" });
+      toast({
+        title: "Update failed",
+        description: error?.message ?? "Failed to update user",
+        variant: "error",
+      });
       console.error("Update user failed", error);
     },
   });
@@ -149,7 +163,11 @@ export default function AdminUsersPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (error: any) => {
-      toast({ title: "Delete failed", description: error?.message ?? "Failed to delete user", variant: "error" });
+      toast({
+        title: "Delete failed",
+        description: error?.message ?? "Failed to delete user",
+        variant: "error",
+      });
       console.error("Delete user failed", error);
     },
   });
@@ -200,11 +218,15 @@ export default function AdminUsersPage() {
         setConfirmDeleteUser(null);
       },
       onError: (error: any) => {
-        toast({ title: "Delete failed", description: error?.message ?? "Unable to delete user", variant: "error" });
+        toast({
+          title: "Delete failed",
+          description: error?.message ?? "Unable to delete user",
+          variant: "error",
+        });
       },
       onSettled: () => setDeletingUserId(null),
     });
-  }; 
+  };
 
   const handleSubmit = () => {
     if (!formData.fullName || !formData.email || !formData.phone) {
@@ -213,21 +235,27 @@ export default function AdminUsersPage() {
     }
 
     if (!isValidSriLankaPhone(formData.phone)) {
-      alert("Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)");
+      alert(
+        "Please enter a valid Sri Lanka phone number (e.g. +94 77 123 4567)",
+      );
       return;
     }
 
     if (editingUser) {
       const updateData: Partial<typeof formData> = { ...formData };
       if (!updateData.password) delete (updateData as any).password;
-      updateData.phone = normalizeSriLankaPhone(updateData.phone) ?? updateData.phone;
+      updateData.phone =
+        normalizeSriLankaPhone(updateData.phone) ?? updateData.phone;
       updateUserMutation.mutate(updateData);
     } else {
       if (!formData.password) {
         alert("Password is required for new users");
         return;
       }
-      const createData = { ...formData, phone: normalizeSriLankaPhone(formData.phone) ?? formData.phone };
+      const createData = {
+        ...formData,
+        phone: normalizeSriLankaPhone(formData.phone) ?? formData.phone,
+      };
       createUserMutation.mutate(createData);
     }
   };
@@ -288,7 +316,9 @@ export default function AdminUsersPage() {
                           <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                          <DropdownMenuItem
+                            onClick={() => handleEditUser(user)}
+                          >
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -490,8 +520,8 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>Confirm delete</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {confirmDeleteUser?.fullName}? This
-              action cannot be undone.
+              Are you sure you want to delete {confirmDeleteUser?.fullName}?
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 

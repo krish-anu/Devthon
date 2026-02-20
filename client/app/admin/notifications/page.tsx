@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import Pagination from '@/components/ui/pagination';
+import Pagination from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api";
 import { NotificationItem } from "@/lib/types";
 import { Card } from "@/components/ui/card";
@@ -52,17 +52,20 @@ export default function AdminNotificationsPage() {
     queryKey: ["admin-notifications", afterCursor, beforeCursor, limit],
     queryFn: () =>
       apiFetch<NotificationsResponse>(
-        `/notifications?limit=${limit}${afterCursor ? `&after=${afterCursor}` : ''}${beforeCursor ? `&before=${beforeCursor}` : ''}`,
+        `/notifications?limit=${limit}${afterCursor ? `&after=${afterCursor}` : ""}${beforeCursor ? `&before=${beforeCursor}` : ""}`,
       ),
     refetchInterval: 30_000,
     placeholderData: (previousData) => previousData,
   });
 
   const mutation = useMutation({
-    mutationFn: () => apiFetch("/notifications/mark-all-read", { method: "POST" }),
+    mutationFn: () =>
+      apiFetch("/notifications/mark-all-read", { method: "POST" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications", "header-unread-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", "header-unread-count"],
+      });
       toast({
         title: "Notifications cleared",
         description: "All alerts marked as read.",
@@ -82,18 +85,24 @@ export default function AdminNotificationsPage() {
         old
           ? {
               ...old,
-              items: old.items.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
+              items: old.items.map((n) =>
+                n.id === item.id ? { ...n, isRead: true } : n,
+              ),
             }
           : old,
     );
 
-    queryClient.invalidateQueries({ queryKey: ["notifications", "header-unread-count"] });
+    queryClient.invalidateQueries({
+      queryKey: ["notifications", "header-unread-count"],
+    });
 
     try {
       await apiFetch(`/notifications/${item.id}/mark-read`, { method: "POST" });
     } catch {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications", "header-unread-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", "header-unread-count"],
+      });
     }
 
     if (item.bookingId) {
@@ -142,16 +151,22 @@ export default function AdminNotificationsPage() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-2">
                     {levelIcon[item.level]}
-                    <h3 className="truncate text-lg font-semibold">{item.title}</h3>
+                    <h3 className="truncate text-lg font-semibold">
+                      {item.title}
+                    </h3>
                   </div>
                   <div className="flex items-center gap-2">
                     {item.bookingId && (
                       <ExternalLink className="h-3.5 w-3.5 text-[color:var(--muted)]" />
                     )}
-                    <Badge variant={levelVariant[item.level]}>{item.level}</Badge>
+                    <Badge variant={levelVariant[item.level]}>
+                      {item.level}
+                    </Badge>
                   </div>
                 </div>
-                <p className="text-sm text-[color:var(--muted)]">{item.message}</p>
+                <p className="text-sm text-[color:var(--muted)]">
+                  {item.message}
+                </p>
                 <p className="text-xs text-[color:var(--muted)]">
                   {new Date(item.createdAt).toLocaleString()}
                 </p>
@@ -161,10 +176,20 @@ export default function AdminNotificationsPage() {
             <Pagination
               nextCursor={data?.nextCursor ?? null}
               prevCursor={data?.prevCursor ?? null}
-              onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
-              onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+              onNext={() => {
+                setAfterCursor(data?.nextCursor ?? null);
+                setBeforeCursor(null);
+              }}
+              onPrev={() => {
+                setBeforeCursor(data?.prevCursor ?? null);
+                setAfterCursor(null);
+              }}
               limit={limit}
-              onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+              onLimitChange={(n) => {
+                setLimit(n);
+                setAfterCursor(null);
+                setBeforeCursor(null);
+              }}
               loading={isFetching}
             />
           </>

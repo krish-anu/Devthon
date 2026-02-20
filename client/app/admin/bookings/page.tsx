@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import Pagination from '@/components/ui/pagination';
+import Pagination from "@/components/ui/pagination";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -70,7 +70,13 @@ export default function AdminBookingsPage() {
     queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
 
   const assignDriverMutation = useMutation({
-    mutationFn: ({ bookingId, driverId }: { bookingId: string; driverId: string }) =>
+    mutationFn: ({
+      bookingId,
+      driverId,
+    }: {
+      bookingId: string;
+      driverId: string;
+    }) =>
       apiFetch(`/admin/bookings/${bookingId}/assign`, {
         method: "PATCH",
         body: JSON.stringify({ driverId }),
@@ -96,7 +102,13 @@ export default function AdminBookingsPage() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ bookingId, status }: { bookingId: string; status: BookingStatus }) =>
+    mutationFn: ({
+      bookingId,
+      status,
+    }: {
+      bookingId: string;
+      status: BookingStatus;
+    }) =>
       apiFetch(`/admin/bookings/${bookingId}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
@@ -128,7 +140,9 @@ export default function AdminBookingsPage() {
       }),
     onMutate: async (id: string) => {
       setDeletingId(id);
-      await queryClient.cancelQueries({ queryKey: ["admin-bookings", status, search, dateFilter] });
+      await queryClient.cancelQueries({
+        queryKey: ["admin-bookings", status, search, dateFilter],
+      });
 
       const previous = queryClient.getQueryData<any[]>([
         "admin-bookings",
@@ -152,7 +166,11 @@ export default function AdminBookingsPage() {
         context?.previous,
       );
       setDeletingId(null);
-      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete booking.",
+        variant: "error",
+      });
     },
     onSuccess: () => {
       setDeletingId(null);
@@ -170,12 +188,20 @@ export default function AdminBookingsPage() {
   const [limit, setLimit] = useState<number>(10);
 
   const { data, isLoading, isFetching } = useQuery<AdminBookingsResponse>({
-    queryKey: ["admin-bookings", status, search, dateFilter, afterCursor, beforeCursor, limit],
+    queryKey: [
+      "admin-bookings",
+      status,
+      search,
+      dateFilter,
+      afterCursor,
+      beforeCursor,
+      limit,
+    ],
     queryFn: () => {
       const params = new URLSearchParams();
       if (status) params.append("status", status);
       if (search) params.append("search", search);
-      params.append('limit', String(limit));
+      params.append("limit", String(limit));
 
       if (dateFilter === "thisMonth") {
         const now = new Date();
@@ -186,10 +212,12 @@ export default function AdminBookingsPage() {
         params.append("to", lastDay.toISOString().split("T")[0]);
       }
 
-      if (afterCursor) params.append('after', afterCursor);
-      if (beforeCursor) params.append('before', beforeCursor);
+      if (afterCursor) params.append("after", afterCursor);
+      if (beforeCursor) params.append("before", beforeCursor);
 
-      return apiFetch<AdminBookingsResponse>(`/admin/bookings?${params.toString()}`);
+      return apiFetch<AdminBookingsResponse>(
+        `/admin/bookings?${params.toString()}`,
+      );
     },
     refetchInterval: 12000,
     placeholderData: (previousData) => previousData,
@@ -220,7 +248,9 @@ export default function AdminBookingsPage() {
       <Card className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-2">
           <Button
-            variant={dateFilter === "all" && status === "" ? "default" : "outline"}
+            variant={
+              dateFilter === "all" && status === "" ? "default" : "outline"
+            }
             size="sm"
             onClick={() => {
               setDateFilter("all");
@@ -239,7 +269,11 @@ export default function AdminBookingsPage() {
           {STATUS_FILTERS.map((statusOption) => (
             <Button
               key={statusOption}
-              variant={status === statusOption && dateFilter === "all" ? "default" : "outline"}
+              variant={
+                status === statusOption && dateFilter === "all"
+                  ? "default"
+                  : "outline"
+              }
               size="sm"
               onClick={() => {
                 setStatus(statusOption);
@@ -305,7 +339,9 @@ export default function AdminBookingsPage() {
                         <select
                           className="h-9 w-full rounded-md border border-(--border) bg-(--card) px-2 text-sm"
                           value={booking.driver?.id ?? ""}
-                          onChange={(event) => handleAssign(booking.id, event.target.value)}
+                          onChange={(event) =>
+                            handleAssign(booking.id, event.target.value)
+                          }
                           disabled={
                             !canAssignDriver ||
                             assigningId === booking.id ||
@@ -332,8 +368,13 @@ export default function AdminBookingsPage() {
                         {canCompleteBooking && (
                           <Button
                             size="sm"
-                            onClick={() => handleStatusChange(booking.id, "COMPLETED")}
-                            disabled={statusUpdatingId === booking.id || !hasCollectionData}
+                            onClick={() =>
+                              handleStatusChange(booking.id, "COMPLETED")
+                            }
+                            disabled={
+                              statusUpdatingId === booking.id ||
+                              !hasCollectionData
+                            }
                           >
                             Complete
                           </Button>
@@ -342,7 +383,9 @@ export default function AdminBookingsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleStatusChange(booking.id, "CANCELLED")}
+                            onClick={() =>
+                              handleStatusChange(booking.id, "CANCELLED")
+                            }
                             disabled={statusUpdatingId === booking.id}
                           >
                             Cancel
@@ -352,7 +395,9 @@ export default function AdminBookingsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleStatusChange(booking.id, "REFUNDED")}
+                            onClick={() =>
+                              handleStatusChange(booking.id, "REFUNDED")
+                            }
                             disabled={statusUpdatingId === booking.id}
                           >
                             Refund
@@ -375,7 +420,8 @@ export default function AdminBookingsPage() {
                       </div>
                       {canCompleteBooking && !hasCollectionData && (
                         <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                          Driver must submit weight and amount before completion.
+                          Driver must submit weight and amount before
+                          completion.
                         </p>
                       )}
                       {!canAssignDriver && normalizedStatus === "ASSIGNED" && (
@@ -388,15 +434,25 @@ export default function AdminBookingsPage() {
                 );
               })}
             </TableBody>
-            </Table>
+          </Table>
 
           <Pagination
             nextCursor={data?.nextCursor ?? null}
             prevCursor={data?.prevCursor ?? null}
-            onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
-            onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+            onNext={() => {
+              setAfterCursor(data?.nextCursor ?? null);
+              setBeforeCursor(null);
+            }}
+            onPrev={() => {
+              setBeforeCursor(data?.prevCursor ?? null);
+              setAfterCursor(null);
+            }}
             limit={limit}
-            onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+            onLimitChange={(n) => {
+              setLimit(n);
+              setAfterCursor(null);
+              setBeforeCursor(null);
+            }}
             loading={isFetching}
           />
         </Card>

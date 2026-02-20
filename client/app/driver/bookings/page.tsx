@@ -12,7 +12,7 @@ import {
 import { Booking, WasteType } from "@/lib/types";
 import { getWasteById } from "@/lib/wasteTypeUtils";
 import { Card } from "@/components/ui/card";
-import Pagination from '@/components/ui/pagination';
+import Pagination from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -57,10 +57,12 @@ export default function DriverBookingsPage() {
     queryKey: ["driver-bookings-list", afterCursor, beforeCursor, limit],
     queryFn: () => {
       const params = new URLSearchParams();
-      params.append('limit', String(limit));
-      if (afterCursor) params.append('after', afterCursor);
-      if (beforeCursor) params.append('before', beforeCursor);
-      return apiFetch<DriverBookingsResponse>(`/driver/bookings?${params.toString()}`);
+      params.append("limit", String(limit));
+      if (afterCursor) params.append("after", afterCursor);
+      if (beforeCursor) params.append("before", beforeCursor);
+      return apiFetch<DriverBookingsResponse>(
+        `/driver/bookings?${params.toString()}`,
+      );
     },
     refetchInterval: 12000,
     placeholderData: (previousData) => previousData,
@@ -78,12 +80,14 @@ export default function DriverBookingsPage() {
     setAfterCursor(null);
     setBeforeCursor(null);
   }, []);
-  const selectedBooking = bookings.find((booking) => booking.id === collectBookingId) ?? null;
+  const selectedBooking =
+    bookings.find((booking) => booking.id === collectBookingId) ?? null;
 
   useEffect(() => {
     if (!selectedBooking) return;
     setWeightKg(
-      selectedBooking.actualWeightKg !== null && selectedBooking.actualWeightKg !== undefined
+      selectedBooking.actualWeightKg !== null &&
+        selectedBooking.actualWeightKg !== undefined
         ? String(selectedBooking.actualWeightKg)
         : "",
     );
@@ -109,7 +113,8 @@ export default function DriverBookingsPage() {
     return options;
   }, [wasteTypes, selectedBooking]);
 
-  const selectedCategoryId = wasteCategoryId || selectedBooking?.wasteCategory?.id || "";
+  const selectedCategoryId =
+    wasteCategoryId || selectedBooking?.wasteCategory?.id || "";
   const selectedWasteType = getWasteById(categoryOptions, selectedCategoryId);
   const numericWeight = Number(weightKg);
   const computedAmount =
@@ -204,7 +209,10 @@ export default function DriverBookingsPage() {
       weightKg: parsedWeight,
     };
 
-    if (wasteCategoryId && wasteCategoryId !== selectedBooking.wasteCategory?.id) {
+    if (
+      wasteCategoryId &&
+      wasteCategoryId !== selectedBooking.wasteCategory?.id
+    ) {
       payload.wasteCategoryId = wasteCategoryId;
     }
 
@@ -242,11 +250,17 @@ export default function DriverBookingsPage() {
                 return (
                   <TableRow key={booking.id}>
                     <TableCell>{booking.id.slice(0, 8)}</TableCell>
-                    <TableCell>{booking.user?.fullName ?? "Customer"}</TableCell>
+                    <TableCell>
+                      {booking.user?.fullName ?? "Customer"}
+                    </TableCell>
                     <TableCell>{booking.addressLine1}</TableCell>
                     <TableCell>
-                      <div>{new Date(booking.scheduledDate).toLocaleDateString()}</div>
-                      <div className="text-xs text-(--muted)">{booking.scheduledTimeSlot}</div>
+                      <div>
+                        {new Date(booking.scheduledDate).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-(--muted)">
+                        {booking.scheduledTimeSlot}
+                      </div>
                     </TableCell>
                     <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
                     <TableCell>
@@ -265,9 +279,13 @@ export default function DriverBookingsPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => setCollectBookingId(booking.id)}
-                          disabled={!canDriverCollect(booking.status) || loading}
+                          disabled={
+                            !canDriverCollect(booking.status) || loading
+                          }
                         >
-                          {normalizedStatus === "COLLECTED" ? "Collected / Edit" : "Collected"}
+                          {normalizedStatus === "COLLECTED"
+                            ? "Collected / Edit"
+                            : "Collected"}
                         </Button>
                         <Button
                           size="sm"
@@ -295,16 +313,29 @@ export default function DriverBookingsPage() {
           <Pagination
             nextCursor={data?.nextCursor ?? null}
             prevCursor={data?.prevCursor ?? null}
-            onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
-            onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+            onNext={() => {
+              setAfterCursor(data?.nextCursor ?? null);
+              setBeforeCursor(null);
+            }}
+            onPrev={() => {
+              setBeforeCursor(data?.prevCursor ?? null);
+              setAfterCursor(null);
+            }}
             limit={limit}
-            onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+            onLimitChange={(n) => {
+              setLimit(n);
+              setAfterCursor(null);
+              setBeforeCursor(null);
+            }}
             loading={isFetching}
           />
         </Card>
       )}
 
-      <Dialog open={Boolean(collectBookingId)} onOpenChange={(open) => !open && setCollectBookingId(null)}>
+      <Dialog
+        open={Boolean(collectBookingId)}
+        onOpenChange={(open) => !open && setCollectBookingId(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Collected Pickup</DialogTitle>
@@ -316,7 +347,9 @@ export default function DriverBookingsPage() {
           <div className="space-y-3">
             <div>
               <p className="text-xs text-(--muted)">Booking</p>
-              <p className="text-sm font-medium">{selectedBooking?.id.slice(0, 8)}</p>
+              <p className="text-sm font-medium">
+                {selectedBooking?.id.slice(0, 8)}
+              </p>
             </div>
             <div>
               <p className="text-xs text-(--muted)">Waste Type</p>
@@ -343,7 +376,9 @@ export default function DriverBookingsPage() {
             <div className="rounded-md border border-(--border) bg-(--surface-soft) p-3 text-sm">
               <p className="text-xs text-(--muted)">Computed Amount</p>
               <p className="font-semibold">
-                {computedAmount === null ? "LKR --" : `LKR ${computedAmount.toFixed(2)}`}
+                {computedAmount === null
+                  ? "LKR --"
+                  : `LKR ${computedAmount.toFixed(2)}`}
               </p>
             </div>
           </div>
@@ -356,7 +391,10 @@ export default function DriverBookingsPage() {
             >
               Close
             </Button>
-            <Button onClick={submitCollect} disabled={collectMutation.isPending}>
+            <Button
+              onClick={submitCollect}
+              disabled={collectMutation.isPending}
+            >
               {collectMutation.isPending ? "Saving..." : "Confirm Collected"}
             </Button>
           </DialogFooter>

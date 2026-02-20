@@ -83,7 +83,11 @@ export class AdminController {
     @Query('before') before?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.adminService.listDrivers({ after: after ?? undefined, before: before ?? undefined, limit: limit ? Number(limit) : undefined });
+    return this.adminService.listDrivers({
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Post('drivers')
@@ -166,7 +170,10 @@ export class AdminController {
   }
 
   @Patch('waste-categories/:id')
-  updateWasteCategory(@Param('id') id: string, @Body() dto: AdminUpdateWasteCategoryDto) {
+  updateWasteCategory(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateWasteCategoryDto,
+  ) {
     return this.adminService.updateWasteCategory(id, dto);
   }
 
@@ -216,7 +223,11 @@ export class AdminController {
     @Query('before') before?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.adminService.listAllUsersWithRoles({ after: after ?? undefined, before: before ?? undefined, limit: limit ? Number(limit) : undefined });
+    return this.adminService.listAllUsersWithRoles({
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Roles(Role.SUPER_ADMIN)
@@ -224,5 +235,4 @@ export class AdminController {
   changeUserRole(@Param('id') id: string, @Body('role') role: string) {
     return this.adminService.changeUserRole(id, role);
   }
-
 }

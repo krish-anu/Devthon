@@ -6,14 +6,23 @@ import { cursorPaginate } from '../common/pagination';
 export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
-  async list(userId: string, opts?: { after?: string; before?: string; limit?: number }) {
+  async list(
+    userId: string,
+    opts?: { after?: string; before?: string; limit?: number },
+  ) {
     const where = { OR: [{ userId }, { userId: null }] };
 
     if (opts?.after || opts?.before || opts?.limit) {
       const page = await cursorPaginate(
         (args) => this.prisma.notification.findMany({ ...(args as any) }),
         () => this.prisma.notification.count({ where }),
-        { where, orderBy: { createdAt: 'desc' }, after: opts?.after, before: opts?.before, limit: opts?.limit ?? 10 },
+        {
+          where,
+          orderBy: { createdAt: 'desc' },
+          after: opts?.after,
+          before: opts?.before,
+          limit: opts?.limit ?? 10,
+        },
       );
 
       return {
@@ -24,7 +33,10 @@ export class NotificationsService {
       } as any;
     }
 
-    return this.prisma.notification.findMany({ where, orderBy: { createdAt: 'desc' } });
+    return this.prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async markAllRead(userId: string) {

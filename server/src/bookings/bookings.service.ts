@@ -11,7 +11,11 @@ import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
 import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
-import { cursorPaginate, encodeCursor, decodeCursor } from '../common/pagination';
+import {
+  cursorPaginate,
+  encodeCursor,
+  decodeCursor,
+} from '../common/pagination';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import {
@@ -67,7 +71,8 @@ export class BookingsService {
             ...(args as any),
             include: { wasteCategory: true, driver: true },
           }),
-        (whereArg?: any) => this.prisma.booking.count({ where: whereArg ?? where }),
+        (whereArg?: any) =>
+          this.prisma.booking.count({ where: whereArg ?? where }),
         {
           where,
           orderBy: { createdAt: 'desc' },
@@ -83,7 +88,9 @@ export class BookingsService {
       });
 
       return {
-        items: pageResult.items.map((item) => this.normalizeBookingForRead(item)),
+        items: pageResult.items.map((item) =>
+          this.normalizeBookingForRead(item),
+        ),
         nextCursor: pageResult.nextCursor,
         prevCursor: pageResult.prevCursor,
         hasMore: pageResult.hasMore,
@@ -179,10 +186,7 @@ export class BookingsService {
               addressLine1: dto.addressLine1,
               city: dto.city,
               postalCode: dto.postalCode,
-              imageUrls: [
-                ...(it.images ?? []),
-                ...(dto.images ?? []),
-              ],
+              imageUrls: [...(it.images ?? []), ...(dto.images ?? [])],
               specialInstructions: dto.specialInstructions,
               scheduledDate: new Date(dto.scheduledDate),
               scheduledTimeSlot: dto.scheduledTimeSlot,
@@ -244,19 +248,18 @@ export class BookingsService {
           })
           .catch(() => {});
 
-        void this.notifyAdminsForNonWasteImages(
-          booking,
-          category?.name,
-        ).catch((error) => {
-          this.transactionLogger.logError(
-            'booking.image.screening.failure',
-            error instanceof Error ? error : new Error(String(error)),
-            {
-              bookingId: booking.id,
-              userId: booking.userId,
-            },
-          );
-        });
+        void this.notifyAdminsForNonWasteImages(booking, category?.name).catch(
+          (error) => {
+            this.transactionLogger.logError(
+              'booking.image.screening.failure',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                bookingId: booking.id,
+                userId: booking.userId,
+              },
+            );
+          },
+        );
       }
 
       return created.map((item) => this.normalizeBookingForRead(item));
@@ -326,7 +329,11 @@ export class BookingsService {
       if (!booking) throw new NotFoundException('Booking not found');
 
       // Only the owner or admins can delete a booking
-      if (booking.userId !== userId && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+      if (
+        booking.userId !== userId &&
+        role !== 'ADMIN' &&
+        role !== 'SUPER_ADMIN'
+      ) {
         throw new ForbiddenException();
       }
 
@@ -415,12 +422,16 @@ export class BookingsService {
       });
       return { message: 'Location updated successfully' };
     } catch (err) {
-      this.transactionLogger.logError('booking.updateLocation.failure', err as Error, {
-        userId,
-        bookingId: id,
-        lng,
-        lat,
-      });
+      this.transactionLogger.logError(
+        'booking.updateLocation.failure',
+        err as Error,
+        {
+          userId,
+          bookingId: id,
+          lng,
+          lat,
+        },
+      );
       throw err;
     }
   }
@@ -523,11 +534,14 @@ export class BookingsService {
     };
   }
 
-  private async notifyAdminsForNonWasteImages(booking: {
-    id: string;
-    userId: string;
-    imageUrls: string[];
-  }, expectedWasteCategory?: string | null) {
+  private async notifyAdminsForNonWasteImages(
+    booking: {
+      id: string;
+      userId: string;
+      imageUrls: string[];
+    },
+    expectedWasteCategory?: string | null,
+  ) {
     const imageUrls = (booking.imageUrls ?? []).filter(Boolean);
     if (imageUrls.length === 0) return;
 
@@ -538,12 +552,10 @@ export class BookingsService {
       expectedWasteCategory: expectedWasteCategory ?? null,
     });
 
-    const screeningResults = await this.bookingImageScreeningService.screenImages(
-      imageUrls,
-      {
+    const screeningResults =
+      await this.bookingImageScreeningService.screenImages(imageUrls, {
         expectedWasteCategory,
-      },
-    );
+      });
     this.transactionLogger.logTransaction('booking.image.screening.results', {
       bookingId: booking.id,
       results: screeningResults.map((result) => ({
@@ -648,8 +660,9 @@ export class BookingsService {
 
   private getMismatchAlertConfidence() {
     const configured = Number.parseFloat(
-      this.config.get<string>('BOOKING_IMAGE_VISION_CATEGORY_MISMATCH_CONFIDENCE') ??
-        '',
+      this.config.get<string>(
+        'BOOKING_IMAGE_VISION_CATEGORY_MISMATCH_CONFIDENCE',
+      ) ?? '',
     );
     if (Number.isFinite(configured)) {
       return Math.max(0, Math.min(1, configured));
@@ -659,7 +672,8 @@ export class BookingsService {
 
   private getUncertainAlertConfidence() {
     const configured = Number.parseFloat(
-      this.config.get<string>('BOOKING_IMAGE_VISION_UNCERTAIN_CONFIDENCE') ?? '',
+      this.config.get<string>('BOOKING_IMAGE_VISION_UNCERTAIN_CONFIDENCE') ??
+        '',
     );
     if (Number.isFinite(configured)) {
       return Math.max(0, Math.min(1, configured));
@@ -668,7 +682,9 @@ export class BookingsService {
   }
 
   private shouldAlertOnUncertain() {
-    const configured = this.config.get<string>('BOOKING_IMAGE_VISION_ALERT_ON_UNCERTAIN');
+    const configured = this.config.get<string>(
+      'BOOKING_IMAGE_VISION_ALERT_ON_UNCERTAIN',
+    );
     if (!configured) return true;
     const normalized = configured.trim().toLowerCase();
     return ['1', 'true', 'yes', 'on'].includes(normalized);

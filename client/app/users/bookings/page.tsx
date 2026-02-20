@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import Pagination from '@/components/ui/pagination';
+import Pagination from "@/components/ui/pagination";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
@@ -41,7 +41,8 @@ export default function BookingHistoryPage() {
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["public-waste-categories"],
-    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+    queryFn: () =>
+      apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
   });
 
   const [afterCursor, setAfterCursor] = useState<string | null>(null);
@@ -49,7 +50,15 @@ export default function BookingHistoryPage() {
   const [limit, setLimit] = useState<number>(10);
 
   const { data, isLoading, isFetching } = useQuery<UserBookingsResponse>({
-    queryKey: ["bookings", status, search, category, afterCursor, beforeCursor, limit],
+    queryKey: [
+      "bookings",
+      status,
+      search,
+      category,
+      afterCursor,
+      beforeCursor,
+      limit,
+    ],
     queryFn: () =>
       apiFetch<UserBookingsResponse>(
         `/bookings?${new URLSearchParams({
@@ -82,8 +91,15 @@ export default function BookingHistoryPage() {
       }),
     onMutate: async (id: string) => {
       setDeletingId(id);
-      await queryClient.cancelQueries({ queryKey: ["bookings", status, search, category] });
-      const previous = queryClient.getQueryData<{ items: Booking[] }>(["bookings", status, search, category]);
+      await queryClient.cancelQueries({
+        queryKey: ["bookings", status, search, category],
+      });
+      const previous = queryClient.getQueryData<{ items: Booking[] }>([
+        "bookings",
+        status,
+        search,
+        category,
+      ]);
       if (previous) {
         queryClient.setQueryData(["bookings", status, search, category], {
           ...previous,
@@ -93,9 +109,16 @@ export default function BookingHistoryPage() {
       return { previous };
     },
     onError: (_err, _id, context: any) => {
-      queryClient.setQueryData(["bookings", status, search, category], context?.previous);
+      queryClient.setQueryData(
+        ["bookings", status, search, category],
+        context?.previous,
+      );
       setDeletingId(null);
-      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete booking.",
+        variant: "error",
+      });
     },
     onSettled: () => {
       setDeletingId(null);
@@ -199,7 +222,11 @@ export default function BookingHistoryPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <Button variant="outline" onClick={exportCsv} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={exportCsv}
+            className="w-full sm:w-auto"
+          >
             Export CSV
           </Button>
         </div>
@@ -261,8 +288,8 @@ export default function BookingHistoryPage() {
                         booking.finalAmountLkr !== null &&
                         booking.finalAmountLkr !== undefined && (
                           <div className="text-xs text-amber-700 dark:text-amber-300">
-                            Please pay LKR {booking.finalAmountLkr.toFixed(2)} to
-                            driver.
+                            Please pay LKR {booking.finalAmountLkr.toFixed(2)}{" "}
+                            to driver.
                           </div>
                         )}
                     </div>
@@ -295,10 +322,7 @@ export default function BookingHistoryPage() {
               ))}
               {!bookings.length && (
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-center text-(--muted)"
-                  >
+                  <TableCell colSpan={7} className="text-center text-(--muted)">
                     No bookings found.
                   </TableCell>
                 </TableRow>
@@ -308,10 +332,20 @@ export default function BookingHistoryPage() {
           <Pagination
             nextCursor={data?.nextCursor ?? null}
             prevCursor={data?.prevCursor ?? null}
-            onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
-            onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+            onNext={() => {
+              setAfterCursor(data?.nextCursor ?? null);
+              setBeforeCursor(null);
+            }}
+            onPrev={() => {
+              setBeforeCursor(data?.prevCursor ?? null);
+              setAfterCursor(null);
+            }}
             limit={limit}
-            onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+            onLimitChange={(n) => {
+              setLimit(n);
+              setAfterCursor(null);
+              setBeforeCursor(null);
+            }}
             loading={isFetching}
           />
         </Card>
