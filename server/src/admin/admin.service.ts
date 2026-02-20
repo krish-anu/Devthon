@@ -481,13 +481,14 @@ export class AdminService {
   async listDrivers() {
     const drivers = await this.prisma.driver.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { user: true },
+      include: { user: { include: USER_PROFILE_INCLUDE } },
     });
     return drivers.map((d) => ({
       id: d.id,
       fullName: d.fullName,
       phone: d.phone,
       email: d.user?.email ?? '',
+      avatar: d.user ? (d.user as any).avatar ?? (d.user as any).avatarUrl ?? null : null,
       rating: d.rating,
       pickupCount: d.pickupCount,
       vehicle: d.vehicle,

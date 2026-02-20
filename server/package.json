@@ -21,7 +21,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "node --experimental-vm-modules node_modules/.bin/jest --config ./test/jest-e2e.json",
     "logs:tail": "node scripts/pretty-logs.js logs/trash2treasure-$(date +%F).log",
     "logs:watch": "tail -f logs/trash2treasure-$(date +%F).log | node scripts/pretty-logs.js -",
     "notifications:check": "ts-node src/scripts/check-notifications.ts",
@@ -103,6 +103,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!jose)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
