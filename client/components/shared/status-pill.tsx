@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   CanonicalBookingStatus,
   getBookingStatusLabel,
@@ -6,19 +7,18 @@ import {
 import { BookingStatus, UserRole } from "@/lib/types";
 import { cn } from '@/lib/utils';
 
-const statusStyle: Record<CanonicalBookingStatus, { className: string }> = {
-  CREATED: { className: 'bg-slate-100 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400' },
-  ASSIGNED: { className: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
-  IN_PROGRESS: { className: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  COLLECTED: { className: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' },
-  COMPLETED: { className: 'bg-(--brand)/10 text-(--brand-strong) dark:bg-(--brand)/20 dark:text-(--brand)' },
-  CANCELLED: { className: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' },
-  REFUNDED: { className: 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400' },
+const statusStyle: Record<CanonicalBookingStatus, { style: React.CSSProperties }> = {
+  CREATED:     { style: { backgroundColor: 'var(--status-created-bg)',     color: 'var(--status-created-text)' } },
+  ASSIGNED:    { style: { backgroundColor: 'var(--status-assigned-bg)',    color: 'var(--status-assigned-text)' } },
+  IN_PROGRESS: { style: { backgroundColor: 'var(--status-in-progress-bg)', color: 'var(--status-in-progress-text)' } },
+  COLLECTED:   { style: { backgroundColor: 'var(--status-collected-bg)',   color: 'var(--status-collected-text)' } },
+  COMPLETED:   { style: { backgroundColor: 'var(--status-completed-bg)',   color: 'var(--status-completed-text)' } },
+  CANCELLED:   { style: { backgroundColor: 'var(--status-cancelled-bg)',   color: 'var(--status-cancelled-text)' } },
+  REFUNDED:    { style: { backgroundColor: 'var(--status-refunded-bg)',    color: 'var(--status-refunded-text)' } },
 };
 
 const customerCollectedStyle = {
-  className:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  style: { backgroundColor: 'var(--status-payment-due-bg)', color: 'var(--status-payment-due-text)' } as React.CSSProperties,
 };
 
 export function StatusPill({
@@ -33,18 +33,15 @@ export function StatusPill({
   const normalizedStatus = normalizeBookingStatus(status);
   const isCustomerPaymentDue =
     viewerRole === "CUSTOMER" && normalizedStatus === "COLLECTED";
-  const style = isCustomerPaymentDue
-    ? customerCollectedStyle
-    : (statusStyle[normalizedStatus] ?? {
-        className: "bg-gray-100 text-gray-600",
-      });
+  const pillStyle = isCustomerPaymentDue
+    ? customerCollectedStyle.style
+    : (statusStyle[normalizedStatus]?.style ?? { backgroundColor: '#e5e7eb', color: '#374151' });
   const label = getBookingStatusLabel(status, viewerRole);
   return (
-    <span className={cn(
-      'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-      style.className,
-      className
-    )}>
+    <span
+      className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', className)}
+      style={pillStyle}
+    >
       {label}
     </span>
   );
