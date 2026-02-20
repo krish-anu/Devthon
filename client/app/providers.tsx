@@ -52,10 +52,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           {children}
           <PhoneVerificationModal />
+          <AssistantChatbox />
         </AuthProvider>
         <SmoothScrollHandler />
         <Toaster />
-        <AssistantChatbox />
       </QueryClientProvider>
     </GoogleOAuthProvider>
   );

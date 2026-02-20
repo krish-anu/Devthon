@@ -5,10 +5,12 @@ import { Bot } from "lucide-react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/components/auth/auth-provider";
 import { getPageContext, PageContext } from "@/lib/page-context";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "t2c-assistant-chat";
+const SESSION_ID_KEY = "t2c-assistant-session-id";
 const MAX_MESSAGES = 20;
 const WELCOME_MESSAGE =
   "Hi 👋 I'm your Trash2Treasure AI assistant. How can I help you?";
@@ -22,12 +24,34 @@ const BLOCKED_PROTOCOLS = new Set([
   "javascript:",
 ]);
 const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
+const QUICK_COMMANDS = [
+  { label: "My bookings", prompt: "Show my bookings" },
+  { label: "My points", prompt: "Show my points and rewards summary" },
+  { label: "Pending pickups", prompt: "Show my pending pickups" },
+  { label: "How rewards work", prompt: "Explain how rewards work" },
+  { label: "Waste types & pricing", prompt: "Show waste types and pricing rates" },
+];
+
+type SuggestedAction = {
+  label: string;
+  href: string;
+};
+
+type ChatApiResponse = {
+  reply: string;
+  mode?: "knowledge" | "data" | "mixed";
+  sources?: string[];
+  suggestedActions?: SuggestedAction[];
+};
 
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: number;
+  mode?: "knowledge" | "data" | "mixed";
+  sources?: string[];
+  suggestedActions?: SuggestedAction[];
 };
 
 const markdownComponents: Components = {
@@ -96,6 +120,26 @@ function createId() {
   return `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function sanitizeSuggestedActions(value: unknown): SuggestedAction[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      const label =
+        typeof (item as any)?.label === "string"
+          ? (item as any).label.trim()
+          : "";
+      const href =
+        typeof (item as any)?.href === "string"
+          ? (item as any).href.trim()
+          : "";
+      if (!label || !href) return null;
+      if (!href.startsWith("/") || href.startsWith("//")) return null;
+      return { label, href };
+    })
+    .filter(Boolean)
+    .slice(0, 6) as SuggestedAction[];
+}
+
 function isRelativeUrl(value: string) {
   if (value.startsWith("//")) return false;
   return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value);
@@ -139,11 +183,13 @@ function getSafePageContext() {
 }
 
 export default function AssistantChatbox() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const sessionIdRef = useRef<string>("");
   const pageContextRef = useRef<PageContext | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -157,8 +203,9 @@ export default function AssistantChatbox() {
   const prevMessagesCountRef = useRef(messages.length);
 
   useEffect(() => {
-    const stored =
-      typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    if (typeof window === "undefined") return;
+
+    const stored = window.sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as ChatMessage[];
@@ -169,29 +216,21 @@ export default function AssistantChatbox() {
         // ignore malformed storage
       }
     }
-    setHasHydrated(true);
-  }, []);
 
-  // Clear stored chat history when the page is being refreshed or unloaded
-  // This ensures a fresh assistant session after a hard refresh
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleBeforeUnload = () => {
-      localStorage.removeItem(STORAGE_KEY);
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    // Some browsers fire pagehide instead of beforeunload in certain cases
-    window.addEventListener("pagehide", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("pagehide", handleBeforeUnload);
-    };
+    let sessionId = window.sessionStorage.getItem(SESSION_ID_KEY);
+    if (!sessionId) {
+      sessionId = createId();
+      window.sessionStorage.setItem(SESSION_ID_KEY, sessionId);
+    }
+    sessionIdRef.current = sessionId;
+
+    setHasHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hasHydrated) return;
     if (typeof window === "undefined") return;
-    localStorage.setItem(
+    window.sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(messages.slice(-MAX_MESSAGES)),
     );
@@ -293,13 +332,14 @@ export default function AssistantChatbox() {
       }));
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  const sendMessage = async (overrideMessage?: string) => {
+    const outgoing = (overrideMessage ?? input).trim();
+    if (!outgoing || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: createId(),
       role: "user",
-      content: input.trim(),
+      content: outgoing,
       createdAt: Date.now(),
     };
 
@@ -309,29 +349,39 @@ export default function AssistantChatbox() {
 
     const pageContext = getSafePageContext();
     pageContextRef.current = pageContext;
+    if (!sessionIdRef.current && typeof window !== "undefined") {
+      const fallbackSessionId = createId();
+      window.sessionStorage.setItem(SESSION_ID_KEY, fallbackSessionId);
+      sessionIdRef.current = fallbackSessionId;
+    }
 
     try {
       const historyForRequest = chatHistory.slice(-(MAX_MESSAGES - 1));
-      const response = await apiFetch<{ reply: string }>(
-        "/chat",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            messages: [
-              ...historyForRequest,
-              { role: "user", content: userMessage.content },
-            ],
-            pageContext,
-          }),
-        },
-        false,
-      );
+      const response = await apiFetch<ChatApiResponse>("/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          messages: [
+            ...historyForRequest,
+            { role: "user", content: userMessage.content },
+          ],
+          pageContext,
+          currentRoute:
+            typeof window !== "undefined" ? window.location.pathname : "",
+          roleHint: user?.role ?? "GUEST",
+          sessionId: sessionIdRef.current || undefined,
+        }),
+      });
 
       const assistantMessage: ChatMessage = {
         id: createId(),
         role: "assistant",
         content:
           response.reply || "Sorry, I could not generate a reply right now.",
+        mode: response.mode,
+        sources: Array.isArray(response.sources)
+          ? response.sources.slice(0, 6)
+          : [],
+        suggestedActions: sanitizeSuggestedActions(response.suggestedActions),
         createdAt: Date.now(),
       };
 
@@ -354,6 +404,13 @@ export default function AssistantChatbox() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openSuggestedAction = (href: string) => {
+    if (typeof window === "undefined") return;
+    if (!href.startsWith("/") || href.startsWith("//")) return;
+    setIsOpen(false);
+    window.location.assign(href);
   };
 
   return (
@@ -381,7 +438,7 @@ export default function AssistantChatbox() {
             <div>
               <p className="text-sm font-semibold">Trash2Treasure AI</p>
               <p className="text-xs text-[color:var(--muted)]">
-                Site-aware help
+                Whole website assistant
               </p>
             </div>
           </div>
@@ -423,12 +480,34 @@ export default function AssistantChatbox() {
                   )}
                 >
                   {message.role === "assistant" ? (
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={markdownComponents}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                    <>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={markdownComponents}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                      {message.suggestedActions &&
+                        message.suggestedActions.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {message.suggestedActions.map((action) => (
+                              <button
+                                key={`${action.label}-${action.href}`}
+                                type="button"
+                                onClick={() => openSuggestedAction(action.href)}
+                                className="rounded-full border border-[color:var(--border)] bg-[color:var(--card)] px-2 py-1 text-[11px] text-[color:var(--foreground)] transition hover:border-[color:var(--brand)]"
+                              >
+                                {action.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      {message.sources && message.sources.length > 0 && (
+                        <p className="mt-2 text-[11px] text-[color:var(--muted)]">
+                          Sources: {message.sources.join("; ")}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   )}
@@ -445,6 +524,19 @@ export default function AssistantChatbox() {
             )}
           </div>
           <div className="border-t border-[color:var(--border)] px-4 py-3">
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {QUICK_COMMANDS.map((command) => (
+                <button
+                  key={command.label}
+                  type="button"
+                  onClick={() => sendMessage(command.prompt)}
+                  disabled={isLoading}
+                  className="rounded-full border border-[color:var(--border)] px-2 py-1 text-[11px] text-[color:var(--muted)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--foreground)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {command.label}
+                </button>
+              ))}
+            </div>
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -457,14 +549,14 @@ export default function AssistantChatbox() {
                   }
                 }}
                 rows={1}
-                placeholder="Ask about this page..."
+                placeholder="Ask anything..."
                 className="min-h-[44px] flex-1 resize-none rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 py-2 text-sm text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)] assistant-input-scrollbar"
                 aria-label="Type your message"
                 disabled={isLoading}
               />
               <button
                 type="button"
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 disabled={!input.trim() || isLoading}
                 className="rounded-xl bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Send message"
