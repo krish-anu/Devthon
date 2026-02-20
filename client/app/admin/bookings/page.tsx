@@ -306,19 +306,20 @@ export default function AdminBookingsPage() {
         </Card>
       ) : (
         <Card>
-          <Table className="min-w-[1000px] md:min-w-0 md:table-fixed [&_th]:md:whitespace-normal [&_td]:md:whitespace-normal">
+          <Table className="w-full md:table-auto [&_th]:md:whitespace-normal [&_td]:md:whitespace-normal">
             <TableHeader>
               <TableRow>
-                <TableHead>Booking ID</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Waste Type</TableHead>
-                <TableHead>Images</TableHead>
-                <TableHead>Weight</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Driver</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
+                {/* default widths, let content dictate actual size with auto layout */}
+                <TableHead className="w-24">Booking ID</TableHead>
+                <TableHead className="w-32">User</TableHead>
+                <TableHead className="w-32">Waste Type</TableHead>
+                <TableHead className="w-24">Images</TableHead>
+                <TableHead className="w-24">Weight</TableHead>
+                <TableHead className="w-24">Amount</TableHead>
+                <TableHead className="w-auto">Driver</TableHead>
+                <TableHead className="w-auto">Status</TableHead>
+                <TableHead className="w-28">Date</TableHead>
+                <TableHead className="w-auto">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -381,38 +382,37 @@ export default function AdminBookingsPage() {
                         ? booking.finalAmountLkr.toFixed(2)
                         : "0.00"}
                     </TableCell>
-                    <TableCell>
-                      <div className="space-y-2">
-                        <div>{booking.driver?.fullName ?? "Unassigned"}</div>
-                        <select
-                          className="h-9 w-full rounded-md border border-(--border) bg-(--card) px-2 text-sm"
-                          value={booking.driver?.id ?? ""}
-                          onChange={(event) =>
-                            handleAssign(booking.id, event.target.value)
-                          }
-                          disabled={
-                            !canAssignDriver ||
-                            assigningId === booking.id ||
-                            driverOptions.length === 0
-                          }
-                        >
-                          <option value="">Select driver</option>
-                          {driverOptions.map((driver) => (
-                            <option key={driver.id} value={driver.id}>
-                              {driver.fullName} ({driver.status})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <TableCell className="w-auto whitespace-nowrap">
+                      <select
+                        className="h-9 w-auto rounded-md border border-(--border) bg-(--card) px-2 text-sm"
+                        value={booking.driver?.id ?? ""}
+                        onChange={(event) =>
+                          handleAssign(booking.id, event.target.value)
+                        }
+                        disabled={
+                          !canAssignDriver ||
+                          assigningId === booking.id ||
+                          driverOptions.length === 0
+                        }
+                      >
+                        <option value="">
+                          {booking.driver ? booking.driver.fullName : "Select driver"}
+                        </option>
+                        {driverOptions.map((driver) => (
+                          <option key={driver.id} value={driver.id}>
+                            {driver.fullName} ({driver.status})
+                          </option>
+                        ))}
+                      </select>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="w-auto whitespace-nowrap">
                       <StatusPill status={booking.status} viewerRole="ADMIN" />
                     </TableCell>
                     <TableCell>
                       {new Date(booking.createdAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
+                    <TableCell className="w-auto whitespace-nowrap">
+                      <div className="flex flex-nowrap gap-2">
                         {canCompleteBooking && (
                           <Button
                             size="sm"
@@ -423,8 +423,9 @@ export default function AdminBookingsPage() {
                               statusUpdatingId === booking.id ||
                               !hasCollectionData
                             }
+                            title="Mark as completed"
                           >
-                            Complete
+                            ✓
                           </Button>
                         )}
                         {canCancelBooking && (
@@ -435,8 +436,9 @@ export default function AdminBookingsPage() {
                               handleStatusChange(booking.id, "CANCELLED")
                             }
                             disabled={statusUpdatingId === booking.id}
+                            title="Cancel booking"
                           >
-                            Cancel
+                            ×
                           </Button>
                         )}
                         {canRefundBooking && (
