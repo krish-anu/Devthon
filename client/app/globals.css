@@ -46,6 +46,32 @@ html:not([data-theme]) { visibility: hidden; }
   --scrollbar-track: transparent;
   --auth-text: #0f172a; /* text color for auth header in light mode */
   --auth-image-transition-duration: 20s;
+  /* Status pill colors – light mode */
+  --status-created-bg: #64748b;
+  --status-created-text: #ffffff;
+  --status-assigned-bg: #6366f1;
+  --status-assigned-text: #ffffff;
+  --status-in-progress-bg: #10b981;
+  --status-in-progress-text: #ffffff;
+  --status-collected-bg: #a855f7;
+  --status-collected-text: #ffffff;
+  --status-completed-bg: var(--brand);
+  --status-completed-text: #ffffff;
+  --status-cancelled-bg: #f43f5e;
+  --status-cancelled-text: #ffffff;
+  --status-refunded-bg: #6b7280;
+  --status-refunded-text: #ffffff;
+  --status-payment-due-bg: #f59e0b;
+  --status-payment-due-text: #ffffff;
+  /* Badge colors – light mode */
+  --badge-default-bg: rgba(80, 123, 45, 0.15);
+  --badge-default-text: #000000;
+  --badge-warning-bg: rgba(251, 191, 36, 0.3);
+  --badge-warning-text: #000000;
+  --badge-danger-bg: rgba(244, 63, 94, 0.2);
+  --badge-danger-text: #000000;
+  --badge-info-bg: rgba(14, 165, 233, 0.2);
+  --badge-info-text: #000000;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   --font-display: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 } 
@@ -71,6 +97,32 @@ html:not([data-theme]) { visibility: hidden; }
   --scrollbar-thumb: rgba(var(--brand-rgb), 0.9);
   --scrollbar-thumb-hover: rgba(var(--brand-rgb), 0.6);
   --scrollbar-track: rgba(255, 255, 255, 0.02);
+  /* Status pill colors – dark mode */
+  --status-created-bg: rgba(100, 116, 139, 0.25);
+  --status-created-text: #94a3b8;
+  --status-assigned-bg: rgba(99, 102, 241, 0.25);
+  --status-assigned-text: #818cf8;
+  --status-in-progress-bg: rgba(16, 185, 129, 0.25);
+  --status-in-progress-text: #34d399;
+  --status-collected-bg: rgba(168, 85, 247, 0.25);
+  --status-collected-text: #c084fc;
+  --status-completed-bg: rgba(75, 220, 0, 0.2);
+  --status-completed-text: var(--brand);
+  --status-cancelled-bg: rgba(244, 63, 94, 0.25);
+  --status-cancelled-text: #fb7185;
+  --status-refunded-bg: rgba(107, 114, 128, 0.25);
+  --status-refunded-text: #9ca3af;
+  --status-payment-due-bg: rgba(245, 158, 11, 0.25);
+  --status-payment-due-text: #fbbf24;
+  /* Badge colors – dark mode */
+  --badge-default-bg: rgba(75, 220, 0, 0.15);
+  --badge-default-text: #4bdc00;
+  --badge-warning-bg: rgba(251, 191, 36, 0.2);
+  --badge-warning-text: #fbbf24;
+  --badge-danger-bg: rgba(244, 63, 94, 0.2);
+  --badge-danger-text: #fb7185;
+  --badge-info-bg: rgba(14, 165, 233, 0.2);
+  --badge-info-text: #38bdf8;
 }
 
 @media (prefers-color-scheme: dark) {

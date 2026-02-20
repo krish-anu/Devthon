@@ -230,7 +230,7 @@ export default function BookingHistoryPage() {
                   <TableCell>
                     {booking.wasteCategory?.name ?? "Unknown"}
                   </TableCell>
-                  <TableCell>{booking.actualWeightKg ?? "-"} kg</TableCell>
+                  <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div>
