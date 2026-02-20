@@ -23,12 +23,12 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitive.Viewport.displayName;
 
 const toastVariants = {
-  default: 'border-(--border) bg-(--card) text-foreground',
-  success: 'border-(--brand)/30 bg-(--brand)/10 text-(--brand-strong)',
-  error: 'border-rose-500/30 bg-rose-500/10 text-rose-100',
-  warning: 'border-amber-400/30 bg-amber-400/10 text-amber-100',
-  info: 'border-sky-400/30 bg-sky-400/10 text-sky-100',
-  loading: 'border-(--border) bg-(--surface) text-(--muted)',
+  default: 'border-gray-200 bg-white text-gray-900',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  error: 'border-rose-200 bg-rose-50 text-rose-800',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800',
+  info: 'border-sky-200 bg-sky-50 text-sky-800',
+  loading: 'border-gray-200 bg-white text-gray-600',
 };
 
 const Toast = React.forwardRef<
@@ -40,7 +40,7 @@ const Toast = React.forwardRef<
   <ToastPrimitive.Root
     ref={ref}
     className={cn(
-      'group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border px-4 py-3 shadow-xl backdrop-blur',
+      'group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border px-4 py-3 shadow-lg',
       toastVariants[variant],
       className,
     )}
