@@ -1,12 +1,5 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Req, UseGuards, Query } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -23,6 +16,7 @@ import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
 export class DriverController {
   constructor(private driverService: DriverService) {}
 
+  @CacheTTL(0)
   @Get('bookings')
   getBookings(
     @Req() req: any,
@@ -38,6 +32,7 @@ export class DriverController {
     });
   }
 
+  @CacheTTL(0)
   @Get('bookings/:id')
   getBookingById(@Param('id') id: string, @Req() req: any) {
     return this.driverService.getBookingById(req.user.sub, id);

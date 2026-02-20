@@ -3,7 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
@@ -12,7 +15,10 @@ import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async getMe(userId: string) {
     try {
@@ -179,6 +185,10 @@ export class UsersService {
       where: { id: userId },
       include: USER_PROFILE_INCLUDE,
     });
+
+    // Clear server cache so /me returns the fresh profile immediately
+    await (this.cacheManager as any).reset();
+
     return flattenUser(updated);
   }
 

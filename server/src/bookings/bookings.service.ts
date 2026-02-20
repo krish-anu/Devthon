@@ -3,7 +3,10 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { BookingStatus, NotificationLevel, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -38,6 +41,7 @@ export class BookingsService {
     private pushService: PushService,
     private config: ConfigService,
     private bookingImageScreeningService: BookingImageScreeningService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async list(userId: string, query: BookingsQueryDto) {
@@ -262,6 +266,9 @@ export class BookingsService {
         );
       }
 
+      // Invalidate server cache so downstream GET /bookings and related queries return fresh data
+      await (this.cacheManager as any).reset();
+
       return created.map((item) => this.normalizeBookingForRead(item));
     } catch (err) {
       this.transactionLogger.logError('booking.create.failure', err as Error, {
@@ -306,6 +313,9 @@ export class BookingsService {
           url: `/users/bookings/${id}`,
         })
         .catch(() => {});
+
+      // ensure cached booking lists / details are fresh
+      await (this.cacheManager as any).reset();
 
       return this.normalizeBookingForRead(updated);
     } catch (err) {
@@ -354,6 +364,9 @@ export class BookingsService {
           url: `/users/bookings/${id}`,
         })
         .catch(() => {});
+
+      // remove cached responses so frontend doesn't see the deleted booking again
+      await (this.cacheManager as any).reset();
 
       return { message: 'Booking deleted' };
     } catch (err) {
@@ -420,6 +433,10 @@ export class BookingsService {
         bookingId: id,
         location,
       });
+
+      // location update can affect live tracking UI — clear cache so clients refetch
+      await (this.cacheManager as any).reset();
+
       return { message: 'Location updated successfully' };
     } catch (err) {
       this.transactionLogger.logError(
@@ -511,6 +528,9 @@ export class BookingsService {
         bookingId: id,
         status: updated.status,
       });
+
+      // ensure any cached booking list/details reflect updated status immediately
+      await (this.cacheManager as any).reset();
 
       return this.normalizeBookingForRead(updated);
     } catch (err) {

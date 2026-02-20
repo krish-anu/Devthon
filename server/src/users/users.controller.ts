@@ -8,6 +8,7 @@ import {
   Post,
   Delete,
 } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -19,6 +20,7 @@ import { DeleteAccountDto } from './dto/delete-account.dto';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
+  @CacheTTL(0)
   @Get('me')
   getMe(@Req() req: any) {
     return this.usersService.getMe(req.user.sub);

@@ -43,7 +43,7 @@ export function Sidebar({
           <span className="text-[0.65rem] sm:text-xs uppercase tracking-wider sm:tracking-widest opacity-80 block truncate">
             {title}
           </span>
-          <div className="text-base sm:text-2xl font-bold truncate">
+          <div className="text-base sm:text-xl font-bold truncate">
             Trash2Treasure
           </div>
         </div>
