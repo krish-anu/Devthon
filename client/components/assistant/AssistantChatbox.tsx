@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot } from "lucide-react";
@@ -7,13 +7,79 @@ import remarkGfm from "remark-gfm";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/components/auth/auth-provider";
 import { getPageContext, PageContext } from "@/lib/page-context";
+import {
+  ASSISTANT_BOOKING_DRAFT_KEY,
+  AssistantBookingDraft,
+  isAssistantBookingDraft,
+} from "@/lib/assistant-booking-draft";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "t2c-assistant-chat";
 const SESSION_ID_KEY = "t2c-assistant-session-id";
+const LANGUAGE_KEY = "t2c-assistant-language";
 const MAX_MESSAGES = 20;
-const WELCOME_MESSAGE =
-  "Hi 👋 I'm your Trash2Treasure AI assistant. How can I help you?";
+type AssistantLanguage = "EN" | "SI" | "TA";
+
+const LANGUAGE_OPTIONS: Array<{
+  value: AssistantLanguage;
+  label: string;
+}> = [
+  { value: "EN", label: "English" },
+  { value: "SI", label: "සිංහල" },
+  { value: "TA", label: "தமிழ்" },
+];
+
+const WELCOME_MESSAGES: Record<AssistantLanguage, string> = {
+  EN: "Hi! I'm your Trash2Treasure AI assistant. How can I help you?",
+  SI: "ආයුබෝවන්! මම Trash2Treasure AI සහායකයා. ඔබට මම කෙසේ උදව් කළ හැකිද?",
+  TA: "வணக்கம்! நான் Trash2Treasure AI உதவியாளர். நான் உங்களுக்கு எப்படி உதவலாம்?",
+};
+
+const LOGIN_REQUIRED_MESSAGE_BY_LANGUAGE: Record<AssistantLanguage, string> = {
+  EN: "Please log in first to create a pickup booking. After login, I will ask the same questions as the booking form and prefill it for you.",
+  SI: "පිකප් බුකින් එකක් සෑදීමට පළමුව ලොගින් වන්න. ලොගින් වූ පසු, බුකින් ෆෝමයේම ප්‍රශ්න අසමින් පෙර පුරවන්නම්.",
+  TA: "பிக்கப் பதிவு உருவாக்க முதலில் உள்நுழையவும். உள்நுழைந்த பிறகு, பதிவு படிவத்தில் உள்ள அதே கேள்விகளை கேட்டு முன்பூர்த்தி செய்கிறேன்.",
+};
+
+const SIGN_IN_LABEL_BY_LANGUAGE: Record<AssistantLanguage, string> = {
+  EN: "Sign in",
+  SI: "පිවිසෙන්න",
+  TA: "உள்நுழையவும்",
+};
+
+const QUICK_COMMANDS_BY_LANGUAGE: Record<
+  AssistantLanguage,
+  Array<{ label: string; prompt: string }>
+> = {
+  EN: [
+    { label: "Book a pickup", prompt: "Create a new pickup booking" },
+    { label: "My bookings", prompt: "Show my bookings" },
+    { label: "My points", prompt: "Show my points and rewards summary" },
+    { label: "Pending pickups", prompt: "Show my pending pickups" },
+    { label: "How rewards work", prompt: "Explain how rewards work" },
+    {
+      label: "Waste types & pricing",
+      prompt: "Show waste types and pricing rates",
+    },
+  ],
+  SI: [
+    { label: "නව පිකප් වෙන්කරන්න", prompt: "නව පිකප් බුකින් එකක් සාදන්න" },
+    { label: "මගේ බුකින්", prompt: "මගේ බුකින් පෙන්වන්න" },
+    { label: "මගේ ලකුණු", prompt: "මගේ ලකුණු සහ ත්‍යාග සාරාංශය පෙන්වන්න" },
+    { label: "අපේක්ෂිත පිකප්", prompt: "මගේ අපේක්ෂිත පිකප් පෙන්වන්න" },
+    { label: "ත්‍යාග ක්‍රමය", prompt: "ත්‍යාග ක්‍රමය ක්‍රියාකරන ආකාරය පැහැදිලි කරන්න" },
+    { label: "අපද්‍රව්‍ය සහ මිල", prompt: "අපද්‍රව්‍ය වර්ග සහ මිල ගණන් පෙන්වන්න" },
+  ],
+  TA: [
+    { label: "பிக்கப் பதிவு", prompt: "புதிய பிக்கப் முன்பதிவு உருவாக்கு" },
+    { label: "என் முன்பதிவுகள்", prompt: "என் முன்பதிவுகளை காட்டு" },
+    { label: "என் புள்ளிகள்", prompt: "என் புள்ளிகள் மற்றும் பரிசு சுருக்கத்தை காட்டு" },
+    { label: "நிலுவை பிக்கப்", prompt: "என் நிலுவையில் உள்ள பிக்கப்புகளை காட்டு" },
+    { label: "பரிசு எப்படி?", prompt: "பரிசு திட்டம் எப்படி செயல்படுகிறது என்பதை விளக்கு" },
+    { label: "கழிவு & விலை", prompt: "கழிவு வகைகள் மற்றும் விலை விவரங்களை காட்டு" },
+  ],
+};
+const WELCOME_MESSAGE_VALUES = new Set(Object.values(WELCOME_MESSAGES));
 const BLOCKED_PROTOCOLS = new Set([
   "chrome-extension:",
   "about:",
@@ -24,24 +90,18 @@ const BLOCKED_PROTOCOLS = new Set([
   "javascript:",
 ]);
 const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
-const QUICK_COMMANDS = [
-  { label: "My bookings", prompt: "Show my bookings" },
-  { label: "My points", prompt: "Show my points and rewards summary" },
-  { label: "Pending pickups", prompt: "Show my pending pickups" },
-  { label: "How rewards work", prompt: "Explain how rewards work" },
-  { label: "Waste types & pricing", prompt: "Show waste types and pricing rates" },
-];
-
-type SuggestedAction = {
-  label: string;
-  href: string;
-};
 
 type ChatApiResponse = {
   reply: string;
   mode?: "knowledge" | "data" | "mixed";
-  sources?: string[];
-  suggestedActions?: SuggestedAction[];
+  responseLanguage?: AssistantLanguage;
+  suggestedActions?: Array<{ label: string; href: string }>;
+  bookingDraft?: AssistantBookingDraft;
+};
+
+type ChatSuggestedAction = {
+  label: string;
+  href: string;
 };
 
 type ChatMessage = {
@@ -50,8 +110,6 @@ type ChatMessage = {
   content: string;
   createdAt: number;
   mode?: "knowledge" | "data" | "mixed";
-  sources?: string[];
-  suggestedActions?: SuggestedAction[];
 };
 
 const markdownComponents: Components = {
@@ -120,29 +178,54 @@ function createId() {
   return `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function sanitizeSuggestedActions(value: unknown): SuggestedAction[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      const label =
-        typeof (item as any)?.label === "string"
-          ? (item as any).label.trim()
-          : "";
-      const href =
-        typeof (item as any)?.href === "string"
-          ? (item as any).href.trim()
-          : "";
-      if (!label || !href) return null;
-      if (!href.startsWith("/") || href.startsWith("//")) return null;
-      return { label, href };
-    })
-    .filter(Boolean)
-    .slice(0, 6) as SuggestedAction[];
+function isAssistantLanguage(value: string): value is AssistantLanguage {
+  return value === "EN" || value === "SI" || value === "TA";
+}
+
+function isWelcomeMessage(content: string) {
+  return WELCOME_MESSAGE_VALUES.has(content);
+}
+
+function stripSourcesFooter(content: string) {
+  return content.replace(/\n+Sources:\s*[\s\S]*$/i, "").trim();
+}
+
+function hasCorruptedLanguageText(content: string) {
+  return /\?{3,}/.test(content) || /(?:Ã|â€|à¶|à®|à¯|à·)/.test(content);
 }
 
 function isRelativeUrl(value: string) {
   if (value.startsWith("//")) return false;
   return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value);
+}
+
+function isSafeInternalHref(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/")) return false;
+  if (trimmed.startsWith("//")) return false;
+  return true;
+}
+
+function isBookingCreationIntent(text: string) {
+  const q = text.toLowerCase();
+  const isHowToQuestion =
+    /\bhow to\b/.test(q) || /\bhow do i\b/.test(q) || /\bhow can i\b/.test(q);
+  if (isHowToQuestion) return false;
+
+  const hasCreation =
+    /\b(create|new|book|schedule|arrange|request)\b/.test(q) &&
+    /\b(pickup|pick up|collection|collect)\b/.test(q);
+  const direct =
+    /\bbook\s+(a\s+)?pickup\b/.test(q) ||
+    /\bcreate booking\b/.test(q) ||
+    /\bnew booking\b/.test(q) ||
+    /\bpick\s*up\b/.test(q);
+  const lookupOnly =
+    /\b(my bookings|booking history|booking status|pending pickups|show bookings|list bookings)\b/.test(
+      q,
+    );
+
+  return !lookupOnly && (hasCreation || direct);
 }
 
 function toSafeRequestUrl(rawUrl: string) {
@@ -187,6 +270,9 @@ export default function AssistantChatbox() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [languagePreference, setLanguagePreference] =
+    useState<AssistantLanguage>("EN");
+  const [suggestedActions, setSuggestedActions] = useState<ChatSuggestedAction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
   const sessionIdRef = useRef<string>("");
@@ -202,6 +288,11 @@ export default function AssistantChatbox() {
   const [hasUnread, setHasUnread] = useState(false);
   const prevMessagesCountRef = useRef(messages.length);
 
+  const quickCommands = useMemo(
+    () => QUICK_COMMANDS_BY_LANGUAGE[languagePreference],
+    [languagePreference],
+  );
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -210,7 +301,16 @@ export default function AssistantChatbox() {
       try {
         const parsed = JSON.parse(stored) as ChatMessage[];
         if (Array.isArray(parsed)) {
-          setMessages(parsed.slice(-MAX_MESSAGES));
+          const hasCorruptedCache = parsed.some(
+            (message) =>
+              typeof message?.content === "string" &&
+              hasCorruptedLanguageText(message.content),
+          );
+          if (hasCorruptedCache) {
+            window.sessionStorage.removeItem(STORAGE_KEY);
+          } else {
+            setMessages(parsed.slice(-MAX_MESSAGES));
+          }
         }
       } catch {
         // ignore malformed storage
@@ -224,6 +324,11 @@ export default function AssistantChatbox() {
     }
     sessionIdRef.current = sessionId;
 
+    const storedLanguage = window.sessionStorage.getItem(LANGUAGE_KEY);
+    if (storedLanguage && isAssistantLanguage(storedLanguage)) {
+      setLanguagePreference(storedLanguage);
+    }
+
     setHasHydrated(true);
   }, []);
 
@@ -235,6 +340,12 @@ export default function AssistantChatbox() {
       JSON.stringify(messages.slice(-MAX_MESSAGES)),
     );
   }, [messages, hasHydrated]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(LANGUAGE_KEY, languagePreference);
+  }, [languagePreference, hasHydrated]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -257,12 +368,12 @@ export default function AssistantChatbox() {
       const welcome: ChatMessage = {
         id: createId(),
         role: "assistant",
-        content: WELCOME_MESSAGE,
+        content: WELCOME_MESSAGES[languagePreference],
         createdAt: Date.now(),
       };
       setMessages([welcome]);
     }
-  }, [isOpen, messages.length, hasHydrated]);
+  }, [isOpen, messages.length, hasHydrated, languagePreference]);
 
   useEffect(() => {
     if (!listRef.current) return;
@@ -324,11 +435,14 @@ export default function AssistantChatbox() {
   const chatHistory = useMemo(() => {
     return messages
       .filter((message) => message.content.trim())
-      .filter((message) => message.content !== WELCOME_MESSAGE)
+      .filter((message) => !isWelcomeMessage(message.content))
       .slice(-MAX_MESSAGES)
       .map((message) => ({
         role: message.role,
-        content: message.content.trim(),
+        content:
+          message.role === "assistant"
+            ? stripSourcesFooter(message.content)
+            : message.content.trim(),
       }));
   }, [messages]);
 
@@ -346,6 +460,23 @@ export default function AssistantChatbox() {
     setMessages((prev) => [...prev, userMessage].slice(-MAX_MESSAGES));
     setInput("");
     setIsLoading(true);
+    setSuggestedActions([]);
+
+    if (isBookingCreationIntent(outgoing) && !user) {
+      const assistantMessage: ChatMessage = {
+        id: createId(),
+        role: "assistant",
+        content: LOGIN_REQUIRED_MESSAGE_BY_LANGUAGE[languagePreference],
+        createdAt: Date.now(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage].slice(-MAX_MESSAGES));
+      setSuggestedActions([
+        { label: SIGN_IN_LABEL_BY_LANGUAGE[languagePreference], href: "/login" },
+      ]);
+      setIsLoading(false);
+      return;
+    }
 
     const pageContext = getSafePageContext();
     pageContextRef.current = pageContext;
@@ -369,26 +500,46 @@ export default function AssistantChatbox() {
             typeof window !== "undefined" ? window.location.pathname : "",
           roleHint: user?.role ?? "GUEST",
           sessionId: sessionIdRef.current || undefined,
+          preferredLanguage: languagePreference,
         }),
       });
+
+      const safeActions = (response.suggestedActions ?? [])
+        .filter(
+          (action): action is ChatSuggestedAction =>
+            Boolean(action?.label) &&
+            typeof action.label === "string" &&
+            typeof action.href === "string" &&
+            isSafeInternalHref(action.href),
+        )
+        .slice(0, 4);
+      setSuggestedActions(safeActions);
+
+      if (
+        typeof window !== "undefined" &&
+        response.bookingDraft &&
+        isAssistantBookingDraft(response.bookingDraft)
+      ) {
+        window.sessionStorage.setItem(
+          ASSISTANT_BOOKING_DRAFT_KEY,
+          JSON.stringify(response.bookingDraft),
+        );
+      }
 
       const assistantMessage: ChatMessage = {
         id: createId(),
         role: "assistant",
-        content:
+        content: stripSourcesFooter(
           response.reply || "Sorry, I could not generate a reply right now.",
+        ),
         mode: response.mode,
-        sources: Array.isArray(response.sources)
-          ? response.sources.slice(0, 6)
-          : [],
-        suggestedActions: sanitizeSuggestedActions(response.suggestedActions),
         createdAt: Date.now(),
       };
 
       setMessages((prev) => [...prev, assistantMessage].slice(-MAX_MESSAGES));
-    } catch (error: any) {
+    } catch (error: unknown) {
       const rawMessage =
-        typeof error?.message === "string"
+        error instanceof Error
           ? error.message
           : "Sorry, something went wrong while contacting the assistant.";
       const friendlyMessage = rawMessage.includes("Cannot POST /api/chat")
@@ -406,13 +557,6 @@ export default function AssistantChatbox() {
     }
   };
 
-  const openSuggestedAction = (href: string) => {
-    if (typeof window === "undefined") return;
-    if (!href.startsWith("/") || href.startsWith("//")) return;
-    setIsOpen(false);
-    window.location.assign(href);
-  };
-
   return (
     <div
       ref={containerRef}
@@ -421,7 +565,7 @@ export default function AssistantChatbox() {
     >
       <div
         className={cn(
-          "pointer-events-none fixed bottom-[4.5rem] right-3 left-3 w-auto max-w-[calc(100vw-1.5rem)] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:bottom-20 sm:right-5 sm:left-auto sm:w-[360px] sm:max-w-none",
+          "pointer-events-none fixed bottom-[4.5rem] right-3 left-3 w-auto max-w-[calc(100vw-1.5rem)] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:bottom-20 sm:right-5 sm:left-auto sm:w-[400px] sm:max-w-none",
           isOpen
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "translate-y-2 scale-95 opacity-0",
@@ -451,7 +595,7 @@ export default function AssistantChatbox() {
             Close
           </button>
         </div>
-        <div className="flex h-[360px] max-h-[65vh] flex-col sm:max-h-[70vh]">
+        <div className="flex h-[390px] max-h-[70vh] flex-col sm:h-[430px] sm:max-h-[75vh]">
           <div
             ref={listRef}
             className={cn(
@@ -485,28 +629,8 @@ export default function AssistantChatbox() {
                         remarkPlugins={[remarkGfm]}
                         components={markdownComponents}
                       >
-                        {message.content}
+                        {stripSourcesFooter(message.content)}
                       </ReactMarkdown>
-                      {message.suggestedActions &&
-                        message.suggestedActions.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {message.suggestedActions.map((action) => (
-                              <button
-                                key={`${action.label}-${action.href}`}
-                                type="button"
-                                onClick={() => openSuggestedAction(action.href)}
-                                className="rounded-full border border-[color:var(--border)] bg-[color:var(--card)] px-2 py-1 text-[11px] text-[color:var(--foreground)] transition hover:border-[color:var(--brand)]"
-                              >
-                                {action.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      {message.sources && message.sources.length > 0 && (
-                        <p className="mt-2 text-[11px] text-[color:var(--muted)]">
-                          Sources: {message.sources.join("; ")}
-                        </p>
-                      )}
                     </>
                   ) : (
                     <p className="whitespace-pre-wrap">{message.content}</p>
@@ -524,8 +648,35 @@ export default function AssistantChatbox() {
             )}
           </div>
           <div className="border-t border-[color:var(--border)] px-4 py-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label
+                htmlFor="assistant-language"
+                className="text-[11px] font-medium text-[color:var(--muted)]"
+              >
+                Response language
+              </label>
+              <select
+                id="assistant-language"
+                value={languagePreference}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  if (isAssistantLanguage(next)) {
+                    setLanguagePreference(next);
+                  }
+                }}
+                disabled={isLoading}
+                className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-2 py-1 text-[11px] text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)] disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Response language"
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="mb-2 flex flex-wrap gap-1.5">
-              {QUICK_COMMANDS.map((command) => (
+              {quickCommands.map((command) => (
                 <button
                   key={command.label}
                   type="button"
@@ -537,6 +688,20 @@ export default function AssistantChatbox() {
                 </button>
               ))}
             </div>
+            {suggestedActions.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {suggestedActions.map((action) => (
+                  <a
+                    key={`${action.label}-${action.href}`}
+                    href={action.href}
+                    className="rounded-full border border-[color:var(--brand)] bg-[color:var(--brand)]/10 px-2 py-1 text-[11px] font-medium text-[color:var(--foreground)] transition hover:bg-[color:var(--brand)]/20"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {action.label}
+                  </a>
+                ))}
+              </div>
+            )}
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -590,3 +755,4 @@ export default function AssistantChatbox() {
     </div>
   );
 }
+

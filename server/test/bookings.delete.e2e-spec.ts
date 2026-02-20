@@ -19,7 +19,13 @@ describe('Bookings delete (e2e)', () => {
 
     const _app = moduleFixture.createNestApplication();
     _app.setGlobalPrefix('api');
-    _app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
+    _app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
     await _app.init();
     return _app;
   }
@@ -35,18 +41,27 @@ describe('Bookings delete (e2e)', () => {
     // 1) Create user via register
     const email = `user+book+${Date.now()}@example.com`;
     const pw = 'PasswordA1';
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({ fullName: 'Booking Owner', email, phone: '+94123456789', password: pw, type: 'HOUSEHOLD', recaptchaToken: 'valid' });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      fullName: 'Booking Owner',
+      email,
+      phone: '+94123456789',
+      password: pw,
+      type: 'HOUSEHOLD',
+      recaptchaToken: 'valid',
+    });
 
-    const loginRes = await request(app.getHttpServer()).post('/api/auth/login').send({ email, password: pw });
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email, password: pw });
     const token = loginRes.body?.accessToken;
     expect(token).toBeDefined();
 
     const userId = loginRes.body.user.id;
 
     // 2) Ensure we have a waste category to reference
-    const wc = await prisma.wasteCategory.create({ data: { name: `wc-${Date.now()}`, description: 'test', isActive: true } });
+    const wc = await prisma.wasteCategory.create({
+      data: { name: `wc-${Date.now()}`, description: 'test', isActive: true },
+    });
 
     // 3) Create a booking record directly via prisma
     const booking = await prisma.booking.create({
@@ -78,7 +93,9 @@ describe('Bookings delete (e2e)', () => {
       .expect(404);
 
     // cleanup created data (in case)
-    await prisma.booking.deleteMany({ where: { id: booking.id } }).catch(() => {});
+    await prisma.booking
+      .deleteMany({ where: { id: booking.id } })
+      .catch(() => {});
     await prisma.wasteCategory.delete({ where: { id: wc.id } }).catch(() => {});
   });
 
@@ -89,23 +106,39 @@ describe('Bookings delete (e2e)', () => {
     // Create owner user
     const ownerEmail = `owner+${Date.now()}@example.com`;
     const ownerPw = 'PasswordA1';
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({ fullName: 'Owner', email: ownerEmail, phone: '+94123456780', password: ownerPw, type: 'HOUSEHOLD', recaptchaToken: 'valid' });
-    const ownerLogin = await request(app.getHttpServer()).post('/api/auth/login').send({ email: ownerEmail, password: ownerPw });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      fullName: 'Owner',
+      email: ownerEmail,
+      phone: '+94123456780',
+      password: ownerPw,
+      type: 'HOUSEHOLD',
+      recaptchaToken: 'valid',
+    });
+    const ownerLogin = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: ownerEmail, password: ownerPw });
     const ownerId = ownerLogin.body.user.id;
 
     // Create attacker user
     const attackerEmail = `att+${Date.now()}@example.com`;
     const attackerPw = 'PasswordA1';
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({ fullName: 'Attacker', email: attackerEmail, phone: '+94123456781', password: attackerPw, type: 'HOUSEHOLD', recaptchaToken: 'valid' });
-    const attackerLoginRes = await request(app.getHttpServer()).post('/api/auth/login').send({ email: attackerEmail, password: attackerPw });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      fullName: 'Attacker',
+      email: attackerEmail,
+      phone: '+94123456781',
+      password: attackerPw,
+      type: 'HOUSEHOLD',
+      recaptchaToken: 'valid',
+    });
+    const attackerLoginRes = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: attackerEmail, password: attackerPw });
     const attackerToken = attackerLoginRes.body.accessToken;
 
     // Create waste category and booking for owner
-    const wc = await prisma.wasteCategory.create({ data: { name: `wc-${Date.now()}`, description: 'test', isActive: true } });
+    const wc = await prisma.wasteCategory.create({
+      data: { name: `wc-${Date.now()}`, description: 'test', isActive: true },
+    });
     const booking = await prisma.booking.create({
       data: {
         userId: ownerId,
@@ -129,7 +162,9 @@ describe('Bookings delete (e2e)', () => {
       .expect(403);
 
     // cleanup
-    await prisma.booking.deleteMany({ where: { id: booking.id } }).catch(() => {});
+    await prisma.booking
+      .deleteMany({ where: { id: booking.id } })
+      .catch(() => {});
     await prisma.wasteCategory.delete({ where: { id: wc.id } }).catch(() => {});
   });
 });

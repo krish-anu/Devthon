@@ -1,4 +1,9 @@
-import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 import dns from 'dns/promises';
 
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -60,7 +65,7 @@ export class EmailDeliverableConstraint implements ValidatorConstraintInterface 
 }
 
 export function IsDeliverableEmail(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isDeliverableEmail',
       target: object.constructor,

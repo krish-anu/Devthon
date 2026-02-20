@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrayMaxSize,
   IsArray,
   IsIn,
@@ -66,4 +66,8 @@ export class ChatRequestDto {
   @IsString()
   @MaxLength(80)
   sessionId?: string;
+
+  @IsOptional()
+  @IsIn(['AUTO', 'EN', 'SI', 'TA'])
+  preferredLanguage?: 'AUTO' | 'EN' | 'SI' | 'TA';
 }

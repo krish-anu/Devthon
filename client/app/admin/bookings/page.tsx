@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Pagination from "@/components/ui/pagination";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2 } from "lucide-react";
+import { ImageIcon, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
 import {
@@ -11,6 +11,7 @@ import {
   canAdminCancel,
   canAdminComplete,
   canAdminRefund,
+  isBookingCompleted,
   normalizeBookingStatus,
 } from "@/lib/booking-status";
 import { BookingStatus, Booking } from "@/lib/types";
@@ -293,7 +294,7 @@ export default function AdminBookingsPage() {
 
       {isLoading ? (
         <Card className="p-6">
-          <SkeletonTableRows columns={9} rows={6} />
+          <SkeletonTableRows columns={10} rows={6} />
         </Card>
       ) : (
         <Card>
@@ -303,6 +304,7 @@ export default function AdminBookingsPage() {
                 <TableHead>Booking ID</TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Waste Type</TableHead>
+                <TableHead>Images</TableHead>
                 <TableHead>Weight</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Driver</TableHead>
@@ -318,6 +320,7 @@ export default function AdminBookingsPage() {
                 const canCompleteBooking = canAdminComplete(booking.status);
                 const canCancelBooking = canAdminCancel(booking.status);
                 const canRefundBooking = canAdminRefund(booking.status);
+                const isCompleted = isBookingCompleted(booking.status);
                 const hasCollectionData =
                   booking.actualWeightKg !== null &&
                   booking.actualWeightKg !== undefined &&
@@ -329,9 +332,47 @@ export default function AdminBookingsPage() {
                     <TableCell>{booking.id.slice(0, 8)}</TableCell>
                     <TableCell>{booking.user?.fullName ?? "--"}</TableCell>
                     <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
+                    <TableCell>
+                      {booking.imageUrls && booking.imageUrls.length > 0 ? (
+                        <div className="flex gap-1 flex-wrap">
+                          {booking.imageUrls.slice(0, 3).map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Click to view full image"
+                            >
+                              <img
+                                src={url}
+                                alt={`Booking image ${idx + 1}`}
+                                className="h-10 w-10 rounded border object-cover hover:ring-2 hover:ring-(--brand)"
+                              />
+                            </a>
+                          ))}
+                          {booking.imageUrls.length > 3 && (
+                            <span className="flex h-10 w-10 items-center justify-center rounded border bg-(--surface-strong) text-xs text-(--muted)">
+                              +{booking.imageUrls.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-(--muted)">
+                          <ImageIcon className="h-3 w-3" /> None
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
                     <TableCell>
-                      LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                      {isCompleted && typeof booking.actualWeightKg === "number"
+                        ? `${booking.actualWeightKg} kg`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      LKR{" "}
+                      {isCompleted && typeof booking.finalAmountLkr === "number"
+                        ? booking.finalAmountLkr.toFixed(2)
+                        : "0.00"}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-2">

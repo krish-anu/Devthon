@@ -31,7 +31,11 @@ async function bootstrap() {
     try {
       const parsed = new URL(origin);
       const hostname = parsed.hostname;
-      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0'
+      ) {
         return true;
       }
       const isPrivateIp =
@@ -65,21 +69,30 @@ async function bootstrap() {
     new winston.transports.Console({
       format:
         process.env.NODE_ENV === 'production'
-          ? winston.format.combine(winston.format.timestamp(), winston.format.json())
+          ? winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            )
           : winston.format.combine(
               winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-              winston.format.printf(({ timestamp, level, message, ...meta }) => {
-                const badge = levelBadge(level);
-                const msg = typeof message === 'string' ? message : JSON.stringify(message);
-                let metaStr = '';
-                try {
-                  const keys = Object.keys(meta || {});
-                  if (keys.length) metaStr = '\n' + JSON.stringify(meta, null, 2);
-                } catch (e) {
-                  metaStr = String(meta);
-                }
-                return `${timestamp} ${badge} ${msg}${metaStr}`;
-              }),
+              winston.format.printf(
+                ({ timestamp, level, message, ...meta }) => {
+                  const badge = levelBadge(level);
+                  const msg =
+                    typeof message === 'string'
+                      ? message
+                      : JSON.stringify(message);
+                  let metaStr = '';
+                  try {
+                    const keys = Object.keys(meta || {});
+                    if (keys.length)
+                      metaStr = '\n' + JSON.stringify(meta, null, 2);
+                  } catch (e) {
+                    metaStr = String(meta);
+                  }
+                  return `${timestamp} ${badge} ${msg}${metaStr}`;
+                },
+              ),
             ),
     }),
   ];
@@ -90,7 +103,10 @@ async function bootstrap() {
         filename: `logs/${LOG_FILE_PREFIX}-%DATE%.log`,
         datePattern: 'YYYY-MM-DD',
         maxFiles: '14d',
-        format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.json(),
+        ),
       }),
     );
     transports.push(
@@ -102,7 +118,8 @@ async function bootstrap() {
           winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
           winston.format.printf(({ timestamp, level, message, ...meta }) => {
             const lvl = (level || '').toUpperCase();
-            const msg = typeof message === 'string' ? message : JSON.stringify(message);
+            const msg =
+              typeof message === 'string' ? message : JSON.stringify(message);
             let metaStr = '';
             try {
               const keys = Object.keys(meta || {});

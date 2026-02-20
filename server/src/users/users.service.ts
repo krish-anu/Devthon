@@ -225,7 +225,9 @@ export class UsersService {
     // If the user has a local password, require confirmation
     if (user.passwordHash) {
       if (!dto?.currentPassword) {
-        throw new BadRequestException('Current password is required to delete this account');
+        throw new BadRequestException(
+          'Current password is required to delete this account',
+        );
       }
       const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
       if (!ok) throw new UnauthorizedException('Current password is incorrect');
@@ -234,7 +236,12 @@ export class UsersService {
     // Snapshot the current user/profile for server logs (avoids adding schema changes in this patch)
     try {
       console.info(`Deleting/anonymizing user ${userId}`, {
-        user: { id: user.id, email: user.email, role: user.role, createdAt: user.createdAt },
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
       });
 
       // Anonymize PII but keep domain data (bookings/payments) for accounting.
@@ -253,15 +260,33 @@ export class UsersService {
         // Clear / anonymize role-specific profile tables
         await tx.customer.updateMany({
           where: { id: userId },
-          data: { fullName: 'Deleted user', phone: '', address: null, avatarUrl: null, status: 'INACTIVE' },
+          data: {
+            fullName: 'Deleted user',
+            phone: '',
+            address: null,
+            avatarUrl: null,
+            status: 'INACTIVE',
+          },
         });
         await tx.admin.updateMany({
           where: { id: userId },
-          data: { fullName: 'Deleted user', phone: '', address: null, avatarUrl: null, approved: false },
+          data: {
+            fullName: 'Deleted user',
+            phone: '',
+            address: null,
+            avatarUrl: null,
+            approved: false,
+          },
         });
         await tx.driver.updateMany({
           where: { id: userId },
-          data: { fullName: 'Deleted user', phone: '', avatarUrl: null, status: 'OFFLINE', approved: false },
+          data: {
+            fullName: 'Deleted user',
+            phone: '',
+            avatarUrl: null,
+            status: 'OFFLINE',
+            approved: false,
+          },
         });
         await tx.recycler.updateMany({
           where: { id: userId },
@@ -269,7 +294,11 @@ export class UsersService {
         });
         await tx.corporate.updateMany({
           where: { id: userId },
-          data: { organizationName: 'Deleted user', contactName: '', phone: '' },
+          data: {
+            organizationName: 'Deleted user',
+            contactName: '',
+            phone: '',
+          },
         });
 
         // Remove sensitive related records
@@ -278,7 +307,10 @@ export class UsersService {
         await tx.userPermission.deleteMany({ where: { userId } });
 
         // Disassociate notifications from this user (keep messages for analytics/audit)
-        await tx.notification.updateMany({ where: { userId }, data: { userId: null } });
+        await tx.notification.updateMany({
+          where: { userId },
+          data: { userId: null },
+        });
       });
 
       return { success: true };

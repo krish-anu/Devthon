@@ -9,11 +9,12 @@ import { apiFetch } from "@/lib/api";
 import { Booking, WasteCategory } from "@/lib/types";
 import {
   getBookingStatusLabel,
+  isBookingCompleted,
   isUserPaymentDueStatus,
   normalizeBookingStatus,
 } from "@/lib/booking-status";
 import { Card } from "@/components/ui/card";
-import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
+import { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/shared/kpi-card";
@@ -28,11 +29,17 @@ import {
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
 
-type UserBookingsResponse = {
-  items: Booking[];
-  nextCursor?: string | null;
-  prevCursor?: string | null;
-};
+function getDisplayWeight(booking: Booking) {
+  if (!isBookingCompleted(booking.status)) return "-";
+  if (typeof booking.actualWeightKg !== "number") return "-";
+  return `${booking.actualWeightKg} kg`;
+}
+
+function getDisplayAmount(booking: Booking) {
+  if (!isBookingCompleted(booking.status)) return "LKR 0.00";
+  if (typeof booking.finalAmountLkr !== "number") return "LKR 0.00";
+  return `LKR ${booking.finalAmountLkr.toFixed(2)}`;
+}
 
 export default function BookingHistoryPage() {
   const [status, setStatus] = useState("");
@@ -74,12 +81,7 @@ export default function BookingHistoryPage() {
     placeholderData: (previousData) => previousData,
   });
 
-  const bookings = data?.items ?? [];
-
-  useEffect(() => {
-    setAfterCursor(null);
-    setBeforeCursor(null);
-  }, [status, search, category]);
+  const bookings = useMemo(() => data?.items ?? [], [data]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -108,11 +110,12 @@ export default function BookingHistoryPage() {
       }
       return { previous };
     },
-    onError: (_err, _id, context: any) => {
-      queryClient.setQueryData(
-        ["bookings", status, search, category],
-        context?.previous,
-      );
+    onError: (
+      _err,
+      _id,
+      context: { previous?: { items: Booking[] } } | undefined,
+    ) => {
+      queryClient.setQueryData(["bookings", status, search, category], context?.previous);
       setDeletingId(null);
       toast({
         title: "Delete failed",
@@ -140,11 +143,19 @@ export default function BookingHistoryPage() {
       (b) => normalizeBookingStatus(b.status) === "COMPLETED",
     ).length;
     const totalEarned = bookings.reduce(
-      (sum, b) => sum + (b.finalAmountLkr ?? 0),
+      (sum, b) =>
+        sum +
+        (isBookingCompleted(b.status) && typeof b.finalAmountLkr === "number"
+          ? b.finalAmountLkr
+          : 0),
       0,
     );
     const totalWeight = bookings.reduce(
-      (sum, b) => sum + (b.actualWeightKg ?? 0),
+      (sum, b) =>
+        sum +
+        (isBookingCompleted(b.status) && typeof b.actualWeightKg === "number"
+          ? b.actualWeightKg
+          : 0),
       0,
     );
     return { total: bookings.length, completed, totalEarned, totalWeight };
@@ -154,8 +165,13 @@ export default function BookingHistoryPage() {
     const rows = bookings.map((booking) => [
       booking.id,
       booking.wasteCategory?.name ?? "",
-      booking.actualWeightKg ?? "",
-      booking.finalAmountLkr ?? booking.estimatedMaxAmount,
+      isBookingCompleted(booking.status)
+        ? booking.actualWeightKg ?? ""
+        : "",
+      isBookingCompleted(booking.status) &&
+      typeof booking.finalAmountLkr === "number"
+        ? booking.finalAmountLkr.toFixed(2)
+        : "0.00",
       getBookingStatusLabel(booking.status, "CUSTOMER"),
       booking.createdAt,
     ]);
@@ -163,7 +179,7 @@ export default function BookingHistoryPage() {
       "Booking ID",
       "Waste Type",
       "Weight",
-      "Amount",
+      "Amount (LKR)",
       "Status",
       "Date",
     ];
@@ -277,25 +293,19 @@ export default function BookingHistoryPage() {
                   <TableCell>
                     {booking.wasteCategory?.name ?? "Unknown"}
                   </TableCell>
-                  <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
+                  <TableCell>
+                    {getDisplayWeight(booking)}
+                  </TableCell>
+                  <TableCell>{getDisplayAmount(booking)}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <div>
-                        LKR{" "}
-                        {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                      </div>
-                      {isUserPaymentDueStatus(booking.status) &&
-                        booking.finalAmountLkr !== null &&
-                        booking.finalAmountLkr !== undefined && (
-                          <div className="text-xs text-amber-700 dark:text-amber-300">
-                            Please pay LKR {booking.finalAmountLkr.toFixed(2)}{" "}
-                            to driver.
-                          </div>
-                        )}
+                      <StatusPill status={booking.status} viewerRole="CUSTOMER" />
+                      {isUserPaymentDueStatus(booking.status) && (
+                        <div className="text-xs text-amber-700 dark:text-amber-300">
+                          Pickup is collected. Final weight and amount appear after completion.
+                        </div>
+                      )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <StatusPill status={booking.status} viewerRole="CUSTOMER" />
                   </TableCell>
                   <TableCell>
                     {new Date(booking.createdAt).toLocaleDateString()}

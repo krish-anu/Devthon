@@ -74,9 +74,14 @@ export function isEwasteCategory(name: string, slug?: string | null) {
   );
 }
 
-export function getBaseRate(categoryName: string, categorySlug?: string | null) {
-  if (isPlasticCategory(categoryName, categorySlug)) return BASE_POINT_RATES.plastic;
-  if (isMetalCategory(categoryName, categorySlug)) return BASE_POINT_RATES.metal;
+export function getBaseRate(
+  categoryName: string,
+  categorySlug?: string | null,
+) {
+  if (isPlasticCategory(categoryName, categorySlug))
+    return BASE_POINT_RATES.plastic;
+  if (isMetalCategory(categoryName, categorySlug))
+    return BASE_POINT_RATES.metal;
   return 0;
 }
 

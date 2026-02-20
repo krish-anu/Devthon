@@ -5,10 +5,7 @@ import {
 } from '@nestjs/common';
 import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  calculatePoints,
-  WasteItem,
-} from './points-calculator';
+import { calculatePoints, WasteItem } from './points-calculator';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 import { getWasteById, getWasteBySlug } from '../lib/wasteTypeUtils';
 
@@ -202,9 +199,15 @@ export class RewardsService {
         ]
       : [];
 
-    const bookingWaste = getWasteById(bookingWasteTypes, booking.wasteCategoryId);
+    const bookingWaste = getWasteById(
+      bookingWasteTypes,
+      booking.wasteCategoryId,
+    );
     const includesEwaste = Boolean(
-      getWasteBySlug(bookingWaste ? [bookingWaste] : bookingWasteTypes, 'e-waste'),
+      getWasteBySlug(
+        bookingWaste ? [bookingWaste] : bookingWasteTypes,
+        'e-waste',
+      ),
     );
 
     const calculation = calculatePoints({

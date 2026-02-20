@@ -27,18 +27,15 @@ export const WEBSITE_ROUTE_MAP: WebsiteRouteEntry[] = [
   {
     path: '/users/bookings',
     title: 'Booking History',
-    description:
-      'Customer list of bookings with filters and status tracking.',
-    actions: [
-      'Review booking status timeline',
-      'Open booking detail pages',
-    ],
+    description: 'Customer list of bookings with filters and status tracking.',
+    actions: ['Review booking status timeline', 'Open booking detail pages'],
     allowedRoles: [Role.CUSTOMER, Role.ADMIN, Role.SUPER_ADMIN],
   },
   {
     path: '/users/rewards',
     title: 'User Rewards',
-    description: 'Customer points summary, monthly progress, and recent awards.',
+    description:
+      'Customer points summary, monthly progress, and recent awards.',
     actions: [
       'Check total and monthly points',
       'Review recent points transactions',
@@ -49,17 +46,13 @@ export const WEBSITE_ROUTE_MAP: WebsiteRouteEntry[] = [
     path: '/users/notifications',
     title: 'User Notifications',
     description: 'Customer notifications feed for booking and system updates.',
-    actions: [
-      'Read latest notifications',
-      'Track booking-related alerts',
-    ],
+    actions: ['Read latest notifications', 'Track booking-related alerts'],
     allowedRoles: [Role.CUSTOMER, Role.ADMIN, Role.SUPER_ADMIN],
   },
   {
     path: '/users/pending-pickups',
     title: 'Pending Pickups',
-    description:
-      'Customer-focused pending booking queue for active pickups.',
+    description: 'Customer-focused pending booking queue for active pickups.',
     actions: [
       'View bookings awaiting completion',
       'Monitor active pickup progress',
@@ -80,10 +73,7 @@ export const WEBSITE_ROUTE_MAP: WebsiteRouteEntry[] = [
     path: '/driver/notifications',
     title: 'Driver Notifications',
     description: 'Driver alerts for assignment and pickup lifecycle events.',
-    actions: [
-      'Review assignment updates',
-      'Track status change alerts',
-    ],
+    actions: ['Review assignment updates', 'Track status change alerts'],
     allowedRoles: [Role.DRIVER],
   },
   {
@@ -113,10 +103,7 @@ export const WEBSITE_ROUTE_MAP: WebsiteRouteEntry[] = [
     title: 'Admin Drivers',
     description:
       'Admin driver management including status, approval, and profile updates.',
-    actions: [
-      'View and edit drivers',
-      'Manage operational driver readiness',
-    ],
+    actions: ['View and edit drivers', 'Manage operational driver readiness'],
     allowedRoles: [Role.ADMIN, Role.SUPER_ADMIN],
   },
   {
@@ -141,13 +128,16 @@ export function routeMatchesRole(route: WebsiteRouteEntry, role: RouteRole) {
   return route.allowedRoles.includes(role);
 }
 
-export function listActionsForRole(role: RouteRole, limit = 6): SuggestedAction[] {
-  const actions = WEBSITE_ROUTE_MAP.filter((route) => routeMatchesRole(route, role)).map(
-    (route) => ({
-      label: route.title,
-      href: getCanonicalPath(route),
-    }),
-  );
+export function listActionsForRole(
+  role: RouteRole,
+  limit = 6,
+): SuggestedAction[] {
+  const actions = WEBSITE_ROUTE_MAP.filter((route) =>
+    routeMatchesRole(route, role),
+  ).map((route) => ({
+    label: route.title,
+    href: getCanonicalPath(route),
+  }));
 
   return actions.slice(0, Math.max(1, limit));
 }
@@ -182,4 +172,3 @@ export function generateRouteMapMarkdown() {
 
   return lines.join('\n').trim() + '\n';
 }
-

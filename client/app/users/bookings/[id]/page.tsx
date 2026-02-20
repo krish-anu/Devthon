@@ -7,6 +7,7 @@ import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
 import {
+  isBookingCompleted,
   isUserPaymentDueStatus,
   normalizeBookingStatus,
 } from "@/lib/booking-status";
@@ -92,7 +93,11 @@ export default function BookingDetailsPage() {
       }
       return { previous };
     },
-    onError: (_err, _vars, context: any) => {
+    onError: (
+      _err,
+      _vars,
+      context: { previous?: { items: Booking[] } } | undefined,
+    ) => {
       queryClient.setQueryData(["bookings"], context?.previous);
       toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
     },
@@ -121,9 +126,8 @@ export default function BookingDetailsPage() {
   };
 
   // Handle map click to place marker
-  const handleMapClick = (event: any) => {
-    // event may be a React mouse event or a Google MapMouseEvent depending on context
-    const latLng = event?.latLng ?? event?.nativeEvent?.latLng;
+  const handleMapClick = (event: google.maps.MapMouseEvent) => {
+    const latLng = event?.latLng;
     if (latLng) {
       const lat = latLng.lat();
       const lng = latLng.lng();
@@ -140,12 +144,26 @@ export default function BookingDetailsPage() {
     ? normalizeBookingStatus(booking.status)
     : "CREATED";
   const canDelete = normalizedStatus === "CREATED";
-  const isPaymentDue = Boolean(
+  const isCollectedPendingCompletion = Boolean(
     booking &&
       isUserPaymentDueStatus(booking.status) &&
-      booking.finalAmountLkr !== null &&
-      booking.finalAmountLkr !== undefined,
+      !isBookingCompleted(booking.status),
   );
+  const canShowFinalCollectionDetails = Boolean(
+    booking && isBookingCompleted(booking.status),
+  );
+  const displayCollectedWeight =
+    booking &&
+    canShowFinalCollectionDetails &&
+    typeof booking.actualWeightKg === "number"
+      ? `${booking.actualWeightKg} kg`
+      : "-";
+  const displayCollectedAmount =
+    booking &&
+    canShowFinalCollectionDetails &&
+    typeof booking.finalAmountLkr === "number"
+      ? `LKR ${booking.finalAmountLkr.toFixed(2)}`
+      : "LKR 0.00";
 
   return (
     <div className="space-y-6">
@@ -201,10 +219,10 @@ export default function BookingDetailsPage() {
           <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
             <p className="text-xs text-(--muted)">Collected Details</p>
             <p className="text-sm font-semibold">
-              {booking?.actualWeightKg ?? "0"} kg
+              {displayCollectedWeight}
             </p>
             <p className="text-xs text-(--muted)">
-              Amount: LKR {booking?.finalAmountLkr ?? booking?.estimatedMaxAmount}
+              Amount: {displayCollectedAmount}
             </p>
           </div>
     </div>
@@ -228,9 +246,9 @@ export default function BookingDetailsPage() {
             </div>
           ))}
         </div>
-        {isPaymentDue && (
+        {isCollectedPendingCompletion && (
           <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-300">
-            Please pay LKR {booking?.finalAmountLkr?.toFixed(2)} to the driver.
+            Pickup is collected. Final weight and amount will appear once this booking is completed.
           </div>
         )}
       </Card>
@@ -243,7 +261,7 @@ export default function BookingDetailsPage() {
               {booking?.driver?.fullName ?? "Assigned soon"}
             </p>
             <p className="text-xs text-(--muted)">
-              Rating: {booking?.driver?.rating ?? "4.7"} ?
+              Rating: {booking?.driver?.rating ?? "4.7"}/5
             </p>
             <div className="flex gap-3">
               <Button variant="outline" size="sm">

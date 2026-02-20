@@ -75,7 +75,9 @@ export class ChatKnowledgeService implements OnModuleInit {
     if (queryTokens.length === 0) {
       return this.indexedChunks
         .slice(0, effectiveTopK)
-        .map((chunk, index) => this.stripIndexMetadata(chunk, effectiveTopK - index));
+        .map((chunk, index) =>
+          this.stripIndexMetadata(chunk, effectiveTopK - index),
+        );
     }
 
     const docFrequency = new Map<string, number>();
@@ -134,13 +136,17 @@ export class ChatKnowledgeService implements OnModuleInit {
 
     return this.indexedChunks
       .slice(0, effectiveTopK)
-      .map((chunk, index) => this.stripIndexMetadata(chunk, effectiveTopK - index));
+      .map((chunk, index) =>
+        this.stripIndexMetadata(chunk, effectiveTopK - index),
+      );
   }
 
   async reloadKnowledge() {
     const knowledgeDir = await this.resolveKnowledgeDir();
     if (!knowledgeDir) {
-      this.logger.warn('Knowledge directory not found. RAG context will be empty.');
+      this.logger.warn(
+        'Knowledge directory not found. RAG context will be empty.',
+      );
       this.indexedChunks = [];
       this.loaded = true;
       return;
@@ -196,7 +202,9 @@ export class ChatKnowledgeService implements OnModuleInit {
 
     try {
       await fs.mkdir(knowledgeDir, { recursive: true });
-      const existing = await fs.readFile(routeMapPath, 'utf8').catch(() => null);
+      const existing = await fs
+        .readFile(routeMapPath, 'utf8')
+        .catch(() => null);
       if (existing !== generated) {
         await fs.writeFile(routeMapPath, generated, 'utf8');
       }
@@ -209,7 +217,9 @@ export class ChatKnowledgeService implements OnModuleInit {
   private async listMarkdownFiles(knowledgeDir: string) {
     const entries = await fs.readdir(knowledgeDir, { withFileTypes: true });
     return entries
-      .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
+      .filter(
+        (entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.md'),
+      )
       .map((entry) => entry.name)
       .sort((a, b) => a.localeCompare(b));
   }
@@ -300,4 +310,3 @@ export class ChatKnowledgeService implements OnModuleInit {
     };
   }
 }
-

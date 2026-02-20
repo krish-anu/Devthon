@@ -20,6 +20,7 @@ import {
 import { StatusPill } from "@/components/shared/status-pill";
 import { useToast } from "@/components/ui/use-toast";
 import type { BookingStatus } from "@/lib/types";
+import { isBookingCompleted } from "@/lib/booking-status";
 import { MessageSquare, Send, CheckCheck, RefreshCw } from "lucide-react";
 
 interface Booking {
@@ -411,7 +412,11 @@ export default function AdminSmsPage() {
                     </TableCell>
                     <TableCell>{booking.wasteCategory?.name ?? "--"}</TableCell>
                     <TableCell>
-                      LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
+                      LKR{" "}
+                      {isBookingCompleted(booking.status as BookingStatus) &&
+                      typeof booking.finalAmountLkr === "number"
+                        ? booking.finalAmountLkr.toFixed(2)
+                        : "0.00"}
                     </TableCell>
                     <TableCell>
                       <StatusPill
@@ -504,3 +509,4 @@ export default function AdminSmsPage() {
     </div>
   );
 }
+

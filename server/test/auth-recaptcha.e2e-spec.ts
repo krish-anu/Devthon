@@ -17,7 +17,13 @@ describe('Auth reCAPTCHA (e2e)', () => {
 
     const _app = moduleFixture.createNestApplication();
     _app.setGlobalPrefix('api');
-    _app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
+    _app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
     await _app.init();
     return _app;
   }
@@ -68,17 +74,15 @@ describe('Auth reCAPTCHA (e2e)', () => {
     // 1) Create a user with recaptcha passing
     const email = `user+login+${Date.now()}@example.com`;
     const pw = 'PasswordA1';
-    let setupApp = await createAppWithRecaptchaMock(true);
-    await request(setupApp.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        fullName: 'Login Tester',
-        email,
-        phone: '+94123456789',
-        password: pw,
-        type: 'HOUSEHOLD',
-        recaptchaToken: 'valid-token',
-      });
+    const setupApp = await createAppWithRecaptchaMock(true);
+    await request(setupApp.getHttpServer()).post('/api/auth/register').send({
+      fullName: 'Login Tester',
+      email,
+      phone: '+94123456789',
+      password: pw,
+      type: 'HOUSEHOLD',
+      recaptchaToken: 'valid-token',
+    });
     await setupApp.close();
 
     // 2) Attempt to login with reCAPTCHA failing
