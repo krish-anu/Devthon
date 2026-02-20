@@ -549,7 +549,7 @@ export default function AssistantChatbox() {
                   }
                 }}
                 rows={1}
-                placeholder="Ask about bookings, rewards, pricing, or your data..."
+                placeholder="Ask anything..."
                 className="min-h-[44px] flex-1 resize-none rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 py-2 text-sm text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)] assistant-input-scrollbar"
                 aria-label="Type your message"
                 disabled={isLoading}
