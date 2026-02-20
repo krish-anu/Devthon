@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import Cropper from "react-easy-crop";
+import Cropper from "@/components/ui/SimpleCropper";
 import { Button } from "./button"; // local button -> project already has this path alias
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Avatar } from "@/components/ui/avatar";
