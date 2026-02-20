@@ -22,6 +22,11 @@ export class ChatController {
       `Chat request from ${clientIp} (messages=${payload.messages?.length ?? 0}, lastRole=${lastMessage?.role ?? 'n/a'}, lastLength=${lastMessage?.content?.length ?? 0}, contextLength=${payload.pageContext?.textContent?.length ?? 0})`,
     );
 
-    return this.chatService.handleChat(payload, clientIp);
+    const authHeader =
+      typeof req.headers.authorization === 'string'
+        ? req.headers.authorization
+        : undefined;
+
+    return this.chatService.handleChat(payload, clientIp, authHeader);
   }
 }

@@ -51,4 +51,19 @@ export class ChatRequestDto {
   @ValidateNested()
   @Type(() => PageContextDto)
   pageContext?: PageContextDto;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  currentRoute?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  roleHint?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  sessionId?: string;
 }
