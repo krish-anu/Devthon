@@ -80,6 +80,25 @@ function removeRecaptchaScripts() {
     .forEach((script) => script.remove());
 }
 
+/**
+ * Unload reCAPTCHA completely: remove script tags, badge UI and detach window.grecaptcha.
+ * Call this when navigating away from auth pages so the badge doesn't persist globally.
+ */
+export function unloadRecaptcha() {
+  if (typeof window === "undefined") return;
+  // remove the badge node(s) injected by Google
+  document.querySelectorAll<HTMLElement>(".grecaptcha-badge").forEach((el) => el.remove());
+  // remove any recaptcha script tags
+  removeRecaptchaScripts();
+  // attempt to clear the global grecaptcha reference
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).grecaptcha;
+  } catch {}
+  // allow future loads
+  recaptchaLoadPromise = null;
+}
+
 function injectRecaptchaScript(src: string, timeoutMs = SCRIPT_LOAD_TIMEOUT_MS) {
   return new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");

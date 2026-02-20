@@ -1,0 +1,16 @@
+{
+  "name": "Trash2Treasure",
+  "short_name": "Trash2Treasure",
+  "description": "Turn your waste into value — Trash2Treasure (PWA)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#10B981",
+  "icons": [
+    { "src": "/recycle logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/recycle logo.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "gcm_sender_id": "103953800507"
+}

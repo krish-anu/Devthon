@@ -39,11 +39,15 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Favicon and touch icon */}
+        {/* Favicon, touch icon and PWA manifest */}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="alternate icon" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#10B981" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>

@@ -2,7 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { unloadRecaptcha } from "@/lib/recaptcha";
 import { PhoneVerificationModal } from "@/components/auth/phone-verification-modal";
 import { Toaster } from "@/components/ui/toaster";
 import AssistantChatbox from "@/components/assistant/AssistantChatbox";
@@ -23,6 +25,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
+  const pathname = usePathname();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Prevent browser from restoring scroll position
@@ -31,6 +35,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       window.scrollTo(0, 0);
     }
   }, []);
+
+  // Unload reCAPTCHA when navigating away from auth pages (login/signup)
+  useEffect(() => {
+    if (!pathname) return;
+    const isAuthPage =
+      pathname.startsWith("/login") || pathname.startsWith("/signup");
+    if (!isAuthPage) {
+      unloadRecaptcha();
+    }
+  }, [pathname]);
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
