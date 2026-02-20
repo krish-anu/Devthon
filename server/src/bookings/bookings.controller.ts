@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { BookingsService } from './bookings.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
@@ -36,11 +37,13 @@ export class BookingsController {
     return userId;
   }
 
+  @CacheTTL(0)
   @Get()
   list(@Req() req: AuthRequest, @Query() query: BookingsQueryDto) {
     return this.bookingsService.list(this.getUserId(req), query);
   }
 
+  @CacheTTL(0)
   @Get(':id')
   getById(@Req() req: AuthRequest, @Param('id') id: string) {
     return this.bookingsService.getById(this.getUserId(req), id);

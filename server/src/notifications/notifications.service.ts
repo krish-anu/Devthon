@@ -1,10 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { cursorPaginate } from '../common/pagination';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async list(
     userId: string,
@@ -44,6 +49,10 @@ export class NotificationsService {
       where: { userId },
       data: { isRead: true },
     });
+
+    // Refresh cached notification queries for this user
+    await (this.cacheManager as any).reset();
+
     return { success: true };
   }
 
@@ -56,6 +65,10 @@ export class NotificationsService {
       },
       data: { isRead: true },
     });
+
+    // Invalidate cached notification list so UI updates immediately
+    await (this.cacheManager as any).reset();
+
     return { success: count > 0 };
   }
 }

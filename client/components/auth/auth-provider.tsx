@@ -165,13 +165,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = async () => {
     const me = await apiFetch<User>("/me");
+    // cache-bust avatar URL so browsers/CDNs fetch newest image after updates
+    const avatarUrl = (me as any)?.avatarUrl ?? (me as any)?.avatar ?? null;
+    if (avatarUrl && !avatarUrl.includes('?v=')) {
+      (me as any).avatarUrl = `${avatarUrl}?v=${Date.now()}`;
+    }
     updateStoredUser(me);
     setUser(me);
   };
 
   const updateUser = (user: User) => {
-    updateStoredUser(user);
-    setUser(user);
+    // append cache-bust to avatarUrl when present
+    const avatarUrl = (user as any)?.avatarUrl ?? (user as any)?.avatar ?? null;
+    const patched = { ...user } as any;
+    if (avatarUrl && !avatarUrl.includes('?v=')) {
+      patched.avatarUrl = `${avatarUrl}?v=${Date.now()}`;
+    }
+    updateStoredUser(patched);
+    setUser(patched as User);
   };
 
   const googleLogin = async (

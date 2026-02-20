@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RewardsService } from './rewards.service';
 
@@ -28,6 +29,7 @@ export class RewardsController {
     return userId;
   }
 
+  @CacheTTL(0)
   @Get('me')
   getMyRewards(@Req() req: AuthRequest) {
     return this.rewardsService.getMyRewards(this.getUserId(req));

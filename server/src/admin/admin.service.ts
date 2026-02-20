@@ -1,19 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  BookingStatus,
-  CustomerType,
-  NotificationLevel,
-  Prisma,
-  Role,
-} from '@prisma/client';
+import { BadRequestException, Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
+import { BookingStatus, CustomerType, NotificationLevel, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { cursorPaginate } from '../common/pagination';
 import { PushService } from '../notifications/push.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
@@ -133,6 +124,7 @@ export class AdminService {
     private prisma: PrismaService,
     private pushService: PushService,
     private rewardsService: RewardsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getMetrics() {
@@ -403,6 +395,7 @@ export class AdminService {
       });
     });
 
+    await (this.cacheManager as any).reset();
     return flattenUser(user);
   }
 
@@ -510,6 +503,7 @@ export class AdminService {
       where: { id },
       include: USER_PROFILE_INCLUDE,
     });
+    await (this.cacheManager as any).reset();
     return flattenUser(updated);
   }
 
@@ -530,6 +524,8 @@ export class AdminService {
 
     // Now delete the user
     await this.prisma.user.delete({ where: { id } });
+
+    await (this.cacheManager as any).reset();
     return { success: true };
   }
 
@@ -598,7 +594,7 @@ export class AdminService {
       ? await bcrypt.hash(dto.password, 10)
       : undefined;
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email: dto.email,
@@ -624,6 +620,9 @@ export class AdminService {
         email: dto.email,
       };
     });
+
+    await (this.cacheManager as any).reset();
+    return result;
   }
 
   async updateDriver(id: string, dto: AdminUpdateDriverDto) {
@@ -635,13 +634,17 @@ export class AdminService {
     if (dto.vehicle !== undefined) data.vehicle = dto.vehicle;
     if (dto.status !== undefined) data.status = dto.status;
 
-    return this.prisma.driver.update({ where: { id }, data });
+    const updated = await this.prisma.driver.update({ where: { id }, data });
+    await (this.cacheManager as any).reset();
+    return updated;
   }
 
   async deleteDriver(id: string) {
     // Delete the driver profile, then the user record
     await this.prisma.driver.delete({ where: { id } });
     await this.prisma.user.delete({ where: { id } }).catch(() => {});
+
+    await (this.cacheManager as any).reset();
     return { success: true };
   }
 
@@ -726,6 +729,8 @@ export class AdminService {
         }),
       ),
     );
+
+    await (this.cacheManager as any).reset();
     return { items: updates };
   }
 
@@ -743,7 +748,7 @@ export class AdminService {
 
   async createWasteCategory(dto: AdminCreateWasteCategoryDto) {
     try {
-      return await this.prisma.wasteCategory.create({
+      const created = await this.prisma.wasteCategory.create({
         data: {
           name: dto.name,
           slug: normalizeWasteName(dto.name),
@@ -751,6 +756,8 @@ export class AdminService {
           isActive: dto.isActive ?? true,
         } as any,
       });
+      await (this.cacheManager as any).reset();
+      return created;
     } catch (error: any) {
       if (error?.code === 'P2002') {
         throw new BadRequestException('Category name or slug already exists');
@@ -767,11 +774,15 @@ export class AdminService {
     }
     if (dto.description !== undefined) data.description = dto.description;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
-    return this.prisma.wasteCategory.update({ where: { id }, data });
+
+    const updated = await this.prisma.wasteCategory.update({ where: { id }, data });
+    await (this.cacheManager as any).reset();
+    return updated;
   }
 
   async deleteWasteCategory(id: string) {
     await this.prisma.wasteCategory.delete({ where: { id } }).catch(() => {});
+    await (this.cacheManager as any).reset();
     return { success: true };
   }
 
@@ -1039,6 +1050,8 @@ export class AdminService {
     }
 
     const normalizedUpdated = this.normalizeBookingForRead(updated);
+
+    await (this.cacheManager as any).reset();
     return {
       ...normalizedUpdated,
       user: undefined, // Don't leak full user in admin response
@@ -1324,6 +1337,7 @@ export class AdminService {
       throw new BadRequestException('User is neither an admin nor a driver');
     }
 
+    await (this.cacheManager as any).reset();
     return { success: true, message: `User ${id} approved` };
   }
 
@@ -1344,6 +1358,7 @@ export class AdminService {
     }
     await this.prisma.user.delete({ where: { id } });
 
+    await (this.cacheManager as any).reset();
     return { success: true, message: `User ${id} rejected and removed` };
   }
 
@@ -1399,6 +1414,7 @@ export class AdminService {
       data: { role: role as Role },
     });
 
+    await (this.cacheManager as any).reset();
     return { success: true, message: `Role changed to ${role}` };
   }
 }

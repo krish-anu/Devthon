@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -44,6 +45,7 @@ export class AdminController {
     return this.adminService.getMetrics();
   }
 
+  @CacheTTL(0)
   @Get('users')
   listUsers(
     @Query('search') search?: string,
@@ -77,6 +79,7 @@ export class AdminController {
     return this.adminService.deleteUser(id);
   }
 
+  @CacheTTL(0)
   @Get('drivers')
   listDrivers(
     @Query('after') after?: string,
@@ -110,6 +113,7 @@ export class AdminController {
     return this.adminService.listSupportedBookingStatuses();
   }
 
+  @CacheTTL(0)
   @Get('bookings')
   listBookings(@Query() query: AdminBookingsQueryDto) {
     return this.adminService.listBookings(query);
@@ -199,6 +203,7 @@ export class AdminController {
   // ─────────────────────────────────────────────
 
   @Roles(Role.SUPER_ADMIN)
+  @CacheTTL(0)
   @Get('pending-approvals')
   listPendingApprovals() {
     return this.adminService.listPendingApprovals();
@@ -217,6 +222,7 @@ export class AdminController {
   }
 
   @Roles(Role.SUPER_ADMIN)
+  @CacheTTL(0)
   @Get('all-users')
   listAllUsersWithRoles(
     @Query('after') after?: string,

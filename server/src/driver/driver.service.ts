@@ -1,9 +1,6 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { BookingStatus, DriverStatus, Role } from '@prisma/client';
 import { cursorPaginate } from '../common/pagination';
 import { PrismaService } from '../prisma/prisma.service';
@@ -29,6 +26,7 @@ export class DriverService {
   constructor(
     private prisma: PrismaService,
     private pushService: PushService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getBookings(
@@ -118,6 +116,9 @@ export class DriverService {
       data: { status: DriverStatus.ON_PICKUP },
     });
 
+    // clear server cache so driver/customer lists update immediately
+    await (this.cacheManager as any).reset();
+
     return this.toDriverBookingResponse(updated);
   }
 
@@ -181,6 +182,8 @@ export class DriverService {
       });
     }
 
+    // ensure cached booking / driver views are refreshed
+    await (this.cacheManager as any).reset();
     if (statusChanged) {
       const wasteTypeName = updated.wasteCategory?.name ?? 'Waste';
       this.pushService
@@ -234,6 +237,8 @@ export class DriverService {
       data: { status: DriverStatus.ONLINE },
     });
 
+    // invalidate cache after driver-cancel so frontends refetch
+    await (this.cacheManager as any).reset();
     const messageSuffix = dto?.reason?.trim()
       ? ` Reason: ${dto.reason.trim()}.`
       : '';
