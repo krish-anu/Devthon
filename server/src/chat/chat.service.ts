@@ -131,7 +131,7 @@ export class ChatService {
       dynamicKnowledgeContext,
       dataContext,
     );
-    const reply = this.appendSources(rawReply, sources);
+    const reply = rawReply.trim();
 
     const nextHistory = [
       ...memoryHistory,
@@ -857,15 +857,6 @@ export class ChatService {
       ...dataContext.sources,
     ];
     return [...new Set(all)].slice(0, 6);
-  }
-
-  private appendSources(reply: string, sources: string[]) {
-    const trimmed = reply.trim();
-    if (!trimmed) return trimmed;
-    if (sources.length === 0) return trimmed;
-    if (/\bSources:\b/i.test(trimmed)) return trimmed;
-
-    return `${trimmed}\n\nSources: ${sources.join('; ')}`;
   }
 
   private buildSuggestedActions(params: {

@@ -32,16 +32,9 @@ const QUICK_COMMANDS = [
   { label: "Waste types & pricing", prompt: "Show waste types and pricing rates" },
 ];
 
-type SuggestedAction = {
-  label: string;
-  href: string;
-};
-
 type ChatApiResponse = {
   reply: string;
   mode?: "knowledge" | "data" | "mixed";
-  sources?: string[];
-  suggestedActions?: SuggestedAction[];
 };
 
 type ChatMessage = {
@@ -50,8 +43,6 @@ type ChatMessage = {
   content: string;
   createdAt: number;
   mode?: "knowledge" | "data" | "mixed";
-  sources?: string[];
-  suggestedActions?: SuggestedAction[];
 };
 
 const markdownComponents: Components = {
@@ -120,24 +111,8 @@ function createId() {
   return `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function sanitizeSuggestedActions(value: unknown): SuggestedAction[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      const label =
-        typeof (item as any)?.label === "string"
-          ? (item as any).label.trim()
-          : "";
-      const href =
-        typeof (item as any)?.href === "string"
-          ? (item as any).href.trim()
-          : "";
-      if (!label || !href) return null;
-      if (!href.startsWith("/") || href.startsWith("//")) return null;
-      return { label, href };
-    })
-    .filter(Boolean)
-    .slice(0, 6) as SuggestedAction[];
+function stripSourcesFooter(content: string) {
+  return content.replace(/\n+Sources:\s*[\s\S]*$/i, "").trim();
 }
 
 function isRelativeUrl(value: string) {
@@ -328,7 +303,10 @@ export default function AssistantChatbox() {
       .slice(-MAX_MESSAGES)
       .map((message) => ({
         role: message.role,
-        content: message.content.trim(),
+        content:
+          message.role === "assistant"
+            ? stripSourcesFooter(message.content)
+            : message.content.trim(),
       }));
   }, [messages]);
 
@@ -375,20 +353,17 @@ export default function AssistantChatbox() {
       const assistantMessage: ChatMessage = {
         id: createId(),
         role: "assistant",
-        content:
+        content: stripSourcesFooter(
           response.reply || "Sorry, I could not generate a reply right now.",
+        ),
         mode: response.mode,
-        sources: Array.isArray(response.sources)
-          ? response.sources.slice(0, 6)
-          : [],
-        suggestedActions: sanitizeSuggestedActions(response.suggestedActions),
         createdAt: Date.now(),
       };
 
       setMessages((prev) => [...prev, assistantMessage].slice(-MAX_MESSAGES));
-    } catch (error: any) {
+    } catch (error: unknown) {
       const rawMessage =
-        typeof error?.message === "string"
+        error instanceof Error
           ? error.message
           : "Sorry, something went wrong while contacting the assistant.";
       const friendlyMessage = rawMessage.includes("Cannot POST /api/chat")
@@ -404,13 +379,6 @@ export default function AssistantChatbox() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const openSuggestedAction = (href: string) => {
-    if (typeof window === "undefined") return;
-    if (!href.startsWith("/") || href.startsWith("//")) return;
-    setIsOpen(false);
-    window.location.assign(href);
   };
 
   return (
@@ -485,28 +453,8 @@ export default function AssistantChatbox() {
                         remarkPlugins={[remarkGfm]}
                         components={markdownComponents}
                       >
-                        {message.content}
+                        {stripSourcesFooter(message.content)}
                       </ReactMarkdown>
-                      {message.suggestedActions &&
-                        message.suggestedActions.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {message.suggestedActions.map((action) => (
-                              <button
-                                key={`${action.label}-${action.href}`}
-                                type="button"
-                                onClick={() => openSuggestedAction(action.href)}
-                                className="rounded-full border border-[color:var(--border)] bg-[color:var(--card)] px-2 py-1 text-[11px] text-[color:var(--foreground)] transition hover:border-[color:var(--brand)]"
-                              >
-                                {action.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      {message.sources && message.sources.length > 0 && (
-                        <p className="mt-2 text-[11px] text-[color:var(--muted)]">
-                          Sources: {message.sources.join("; ")}
-                        </p>
-                      )}
                     </>
                   ) : (
                     <p className="whitespace-pre-wrap">{message.content}</p>
