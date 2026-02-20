@@ -105,6 +105,7 @@ export default function AdminDashboardPage() {
                     border: "1px solid rgba(255,255,255,0.1)",
                   }}
                   labelStyle={{ color: "#e2e8f0" }}
+                  itemStyle={{ color: "#ffffff" }}
                 />
               </PieChart>
             </ResponsiveContainer>
