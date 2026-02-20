@@ -8,6 +8,12 @@ import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { NotificationItem } from "@/lib/types";
 
+type NotificationListResponse =
+  | NotificationItem[]
+  | {
+      items?: NotificationItem[];
+    };
+
 /**
  * Header bell that navigates to the appropriate notifications page for the
  * current user role. Shows a small unread-dot when there are unread items.
@@ -33,15 +39,16 @@ export default function NotificationNavButton() {
         : "/users/notifications";
 
   // lightweight unread count for badge (do not poll aggressively)
-  const { data } = useQuery({
+  const { data } = useQuery<NotificationListResponse>({
     queryKey: ["notifications", "header-unread-count"],
-    queryFn: () => apiFetch<NotificationItem[]>("/notifications?limit=5"),
+    queryFn: () => apiFetch<NotificationListResponse>("/notifications?limit=5"),
     staleTime: 30_000,
     refetchInterval: 30_000,
     enabled: !!user,
   });
 
-  const unread = (data ?? []).filter((n) => !n.isRead).length;
+  const items = Array.isArray(data) ? data : (data?.items ?? []);
+  const unread = items.filter((n) => !n.isRead).length;
 
   return (
     <Button
