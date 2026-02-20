@@ -29,6 +29,17 @@ import {
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
 
+type UserBookingsResponse = {
+  items: Booking[];
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+  hasMore?: boolean;
+  limit?: number;
+  total?: number;
+  page?: number;
+  pageSize?: number;
+};
+
 function getDisplayWeight(booking: Booking) {
   if (!isBookingCompleted(booking.status)) return "-";
   if (typeof booking.actualWeightKg !== "number") return "-";
