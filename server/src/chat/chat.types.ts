@@ -3,6 +3,8 @@ import { Role } from '@prisma/client';
 export type AssistantAuthRole = Role | 'GUEST';
 
 export type ChatMode = 'knowledge' | 'data' | 'mixed';
+export type ChatLanguage = 'EN' | 'SI' | 'TA';
+export type ChatLanguagePreference = ChatLanguage | 'AUTO';
 
 export type SuggestedAction = {
   label: string;
@@ -30,4 +32,3 @@ export type KnowledgeChunk = {
 export type RetrievedKnowledgeChunk = KnowledgeChunk & {
   score: number;
 };
-

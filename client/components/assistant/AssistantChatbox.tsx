@@ -11,9 +11,71 @@ import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "t2c-assistant-chat";
 const SESSION_ID_KEY = "t2c-assistant-session-id";
+const LANGUAGE_KEY = "t2c-assistant-language";
 const MAX_MESSAGES = 20;
-const WELCOME_MESSAGE =
-  "Hi 👋 I'm your Trash2Treasure AI assistant. How can I help you?";
+type AssistantLanguage = "EN" | "SI" | "TA";
+
+const LANGUAGE_OPTIONS: Array<{
+  value: AssistantLanguage;
+  label: string;
+}> = [
+  { value: "EN", label: "English" },
+  { value: "SI", label: "Sinhala (සිංහල)" },
+  { value: "TA", label: "Tamil (தமிழ்)" },
+];
+
+const WELCOME_MESSAGES: Record<AssistantLanguage, string> = {
+  EN: "Hi 👋 I'm your Trash2Treasure AI assistant. How can I help you?",
+  SI: "ආයුබෝවන් 👋 මම ඔබගේ Trash2Treasure AI සහායකයා. මට ඔබට කොහොමද උදව් කරන්න පුළුවන්?",
+  TA: "வணக்கம் 👋 நான் உங்கள் Trash2Treasure AI உதவியாளர். நான் எப்படி உதவலாம்?",
+};
+
+const QUICK_COMMANDS_BY_LANGUAGE: Record<
+  AssistantLanguage,
+  Array<{ label: string; prompt: string }>
+> = {
+  EN: [
+    { label: "My bookings", prompt: "Show my bookings" },
+    { label: "My points", prompt: "Show my points and rewards summary" },
+    { label: "Pending pickups", prompt: "Show my pending pickups" },
+    { label: "How rewards work", prompt: "Explain how rewards work" },
+    {
+      label: "Waste types & pricing",
+      prompt: "Show waste types and pricing rates",
+    },
+  ],
+  SI: [
+    { label: "මගේ බුකින්", prompt: "මගේ බුකින් පෙන්වන්න" },
+    {
+      label: "මගේ පොයින්ට්ස්",
+      prompt: "මගේ පොයින්ට් සහ ත්‍යාග සාරාංශය පෙන්වන්න",
+    },
+    { label: "පොරොත්තුවේ එකතු කිරීම්", prompt: "මගේ අපේක්ෂිත එකතු කිරීම් පෙන්වන්න" },
+    { label: "ත්‍යාග ක්‍රමය", prompt: "ත්‍යාග ක්‍රමය වැඩ කරන හැටි විස්තර කරන්න" },
+    { label: "අපද්‍රව්‍ය සහ මිල", prompt: "අපද්‍රව්‍ය වර්ග සහ මිල ගණන් පෙන්වන්න" },
+  ],
+  TA: [
+    { label: "என் முன்பதிவுகள்", prompt: "என் முன்பதிவுகளை காட்டு" },
+    {
+      label: "என் பாயிண்ட்ஸ்",
+      prompt: "என் பாயிண்ட்ஸ் மற்றும் பரிசு சுருக்கத்தை காட்டு",
+    },
+    {
+      label: "நிலுவை சேகரிப்புகள்",
+      prompt: "என் நிலுவையில் உள்ள சேகரிப்புகளை காட்டு",
+    },
+    {
+      label: "பரிசு விதிகள்",
+      prompt: "பரிசு முறை எப்படி வேலை செய்கிறது என்று விளக்கு",
+    },
+    {
+      label: "கழிவு வகைகள் & விலை",
+      prompt: "கழிவு வகைகள் மற்றும் விலை விகிதங்களை காட்டு",
+    },
+  ],
+};
+
+const WELCOME_MESSAGE_VALUES = new Set(Object.values(WELCOME_MESSAGES));
 const BLOCKED_PROTOCOLS = new Set([
   "chrome-extension:",
   "about:",
@@ -24,17 +86,11 @@ const BLOCKED_PROTOCOLS = new Set([
   "javascript:",
 ]);
 const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
-const QUICK_COMMANDS = [
-  { label: "My bookings", prompt: "Show my bookings" },
-  { label: "My points", prompt: "Show my points and rewards summary" },
-  { label: "Pending pickups", prompt: "Show my pending pickups" },
-  { label: "How rewards work", prompt: "Explain how rewards work" },
-  { label: "Waste types & pricing", prompt: "Show waste types and pricing rates" },
-];
 
 type ChatApiResponse = {
   reply: string;
   mode?: "knowledge" | "data" | "mixed";
+  responseLanguage?: AssistantLanguage;
 };
 
 type ChatMessage = {
@@ -111,6 +167,14 @@ function createId() {
   return `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function isAssistantLanguage(value: string): value is AssistantLanguage {
+  return value === "EN" || value === "SI" || value === "TA";
+}
+
+function isWelcomeMessage(content: string) {
+  return WELCOME_MESSAGE_VALUES.has(content);
+}
+
 function stripSourcesFooter(content: string) {
   return content.replace(/\n+Sources:\s*[\s\S]*$/i, "").trim();
 }
@@ -162,6 +226,8 @@ export default function AssistantChatbox() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [languagePreference, setLanguagePreference] =
+    useState<AssistantLanguage>("EN");
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
   const sessionIdRef = useRef<string>("");
@@ -176,6 +242,11 @@ export default function AssistantChatbox() {
   // Track unread messages when the panel is closed
   const [hasUnread, setHasUnread] = useState(false);
   const prevMessagesCountRef = useRef(messages.length);
+
+  const quickCommands = useMemo(
+    () => QUICK_COMMANDS_BY_LANGUAGE[languagePreference],
+    [languagePreference],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -199,6 +270,11 @@ export default function AssistantChatbox() {
     }
     sessionIdRef.current = sessionId;
 
+    const storedLanguage = window.sessionStorage.getItem(LANGUAGE_KEY);
+    if (storedLanguage && isAssistantLanguage(storedLanguage)) {
+      setLanguagePreference(storedLanguage);
+    }
+
     setHasHydrated(true);
   }, []);
 
@@ -210,6 +286,12 @@ export default function AssistantChatbox() {
       JSON.stringify(messages.slice(-MAX_MESSAGES)),
     );
   }, [messages, hasHydrated]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(LANGUAGE_KEY, languagePreference);
+  }, [languagePreference, hasHydrated]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -232,12 +314,12 @@ export default function AssistantChatbox() {
       const welcome: ChatMessage = {
         id: createId(),
         role: "assistant",
-        content: WELCOME_MESSAGE,
+        content: WELCOME_MESSAGES[languagePreference],
         createdAt: Date.now(),
       };
       setMessages([welcome]);
     }
-  }, [isOpen, messages.length, hasHydrated]);
+  }, [isOpen, messages.length, hasHydrated, languagePreference]);
 
   useEffect(() => {
     if (!listRef.current) return;
@@ -299,7 +381,7 @@ export default function AssistantChatbox() {
   const chatHistory = useMemo(() => {
     return messages
       .filter((message) => message.content.trim())
-      .filter((message) => message.content !== WELCOME_MESSAGE)
+      .filter((message) => !isWelcomeMessage(message.content))
       .slice(-MAX_MESSAGES)
       .map((message) => ({
         role: message.role,
@@ -347,6 +429,7 @@ export default function AssistantChatbox() {
             typeof window !== "undefined" ? window.location.pathname : "",
           roleHint: user?.role ?? "GUEST",
           sessionId: sessionIdRef.current || undefined,
+          preferredLanguage: languagePreference,
         }),
       });
 
@@ -472,8 +555,35 @@ export default function AssistantChatbox() {
             )}
           </div>
           <div className="border-t border-[color:var(--border)] px-4 py-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label
+                htmlFor="assistant-language"
+                className="text-[11px] font-medium text-[color:var(--muted)]"
+              >
+                Response language
+              </label>
+              <select
+                id="assistant-language"
+                value={languagePreference}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  if (isAssistantLanguage(next)) {
+                    setLanguagePreference(next);
+                  }
+                }}
+                disabled={isLoading}
+                className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-2 py-1 text-[11px] text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)] disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Response language"
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="mb-2 flex flex-wrap gap-1.5">
-              {QUICK_COMMANDS.map((command) => (
+              {quickCommands.map((command) => (
                 <button
                   key={command.label}
                   type="button"

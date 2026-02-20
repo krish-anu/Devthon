@@ -1,4 +1,4 @@
-﻿
+
 import {
   BadRequestException,
   HttpException,
@@ -16,6 +16,8 @@ import { ChatToolsService } from './chat.tools.service';
 import { ChatRequestDto, PageContextDto } from './dto/chat.dto';
 import {
   AuthContext,
+  ChatLanguage,
+  ChatLanguagePreference,
   ChatMode,
   RetrievedKnowledgeChunk,
   StoredChatMessage,
@@ -31,6 +33,13 @@ const MAX_SESSION_TURNS = 10;
 const MAX_SESSION_MESSAGES = MAX_SESSION_TURNS * 2;
 const SESSION_TTL_MS = 1000 * 60 * 60 * 6;
 const KNOWLEDGE_TOP_K = 5;
+const CHAT_LANGUAGE_PREFERENCES = new Set<ChatLanguagePreference>([
+  'AUTO',
+  'EN',
+  'SI',
+  'TA',
+]);
+const CHAT_LANGUAGE_CODES = new Set<ChatLanguage>(['EN', 'SI', 'TA']);
 
 const PENDING_STATUSES = new Set(['CREATED', 'ASSIGNED', 'IN_PROGRESS']);
 
@@ -50,7 +59,7 @@ export class ChatService {
   private resolvedModel: string | null = null;
   private readonly sessionMemory = new Map<
     string,
-    { history: StoredChatMessage[]; updatedAt: number }
+    { history: StoredChatMessage[]; language: ChatLanguage; updatedAt: number }
   >();
 
   constructor(
@@ -83,7 +92,14 @@ export class ChatService {
 
     this.cleanupExpiredSessions();
     const sessionKey = this.resolveSessionKey(payload.sessionId, auth, clientIp);
+    const existingSession = this.sessionMemory.get(sessionKey);
     const memoryHistory = this.getSessionHistory(sessionKey, payload, question);
+    const responseLanguage = this.resolveResponseLanguage(
+      payload.preferredLanguage,
+      question,
+      payload.messages,
+      existingSession?.language,
+    );
 
     const knowledgeChunks = await this.knowledgeService.search(
       question,
@@ -104,6 +120,7 @@ export class ChatService {
       knowledgeChunks,
       dynamicKnowledgeContext,
       dataContext,
+      responseLanguage,
     });
 
     const conversationHistory = [
@@ -141,6 +158,7 @@ export class ChatService {
 
     this.sessionMemory.set(sessionKey, {
       history: nextHistory,
+      language: responseLanguage,
       updatedAt: Date.now(),
     });
 
@@ -161,6 +179,7 @@ export class ChatService {
         ...dynamicKnowledgeContext.calledTools,
         ...dataContext.calledTools,
       ],
+      responseLanguage,
     };
   }
 
@@ -224,6 +243,88 @@ export class ChatService {
 
     const originalIndex = incoming.length - 1 - lastUserIndex;
     return incoming.slice(0, originalIndex).slice(-MAX_SESSION_MESSAGES);
+  }
+
+  private resolveResponseLanguage(
+    preferredLanguage: string | undefined,
+    question: string,
+    messages: ChatRequestDto['messages'],
+    sessionLanguage?: ChatLanguage,
+  ): ChatLanguage {
+    const preference = this.normalizeLanguagePreference(preferredLanguage);
+    if (preference !== 'AUTO') {
+      return preference;
+    }
+
+    const detectedFromQuestion = this.detectLanguageFromText(question);
+    if (detectedFromQuestion) {
+      return detectedFromQuestion;
+    }
+
+    if (sessionLanguage && CHAT_LANGUAGE_CODES.has(sessionLanguage)) {
+      return sessionLanguage;
+    }
+
+    const detectedFromHistory = this.detectLanguageFromMessages(messages);
+    if (detectedFromHistory) {
+      return detectedFromHistory;
+    }
+
+    return 'EN';
+  }
+
+  private normalizeLanguagePreference(value?: string): ChatLanguagePreference {
+    const normalized = (value ?? 'AUTO').trim().toUpperCase();
+    if (CHAT_LANGUAGE_PREFERENCES.has(normalized as ChatLanguagePreference)) {
+      return normalized as ChatLanguagePreference;
+    }
+
+    return 'AUTO';
+  }
+
+  private detectLanguageFromMessages(messages: ChatRequestDto['messages']) {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (message.role !== 'user' || !message.content?.trim()) {
+        continue;
+      }
+
+      const detected = this.detectLanguageFromText(message.content);
+      if (detected) return detected;
+    }
+
+    return null;
+  }
+
+  private detectLanguageFromText(text: string): ChatLanguage | null {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+
+    const sinhalaChars = this.countMatches(trimmed, /[\u0d80-\u0dff]/g);
+    const tamilChars = this.countMatches(trimmed, /[\u0b80-\u0bff]/g);
+    const latinWords = this.countMatches(trimmed, /\b[A-Za-z][A-Za-z'-]*\b/g);
+
+    if (sinhalaChars >= 2 || tamilChars >= 2) {
+      return sinhalaChars >= tamilChars ? 'SI' : 'TA';
+    }
+
+    // Avoid flipping to English for short acknowledgements like "ok".
+    if (latinWords >= 3 && sinhalaChars === 0 && tamilChars === 0) {
+      return 'EN';
+    }
+
+    return null;
+  }
+
+  private countMatches(text: string, pattern: RegExp) {
+    const matches = text.match(pattern);
+    return matches ? matches.length : 0;
+  }
+
+  private getLanguageDisplayName(language: ChatLanguage) {
+    if (language === 'SI') return 'Sinhala';
+    if (language === 'TA') return 'Tamil';
+    return 'English';
   }
 
   private cleanupExpiredSessions() {
@@ -768,6 +869,7 @@ export class ChatService {
   private buildSystemPrompt(params: {
     auth: AuthContext;
     mode: ChatMode;
+    responseLanguage: ChatLanguage;
     currentRoute?: string;
     pageContext: {
       url: string;
@@ -800,6 +902,9 @@ export class ChatService {
 
     const routeLine = currentRoute?.trim() || '(not provided)';
     const roleLine = auth.isAuthenticated ? auth.role : 'GUEST';
+    const responseLanguageName = this.getLanguageDisplayName(
+      params.responseLanguage,
+    );
 
     return [
       `You are the ${BRAND_NAME} Whole Website Assistant.`,
@@ -812,6 +917,13 @@ export class ChatService {
       '4) Do not hallucinate features, rules, prices, statuses, or metrics.',
       '5) When using knowledge snippets, cite source names inline like "From rewards.md > Rewards Rules".',
       '6) Ask follow-up questions only when required to proceed safely.',
+      '7) Respond in the requested language while preserving system constants.',
+      '',
+      'Language rules:',
+      `- Primary response language: ${responseLanguageName} (${params.responseLanguage}).`,
+      '- If the user explicitly asks to switch language, follow that request.',
+      '- Keep route paths, booking status enums, IDs, and currency symbols unchanged.',
+      '- Do not transliterate unless the user asks for transliteration.',
       '',
       'Requester context:',
       `- Authenticated: ${auth.isAuthenticated ? 'yes' : 'no'}`,
