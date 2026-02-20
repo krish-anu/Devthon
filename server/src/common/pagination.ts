@@ -54,9 +54,11 @@ export async function cursorPaginate<T extends { id: CursorId }>(
   const limit = Math.max(1, Math.min(100, Math.floor(args.limit ?? 10)));
   const where = args.where;
   const orderBy = args.orderBy ?? { createdAt: 'desc' };
+  const pageSize = limit + 1;
 
   // If `before` is provided we will query backwards by using a negative `take`
   // then reverse the returned rows to keep the client-facing order stable.
+  // We fetch one extra row to know if another previous page exists.
   if (args.before) {
     const cursorPayload = decodeCursor<{ id: string }>(args.before);
     const cursorId = cursorPayload?.id;
@@ -65,21 +67,25 @@ export async function cursorPaginate<T extends { id: CursorId }>(
       orderBy,
       cursor: cursorId ? { id: cursorId } : undefined,
       skip: cursorId ? 1 : undefined,
-      take: -limit,
+      take: -pageSize,
     });
+
     const ordered = items.reverse();
-    const hasMore = ordered.length === limit;
-    const nextCursor = ordered.length
-      ? encodeCursor({ id: ordered[ordered.length - 1].id })
+    const hasPrev = ordered.length > limit;
+    const pageItems = hasPrev ? ordered.slice(1) : ordered;
+    const nextCursor = pageItems.length
+      ? encodeCursor({ id: pageItems[pageItems.length - 1].id })
       : null;
-    const prevCursor = ordered.length
-      ? encodeCursor({ id: ordered[0].id })
-      : null;
+    const prevCursor =
+      hasPrev && pageItems.length
+        ? encodeCursor({ id: pageItems[0].id })
+        : null;
+
     return {
-      items: ordered,
-      nextCursor: hasMore ? nextCursor : null,
+      items: pageItems,
+      nextCursor,
       prevCursor,
-      hasMore,
+      hasMore: hasPrev,
     };
   }
 
@@ -93,18 +99,21 @@ export async function cursorPaginate<T extends { id: CursorId }>(
     orderBy,
     cursor: cursorId ? { id: cursorId } : undefined,
     skip: cursorId ? 1 : undefined,
-    take: limit,
+    take: pageSize,
   });
 
-  const hasMore = items.length === limit;
-  const nextCursor = items.length
-    ? encodeCursor({ id: items[items.length - 1].id })
-    : null;
-  const prevCursor = items.length ? encodeCursor({ id: items[0].id }) : null;
+  const hasMore = items.length > limit;
+  const pageItems = hasMore ? items.slice(0, limit) : items;
+  const nextCursor =
+    hasMore && pageItems.length
+      ? encodeCursor({ id: pageItems[pageItems.length - 1].id })
+      : null;
+  const prevCursor =
+    cursorId && pageItems.length ? encodeCursor({ id: pageItems[0].id }) : null;
 
   return {
-    items,
-    nextCursor: hasMore ? nextCursor : null,
+    items: pageItems,
+    nextCursor,
     prevCursor,
     hasMore,
   };

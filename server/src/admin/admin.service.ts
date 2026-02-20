@@ -683,9 +683,46 @@ export class AdminService {
       ];
     }
 
+    const normalizedWhere = Object.keys(where).length > 0 ? where : undefined;
+    const mapBooking = (booking: any) => ({
+      ...this.normalizeBookingForRead(booking),
+      user: flattenUser(booking.user),
+    });
+
+    if (query.after || query.before || query.limit) {
+      const page = await cursorPaginate(
+        (args) =>
+          this.findManyBookingsWithUserProfile(
+            {
+              ...(args as any),
+              include: {
+                wasteCategory: true,
+                driver: true,
+              },
+            },
+            'listBookings/paginated',
+          ),
+        (w?: any) => this.prisma.booking.count({ where: w ?? normalizedWhere }),
+        {
+          where: normalizedWhere,
+          orderBy: { createdAt: 'desc' },
+          after: query.after ?? undefined,
+          before: query.before ?? undefined,
+          limit: query.limit ?? 10,
+        },
+      );
+
+      return {
+        items: page.items.map(mapBooking),
+        nextCursor: page.nextCursor,
+        prevCursor: page.prevCursor,
+        hasMore: page.hasMore,
+      } as any;
+    }
+
     const bookings = await this.findManyBookingsWithUserProfile(
       {
-        where: Object.keys(where).length > 0 ? where : undefined,
+        where: normalizedWhere,
         orderBy: { createdAt: 'desc' },
         include: {
           wasteCategory: true,
@@ -695,10 +732,7 @@ export class AdminService {
       'listBookings',
     );
 
-    return bookings.map((booking) => ({
-      ...this.normalizeBookingForRead(booking),
-      user: flattenUser(booking.user),
-    }));
+    return bookings.map(mapBooking);
   }
 
   async listSupportedBookingStatuses() {

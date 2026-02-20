@@ -141,29 +141,32 @@ export default function AdminBookingsPage() {
       }),
     onMutate: async (id: string) => {
       setDeletingId(id);
-      await queryClient.cancelQueries({
-        queryKey: ["admin-bookings", status, search, dateFilter],
-      });
-
-      const previous = queryClient.getQueryData<any[]>([
+      const queryKey = [
         "admin-bookings",
         status,
         search,
         dateFilter,
-      ]);
+        afterCursor,
+        beforeCursor,
+        limit,
+      ] as const;
+
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<AdminBookingsResponse>(queryKey);
 
       if (previous) {
-        queryClient.setQueryData(
-          ["admin-bookings", status, search, dateFilter],
-          previous.filter((b) => b.id !== id),
-        );
+        queryClient.setQueryData<AdminBookingsResponse>(queryKey, {
+          ...previous,
+          items: previous.items.filter((booking) => booking.id !== id),
+        });
       }
 
       return { previous };
     },
     onError: (_err, _id, context: any) => {
       queryClient.setQueryData(
-        ["admin-bookings", status, search, dateFilter],
+        ["admin-bookings", status, search, dateFilter, afterCursor, beforeCursor, limit],
         context?.previous,
       );
       setDeletingId(null);
@@ -216,9 +219,14 @@ export default function AdminBookingsPage() {
       if (afterCursor) params.append("after", afterCursor);
       if (beforeCursor) params.append("before", beforeCursor);
 
-      return apiFetch<AdminBookingsResponse>(
+      return apiFetch<Booking[] | AdminBookingsResponse>(
         `/admin/bookings?${params.toString()}`,
-      );
+      ).then((response) => {
+        if (Array.isArray(response)) {
+          return { items: response, nextCursor: null, prevCursor: null };
+        }
+        return response;
+      });
     },
     refetchInterval: 12000,
     placeholderData: (previousData) => previousData,
@@ -298,7 +306,7 @@ export default function AdminBookingsPage() {
         </Card>
       ) : (
         <Card>
-          <Table className="md:min-w-[800px]">
+          <Table className="min-w-[1000px] md:min-w-0 md:table-fixed [&_th]:md:whitespace-normal [&_td]:md:whitespace-normal">
             <TableHeader>
               <TableRow>
                 <TableHead>Booking ID</TableHead>
@@ -321,6 +329,10 @@ export default function AdminBookingsPage() {
                 const canCancelBooking = canAdminCancel(booking.status);
                 const canRefundBooking = canAdminRefund(booking.status);
                 const isCompleted = isBookingCompleted(booking.status);
+                const weightText =
+                  typeof booking.actualWeightKg === "number"
+                    ? `${booking.actualWeightKg} kg`
+                    : "-";
                 const hasCollectionData =
                   booking.actualWeightKg !== null &&
                   booking.actualWeightKg !== undefined &&
@@ -362,12 +374,7 @@ export default function AdminBookingsPage() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
-                    <TableCell>
-                      {isCompleted && typeof booking.actualWeightKg === "number"
-                        ? `${booking.actualWeightKg} kg`
-                        : "-"}
-                    </TableCell>
+                    <TableCell>{weightText}</TableCell>
                     <TableCell>
                       LKR{" "}
                       {isCompleted && typeof booking.finalAmountLkr === "number"
