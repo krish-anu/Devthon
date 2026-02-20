@@ -142,6 +142,11 @@ export default function HomePage() {
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
+            <Button size="sm" className="sm:hidden" asChild>
+              <Link href="/login" className="text-xs">
+                Login
+              </Link>
+            </Button>
             {/* Mobile hamburger */}
             <button
               type="button"
@@ -173,7 +178,7 @@ export default function HomePage() {
             >
               <Link href="/login">Login</Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button size="sm" className="hidden sm:inline-flex" asChild>
               <Link href="/signup" className="text-xs sm:text-sm">
                 Get Started
               </Link>
@@ -212,11 +217,11 @@ export default function HomePage() {
               Contact
             </a>
             <Link
-              href="/login"
+              href="/signup"
               className="py-2 hover:text-foreground transition-colors sm:hidden"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Login
+              Get Started
             </Link>
           </nav>
         )}
@@ -272,37 +277,7 @@ export default function HomePage() {
         </section>
       </div>
 
-      <section
-        id="impact"
-        className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-10 px-4 sm:px-6 py-12 sm:py-16"
-      >
-        <ScrollAnimatedSection>
-          <SectionHeading
-            eyebrow="Our Impact"
-            title="Making a Real Difference"
-            description="Together with our community, we are transforming waste management in Sri Lanka."
-          />
-        </ScrollAnimatedSection>
-        <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-3 sm:p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-            {stats.map((stat, index) => (
-              <ScrollAnimatedSection key={stat.label} delay={index * 100}>
-                <Card className="bg-(--card) text-center shadow-md">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
-                      {stat.icon}
-                    </div>
-                    <div className="text-lg font-bold text-(--brand)">
-                      {stat.value}
-                    </div>
-                    <div className="text-xs text-(--muted)">{stat.label}</div>
-                  </div>
-                </Card>
-              </ScrollAnimatedSection>
-            ))}
-          </div>
-        </div>
-      </section>
+     
 
       <section
         id="how"
@@ -355,6 +330,38 @@ export default function HomePage() {
               </Card>
             </ScrollAnimatedSection>
           ))}
+        </div>
+      </section>
+
+       <section
+        id="impact"
+        className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-10 px-4 sm:px-6 py-12 sm:py-16"
+      >
+        <ScrollAnimatedSection>
+          <SectionHeading
+            eyebrow="Our Impact"
+            title="Making a Real Difference"
+            description="Together with our community, we are transforming waste management in Sri Lanka."
+          />
+        </ScrollAnimatedSection>
+        <div className="mx-auto rounded-2xl border border-(--brand)/20 bg-transparent p-3 sm:p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+            {stats.map((stat, index) => (
+              <ScrollAnimatedSection key={stat.label} delay={index * 100}>
+                <Card className="bg-(--card) text-center shadow-md">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--brand)/20 text-(--brand)">
+                      {stat.icon}
+                    </div>
+                    <div className="text-lg font-bold text-(--brand)">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs text-(--muted)">{stat.label}</div>
+                  </div>
+                </Card>
+              </ScrollAnimatedSection>
+            ))}
+          </div>
         </div>
       </section>
 
