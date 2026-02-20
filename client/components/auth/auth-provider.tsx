@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       return data.user;
     } catch (error) {
-      if (recaptchaToken && isRecaptchaVerificationFailure(error)) {
+      if (isRecaptchaVerificationFailure(error)) {
         const retryToken = await executeRecaptcha("login");
         if (retryToken && retryToken !== recaptchaToken) {
           const data = await authApi.login({
@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       return data.user;
     } catch (error) {
-      if (payload.recaptchaToken && isRecaptchaVerificationFailure(error)) {
+      if (isRecaptchaVerificationFailure(error)) {
         const retryToken = await executeRecaptcha("signup");
         if (retryToken && retryToken !== payload.recaptchaToken) {
           const data = await authApi.register({

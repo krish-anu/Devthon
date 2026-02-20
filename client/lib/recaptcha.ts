@@ -184,6 +184,8 @@ export async function loadRecaptcha(siteKey: string) {
 export async function executeRecaptcha(action: string) {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const enabled = process.env.NEXT_PUBLIC_RECAPTCHA_ENABLED;
+  const nodeEnv = process.env.NODE_ENV;
+  const isProduction = nodeEnv === "production";
 
   // Allow explicit env toggle to disable reCAPTCHA in local/dev environments
   if (enabled && enabled.toLowerCase() === "false") {
@@ -192,12 +194,18 @@ export async function executeRecaptcha(action: string) {
 
   // Placeholder value in `.env` should never trigger a real script load.
   if (siteKey && /your_recaptcha_site_key_here/i.test(siteKey)) {
+    if (isProduction) {
+      throw new Error("reCAPTCHA is misconfigured: placeholder site key in production build");
+    }
     return null;
   }
 
   if (!siteKey) {
-    // If no site key is configured, skip gracefully (useful for local/dev)
-    // Return null to indicate no token was generated
+    // In production, missing site key is always a deployment/config issue.
+    if (isProduction) {
+      throw new Error("reCAPTCHA is misconfigured: missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY");
+    }
+    // If no site key is configured, skip gracefully in local/dev.
     return null;
   }
 
