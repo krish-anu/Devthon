@@ -719,8 +719,9 @@ export default function NewBookingPage() {
       if (!user?.id) throw new Error("User session unavailable. Please sign in again.");
       const sb = supabase();
       if (!sb) {
-        // Supabase not configured on client – skip uploads
-        return [] as string[];
+        throw new Error(
+          "Supabase is not configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then restart the frontend.",
+        );
       }
       const bucket = getBookingsBucketName();
 
@@ -728,7 +729,7 @@ export default function NewBookingPage() {
       for (const file of files) {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const filename = `${Date.now()}_${safeName}`;
-        const path = `bookings/${user.id}/${filename}`;
+        const path = `${user.id}/${filename}`;
         const { error: uploadErr } = await sb.storage
           .from(bucket)
           .upload(path, file as File, {
@@ -736,7 +737,9 @@ export default function NewBookingPage() {
             contentType: file.type || "application/octet-stream",
           });
         if (uploadErr) {
-          throw uploadErr;
+          throw new Error(
+            `Supabase upload failed for "${file.name}" (bucket: "${bucket}", path: "${path}"): ${uploadErr.message}`,
+          );
         }
 
         const { data: publicData } = sb.storage.from(bucket).getPublicUrl(path);
@@ -745,7 +748,11 @@ export default function NewBookingPage() {
           const { data: signedData, error: signedErr } = await sb.storage
             .from(bucket)
             .createSignedUrl(path, 60 * 60 * 24);
-          if (signedErr) throw signedErr;
+          if (signedErr) {
+            throw new Error(
+              `Image uploaded but signed URL generation failed (bucket: "${bucket}", path: "${path}"): ${signedErr.message}`,
+            );
+          }
           url = (signedData as any)?.signedUrl ?? null;
         }
         if (!url) {
