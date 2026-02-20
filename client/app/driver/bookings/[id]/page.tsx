@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
 import Loading from "@/components/shared/Loading";
 import { useToast } from "@/components/ui/use-toast";
+import { Navigation } from "lucide-react";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
 const mapContainerStyle = { height: "100%", width: "100%" };
@@ -247,9 +248,21 @@ export default function DriverBookingDetailPage() {
           )}
         </div>
         {booking.lat != null && booking.lng != null && (
-          <p className="text-xs text-(--muted)">
-            {booking.lat.toFixed(6)}, {booking.lng.toFixed(6)}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-(--muted)">
+              {booking.lat.toFixed(6)}, {booking.lng.toFixed(6)}
+            </p>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${booking.lat},${booking.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="sm" className="gap-1.5">
+                <Navigation className="h-4 w-4" />
+                Get Directions
+              </Button>
+            </a>
+          </div>
         )}
       </Card>
 
