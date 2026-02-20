@@ -173,6 +173,7 @@ networks:
 volumes:
   postgres_data:
     driver: local
-  node_modules:
+  frontend_node_modules:
     driver: local
-
+  frontend_next:
+    driver: local

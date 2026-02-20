@@ -395,7 +395,7 @@ export class AdminService {
       });
     });
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return flattenUser(user);
   }
 
@@ -503,7 +503,7 @@ export class AdminService {
       where: { id },
       include: USER_PROFILE_INCLUDE,
     });
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return flattenUser(updated);
   }
 
@@ -525,7 +525,7 @@ export class AdminService {
     // Now delete the user
     await this.prisma.user.delete({ where: { id } });
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { success: true };
   }
 
@@ -623,7 +623,7 @@ export class AdminService {
       };
     });
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return result;
   }
 
@@ -637,7 +637,7 @@ export class AdminService {
     if (dto.status !== undefined) data.status = dto.status;
 
     const updated = await this.prisma.driver.update({ where: { id }, data });
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return updated;
   }
 
@@ -646,7 +646,7 @@ export class AdminService {
     await this.prisma.driver.delete({ where: { id } });
     await this.prisma.user.delete({ where: { id } }).catch(() => {});
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { success: true };
   }
 
@@ -732,7 +732,7 @@ export class AdminService {
       ),
     );
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { items: updates };
   }
 
@@ -758,7 +758,7 @@ export class AdminService {
           isActive: dto.isActive ?? true,
         } as any,
       });
-      await (this.cacheManager as any).reset();
+      await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
       return created;
     } catch (error: any) {
       if (error?.code === 'P2002') {
@@ -778,13 +778,13 @@ export class AdminService {
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
 
     const updated = await this.prisma.wasteCategory.update({ where: { id }, data });
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return updated;
   }
 
   async deleteWasteCategory(id: string) {
     await this.prisma.wasteCategory.delete({ where: { id } }).catch(() => {});
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { success: true };
   }
 
@@ -1053,7 +1053,7 @@ export class AdminService {
 
     const normalizedUpdated = this.normalizeBookingForRead(updated);
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return {
       ...normalizedUpdated,
       user: undefined, // Don't leak full user in admin response
@@ -1339,7 +1339,7 @@ export class AdminService {
       throw new BadRequestException('User is neither an admin nor a driver');
     }
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { success: true, message: `User ${id} approved` };
   }
 
@@ -1360,7 +1360,7 @@ export class AdminService {
     }
     await this.prisma.user.delete({ where: { id } });
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { success: true, message: `User ${id} rejected and removed` };
   }
 
@@ -1416,7 +1416,7 @@ export class AdminService {
       data: { role: role as Role },
     });
 
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     return { success: true, message: `Role changed to ${role}` };
   }
 }

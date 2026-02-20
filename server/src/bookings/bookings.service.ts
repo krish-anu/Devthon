@@ -267,7 +267,7 @@ export class BookingsService {
       }
 
       // Invalidate server cache so downstream GET /bookings and related queries return fresh data
-      await (this.cacheManager as any).reset();
+      await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
       return created.map((item) => this.normalizeBookingForRead(item));
     } catch (err) {
@@ -315,7 +315,7 @@ export class BookingsService {
         .catch(() => {});
 
       // ensure cached booking lists / details are fresh
-      await (this.cacheManager as any).reset();
+      await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
       return this.normalizeBookingForRead(updated);
     } catch (err) {
@@ -366,7 +366,7 @@ export class BookingsService {
         .catch(() => {});
 
       // remove cached responses so frontend doesn't see the deleted booking again
-      await (this.cacheManager as any).reset();
+      await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
       return { message: 'Booking deleted' };
     } catch (err) {
@@ -435,7 +435,7 @@ export class BookingsService {
       });
 
       // location update can affect live tracking UI — clear cache so clients refetch
-      await (this.cacheManager as any).reset();
+      await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
       return { message: 'Location updated successfully' };
     } catch (err) {
@@ -530,7 +530,7 @@ export class BookingsService {
       });
 
       // ensure any cached booking list/details reflect updated status immediately
-      await (this.cacheManager as any).reset();
+      await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
       return this.normalizeBookingForRead(updated);
     } catch (err) {

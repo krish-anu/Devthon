@@ -51,7 +51,7 @@ export class NotificationsService {
     });
 
     // Refresh cached notification queries for this user
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
     return { success: true };
   }
@@ -67,7 +67,7 @@ export class NotificationsService {
     });
 
     // Invalidate cached notification list so UI updates immediately
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
     return { success: count > 0 };
   }

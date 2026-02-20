@@ -716,6 +716,7 @@ export default function NewBookingPage() {
     // Helper: upload files to Supabase and return public/signed URLs
     const uploadFiles = async (files: File[] | undefined) => {
       if (!files || files.length === 0) return [] as string[];
+      if (!user?.id) throw new Error("User session unavailable. Please sign in again.");
       const sb = supabase();
       if (!sb) {
         // Supabase not configured on client – skip uploads
@@ -725,11 +726,15 @@ export default function NewBookingPage() {
 
       const urls: string[] = [];
       for (const file of files) {
-        const filename = `${Date.now()}_${file.name}`;
-        const path = `bookings/${user?.id ?? 'unknown'}/${filename}`;
-        const { data: uploadData, error: uploadErr } = await sb.storage
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const filename = `${Date.now()}_${safeName}`;
+        const path = `bookings/${user.id}/${filename}`;
+        const { error: uploadErr } = await sb.storage
           .from(bucket)
-          .upload(path, file as File, { upsert: true });
+          .upload(path, file as File, {
+            upsert: true,
+            contentType: file.type || "application/octet-stream",
+          });
         if (uploadErr) {
           throw uploadErr;
         }
@@ -742,6 +747,9 @@ export default function NewBookingPage() {
             .createSignedUrl(path, 60 * 60 * 24);
           if (signedErr) throw signedErr;
           url = (signedData as any)?.signedUrl ?? null;
+        }
+        if (!url) {
+          throw new Error(`Upload succeeded but URL generation failed for ${file.name}`);
         }
         if (url) urls.push(url);
       }

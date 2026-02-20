@@ -211,15 +211,17 @@ export default function ProfilePage() {
 
     setUploading(true);
     try {
-      const filename = `${Date.now()}_${file.name}`;
-      const path = `avatars/${user?.id ?? "unknown"}/${filename}`;
+      if (!user?.id) throw new Error("User session unavailable. Please sign in again.");
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filename = `${Date.now()}_${safeName}`;
+      const path = `avatars/${user.id}/${filename}`;
       const bucket = getBucketName();
       const sb = supabase();
       if (!sb) throw new Error("Supabase not configured");
 
-      const { data: uploadData, error: uploadErr } = await sb.storage
+      const { error: uploadErr } = await sb.storage
         .from(bucket)
-        .upload(path, file, { upsert: true });
+        .upload(path, file, { upsert: true, contentType: file.type || "image/jpeg" });
       if (uploadErr) throw uploadErr;
 
       const { data: publicData } = sb.storage.from(bucket).getPublicUrl(path);
@@ -231,6 +233,7 @@ export default function ProfilePage() {
         if (signedErr) throw signedErr;
         url = (signedData as any)?.signedUrl ?? null;
       }
+      if (!url) throw new Error("Upload succeeded but image URL could not be generated.");
 
       const updatedUser = await apiFetch<any>("/me", {
         method: "PATCH",

@@ -117,7 +117,7 @@ export class DriverService {
     });
 
     // clear server cache so driver/customer lists update immediately
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
     return this.toDriverBookingResponse(updated);
   }
@@ -183,7 +183,7 @@ export class DriverService {
     }
 
     // ensure cached booking / driver views are refreshed
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     if (statusChanged) {
       const wasteTypeName = updated.wasteCategory?.name ?? 'Waste';
       this.pushService
@@ -238,7 +238,7 @@ export class DriverService {
     });
 
     // invalidate cache after driver-cancel so frontends refetch
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
     const messageSuffix = dto?.reason?.trim()
       ? ` Reason: ${dto.reason.trim()}.`
       : '';

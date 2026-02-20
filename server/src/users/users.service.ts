@@ -187,7 +187,7 @@ export class UsersService {
     });
 
     // Clear server cache so /me returns the fresh profile immediately
-    await (this.cacheManager as any).reset();
+    await ((this.cacheManager as any).clear?.() ?? (this.cacheManager as any).reset?.());
 
     return flattenUser(updated);
   }
