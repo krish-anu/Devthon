@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import {
   canDriverCancel,
@@ -249,7 +250,14 @@ export default function DriverBookingsPage() {
 
                 return (
                   <TableRow key={booking.id}>
-                    <TableCell>{booking.id.slice(0, 8)}</TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/driver/bookings/${booking.id}`}
+                        className="font-mono text-sm text-blue-600 hover:underline"
+                      >
+                        {booking.id.slice(0, 8)}
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       {booking.user?.fullName ?? "Customer"}
                     </TableCell>
