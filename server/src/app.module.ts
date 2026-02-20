@@ -32,7 +32,10 @@ import { WasteTypesModule } from './waste-types/waste-types.module';
 @Module({
   imports: [
     DriverModule,
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '../.env'],
+    }),
     // Cache: in-memory cache configuration
     CacheModule.registerAsync({
       isGlobal: true,
