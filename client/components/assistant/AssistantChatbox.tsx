@@ -565,7 +565,7 @@ export default function AssistantChatbox() {
     >
       <div
         className={cn(
-          "pointer-events-none fixed bottom-[4.5rem] right-3 left-3 w-auto max-w-[calc(100vw-1.5rem)] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:bottom-20 sm:right-5 sm:left-auto sm:w-[360px] sm:max-w-none",
+          "pointer-events-none fixed bottom-[4.5rem] right-3 left-3 w-auto max-w-[calc(100vw-1.5rem)] origin-bottom-right rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-xl transition-all duration-200 ease-out sm:bottom-20 sm:right-5 sm:left-auto sm:w-[400px] sm:max-w-none",
           isOpen
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "translate-y-2 scale-95 opacity-0",
@@ -595,7 +595,7 @@ export default function AssistantChatbox() {
             Close
           </button>
         </div>
-        <div className="flex h-[360px] max-h-[65vh] flex-col sm:max-h-[70vh]">
+        <div className="flex h-[390px] max-h-[70vh] flex-col sm:h-[430px] sm:max-h-[75vh]">
           <div
             ref={listRef}
             className={cn(
