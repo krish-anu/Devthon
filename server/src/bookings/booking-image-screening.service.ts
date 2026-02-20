@@ -29,7 +29,7 @@ type GeminiScreeningResponse = {
   reason?: unknown;
 };
 
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 const DEFAULT_API_BASE_URL = 'https://generativelanguage.googleapis.com';
 const DEFAULT_API_VERSION = 'v1beta';
 const DEFAULT_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
