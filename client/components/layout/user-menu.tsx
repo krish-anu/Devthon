@@ -13,7 +13,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 
 export function UserMenu({ onlySettings }: { onlySettings?: boolean }) {
   const { user, logout } = useAuth();
-  const avatarSrc = (user as any)?.avatar ?? (user as any)?.avatarUrl ?? null;
+  const avatarSrc = (user as any)?.avatarUrl ?? (user as any)?.avatar ?? null;
 
   // Resolve a sensible settings/profile link depending on role
   const settingsHref =

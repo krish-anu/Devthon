@@ -42,7 +42,7 @@ export default function AdminDriversPage() {
             <Card key={driver.id} className="space-y-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar src={driver.avatar ?? driver.avatarUrl ?? null} alt={driver.fullName ?? 'Driver'} className="h-10 w-10" />
+                  <Avatar src={driver.avatarUrl ?? driver.avatar ?? null} alt={driver.fullName ?? 'Driver'} className="h-10 w-10" />
                   <h3 className="text-lg font-semibold break-words">{driver.fullName}</h3>
                 </div>
                 <span className="rounded-full border border-(--border) bg-(--surface) px-3 py-1 text-xs text-(--muted)">

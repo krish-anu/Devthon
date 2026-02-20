@@ -369,7 +369,7 @@ export default function ProfilePage() {
       <Card className="flex flex-wrap items-center gap-4">
         <div>
           <Avatar
-            src={localAvatarPreview ?? (user as any)?.avatar ?? (user as any)?.avatarUrl ?? null}
+            src={localAvatarPreview ?? (user as any)?.avatarUrl ?? (user as any)?.avatar ?? null}
             alt={user?.fullName ?? "User"}
             className="h-16 w-16"
           />
@@ -439,6 +439,15 @@ export default function ProfilePage() {
               URL.revokeObjectURL(localAvatarPreview);
               setLocalAvatarPreview(null);
             }
+          }}
+          onPreviewChange={(blob) => {
+            // parent manages its own preview object URL so it won't be invalidated by cropper internals
+            // revoke previous preview URL when replaced/cleared
+            setLocalAvatarPreview((prev) => {
+              if (prev) URL.revokeObjectURL(prev);
+              if (!blob) return null;
+              return URL.createObjectURL(blob);
+            });
           }}
           onCrop={handleCroppedFile}
         />

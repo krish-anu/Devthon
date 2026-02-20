@@ -11,6 +11,8 @@ type Props = {
   aspect?: number; // aspect ratio (default 1)
   onCancel: () => void;
   onCrop: (file: File) => void; // returns a File ready to upload
+  // optional: provide live preview blob to parent (parent should create/revoke its own object URL)
+  onPreviewChange?: (previewBlob: Blob | null) => void;
 };
 
 // utils: create image, crop via canvas, return blob
@@ -51,9 +53,10 @@ async function getCroppedImg(
   tmpCtx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
   tmpCtx.drawImage(image, -image.width / 2, -image.height / 2);
 
+  // translate from centered draw coords back to the crop box coords
   const data = tmpCtx.getImageData(
-    safeArea / 2 + pixelCrop.x,
-    safeArea / 2 + pixelCrop.y,
+    safeArea / 2 - image.width / 2 + pixelCrop.x,
+    safeArea / 2 - image.height / 2 + pixelCrop.y,
     pixelCrop.width,
     pixelCrop.height,
   );
@@ -83,7 +86,7 @@ async function getCroppedImg(
   });
 }
 
-export default function ImageCropper({ src, aspect = 1, onCancel, onCrop }: Props) {
+export default function ImageCropper({ src, aspect = 1, onCancel, onCrop, onPreviewChange }: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -116,24 +119,41 @@ export default function ImageCropper({ src, aspect = 1, onCancel, onCrop }: Prop
     let active = true;
     let url: string | null = null;
     (async () => {
-      if (!croppedAreaPixels) return;
+      if (!croppedAreaPixels) {
+        // notify parent that preview is gone
+        onPreviewChange?.(null);
+        return;
+      }
       try {
         const blob = await getCroppedImg(src, croppedAreaPixels, rotation, { horizontal: false, vertical: false }, { width: OUTPUT_PX, height: OUTPUT_PX });
-        if (!blob) return;
+        if (!blob) {
+          onPreviewChange?.(null);
+          return;
+        }
+
+        // internal preview (object URL) for crop dialog
         url = URL.createObjectURL(blob);
         if (active && mountedRef.current) setPreviewUrl(url);
+
+        // inform parent with the raw blob so the parent can create/revoke its own object URL
+        onPreviewChange?.(blob);
       } catch (err) {
-        // ignore preview errors
+        // notify parent on error
+        onPreviewChange?.(null);
       }
     })();
 
     return () => {
       active = false;
+      // clear internal preview URL; parent preview stays until explicitly cleared
       if (url) {
         URL.revokeObjectURL(url);
       }
     };
-  }, [croppedAreaPixels, rotation, src]);
+  }, [croppedAreaPixels, rotation, src, onPreviewChange]);
+
+  // ensure parent preview clears if the cropper unmounts entirely
+  React.useEffect(() => () => { onPreviewChange?.(null); }, [onPreviewChange]);
 
   const handleSave = useCallback(async () => {
     if (!croppedAreaPixels) return;
