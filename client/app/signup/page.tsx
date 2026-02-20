@@ -18,7 +18,7 @@ import { AuthLayout } from "@/components/auth/auth-layout";
 import { useGoogleLogin } from "@react-oauth/google";
 import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
-import { executeRecaptcha } from "@/lib/recaptcha";
+
 
 const schema = z
   .object({
@@ -156,18 +156,7 @@ export default function SignupPage() {
       // eslint-disable-next-line no-console
       console.debug("Signup onSubmit payload:", { ...payload, role });
 
-      let recaptchaToken: string | null = null;
-      try {
-        recaptchaToken = (await executeRecaptcha("signup")) as string | null;
-      } catch (err) {
-        console.error("reCAPTCHA failed:", err);
-        toast({
-          title: "reCAPTCHA",
-          description: "Failed to run reCAPTCHA. Please try again.",
-          variant: "error",
-        });
-        return;
-      }
+      const recaptchaToken = undefined;
 
       const user = await registerUser({
         ...payload,

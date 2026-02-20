@@ -633,3 +633,12 @@ section[id], [id] {
   pointer-events: none;
   animation: assistant-ring 1.6s ease-out infinite;
 }
+
+/* Reposition Google reCAPTCHA badge and ensure it sits above UI when present */
+.grecaptcha-badge {
+  left: auto !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  z-index: 999999 !important;
+  transform: none !important;
+}
