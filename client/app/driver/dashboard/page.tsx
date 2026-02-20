@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { isBookingCompleted, normalizeBookingStatus } from "@/lib/booking-status";
 import { Card } from "@/components/ui/card";
@@ -103,7 +104,14 @@ export default function DriverDashboardPage() {
               <TableBody>
                 {bookings.map((b) => (
                   <TableRow key={b.id}>
-                    <TableCell>{b.id.slice(0, 8)}</TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/driver/bookings/${b.id}`}
+                        className="font-mono text-sm text-blue-600 hover:underline"
+                      >
+                        {b.id.slice(0, 8)}
+                      </Link>
+                    </TableCell>
                     <TableCell>{b.addressLine1}</TableCell>
                     <TableCell>
                       {isBookingCompleted(b.status) &&

@@ -17,12 +17,22 @@ import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
 import Loading from "@/components/shared/Loading";
 import { useToast } from "@/components/ui/use-toast";
+import { Navigation } from "lucide-react";
+import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+
+const mapContainerStyle = { height: "100%", width: "100%" };
+const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 
 export default function DriverBookingDetailPage() {
   const params = useParams();
   const bookingId = typeof params?.id === "string" ? params.id : "";
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: apiKey || "",
+  });
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["driver-booking", bookingId],
@@ -205,6 +215,55 @@ export default function DriverBookingDetailPage() {
         <div className="text-base">
           {new Date(booking.scheduledDate).toLocaleDateString()} ({booking.scheduledTimeSlot})
         </div>
+      </Card>
+
+      {/* Pickup location map */}
+      <Card className="p-4 space-y-2">
+        <div className="text-sm font-semibold">Pickup Location</div>
+        <div className="h-56 rounded-xl border border-(--border) overflow-hidden">
+          {!apiKey ? (
+            <div className="flex h-full items-center justify-center text-sm text-red-500">
+              Google Maps API key is not configured
+            </div>
+          ) : loadError ? (
+            <div className="flex h-full items-center justify-center text-sm text-(--muted)">
+              Error loading map
+            </div>
+          ) : !isLoaded ? (
+            <div className="flex h-full items-center justify-center text-sm text-(--muted)">
+              Loading map...
+            </div>
+          ) : booking.lat == null || booking.lng == null ? (
+            <div className="flex h-full items-center justify-center text-sm text-(--muted)">
+              No location saved for this booking
+            </div>
+          ) : (
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={{ lat: booking.lat, lng: booking.lng }}
+              zoom={15}
+            >
+              <Marker position={{ lat: booking.lat!, lng: booking.lng! }} />
+            </GoogleMap>
+          )}
+        </div>
+        {booking.lat != null && booking.lng != null && (
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-(--muted)">
+              {booking.lat.toFixed(6)}, {booking.lng.toFixed(6)}
+            </p>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${booking.lat},${booking.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="sm" className="gap-1.5">
+                <Navigation className="h-4 w-4" />
+                Get Directions
+              </Button>
+            </a>
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 space-y-4">

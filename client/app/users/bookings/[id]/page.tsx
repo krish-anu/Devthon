@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { apiFetch } from "@/lib/api";
 import { Booking } from "@/lib/types";
@@ -56,8 +56,21 @@ export default function BookingDetailsPage() {
 
   const booking = data;
 
-  // State for map marker position
+  // State for map marker position — initialise from saved booking coords if available
   const [markerPosition, setMarkerPosition] = useState(defaultCenter);
+
+  // Sync marker to saved booking location whenever booking data loads
+  useEffect(() => {
+    if (booking?.lat != null && booking?.lng != null) {
+      setMarkerPosition({ lat: booking.lat, lng: booking.lng });
+    }
+  }, [booking?.lat, booking?.lng]);
+
+  // Map center: use the saved booking location, fall back to Colombo default
+  const mapCenter =
+    booking?.lat != null && booking?.lng != null
+      ? { lat: booking.lat, lng: booking.lng }
+      : defaultCenter;
   const { toast } = useToast();
 
   // Mutation to save location
@@ -293,8 +306,8 @@ export default function BookingDetailsPage() {
             ) : (
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
-                center={defaultCenter}
-                zoom={10}
+                center={mapCenter}
+                zoom={booking?.lat != null ? 15 : 10}
                 onClick={handleMapClick}
               >
                 <Marker position={markerPosition} />
