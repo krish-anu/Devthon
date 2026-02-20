@@ -624,9 +624,13 @@ export class BookingsService {
   }
 
   private shouldAlertForScreeningResult(result: BookingImageScreeningResult) {
-    if (result.verdictSource !== 'model') return false;
-
     const confidence = result.confidence ?? 0;
+
+    // Fallback results (API failure) should still alert admins for review
+    if (result.verdictSource === 'fallback') {
+      return true;
+    }
+
     if (result.verdict === 'NON_WASTE') {
       return (
         confidence >= this.getNonWasteAlertConfidence() ||
