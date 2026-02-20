@@ -25,7 +25,11 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken };
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @Post('login')
@@ -42,7 +46,11 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken };
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @Post('google')
@@ -50,7 +58,11 @@ export class AuthController {
     @Body() dto: GoogleLoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.googleLogin(dto.token, dto.signup ?? false, dto.role);
+    const result = await this.authService.googleLogin(
+      dto.token,
+      dto.signup ?? false,
+      dto.role,
+    );
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -59,7 +71,11 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken };
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @Post('google/code')
@@ -81,10 +97,12 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken };
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
-
-
 
   @Post('refresh')
   async refresh(
@@ -102,7 +120,11 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
     res.cookie('refreshToken', result.refreshToken, cookieOptions);
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken };
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @UseGuards(JwtAuthGuard)

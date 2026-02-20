@@ -31,8 +31,8 @@ export class PrismaService
     const directUrl = process.env.DIRECT_URL;
     const preferDirect = toBool(process.env.PRISMA_PREFER_DIRECT_URL);
     const url = preferDirect
-      ? directUrl ?? databaseUrl
-      : databaseUrl ?? directUrl;
+      ? (directUrl ?? databaseUrl)
+      : (databaseUrl ?? directUrl);
     const connectionUrlSource = !url
       ? 'UNSET'
       : preferDirect && directUrl
@@ -52,7 +52,9 @@ export class PrismaService
         'No DATABASE_URL or DIRECT_URL detected at runtime. Prisma may use the URL embedded at generate time.',
       );
     } else {
-      this.logger.log(`Using ${connectionUrlSource} for Prisma runtime connection.`);
+      this.logger.log(
+        `Using ${connectionUrlSource} for Prisma runtime connection.`,
+      );
     }
   }
 

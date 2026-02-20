@@ -31,6 +31,15 @@ export default function MapComponent({
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const hasControlledCoordinates =
+    Boolean(onLocationSelect) &&
+    typeof initialLat === "number" &&
+    Number.isFinite(initialLat) &&
+    typeof initialLng === "number" &&
+    Number.isFinite(initialLng);
+  const resolvedMarkerPosition = hasControlledCoordinates
+    ? { lat: initialLat, lng: initialLng }
+    : markerPosition;
 
   const updateLocation = useCallback(
     (lat: number, lng: number) => {
@@ -123,12 +132,12 @@ export default function MapComponent({
     <div className="relative h-full w-full">
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={markerPosition}
+        center={resolvedMarkerPosition}
         zoom={13}
         onClick={handleMapClick}
         onLoad={(map) => setMapInstance(map)}
       >
-        <Marker position={markerPosition} />
+        <Marker position={resolvedMarkerPosition} />
       </GoogleMap>
 
       <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">

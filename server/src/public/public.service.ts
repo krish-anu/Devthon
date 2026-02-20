@@ -120,8 +120,8 @@ export class PublicService {
       // Call Gemini Vision API
       const fetchFn =
         (global as any).fetch || (await import('node-fetch')).default;
-      const model = 'gemini-2.0-flash';
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const model = 'gemini-1.5-flash';
+      const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`;
 
       const prompt = `You are a waste classification assistant. Analyze this image and determine which waste category it belongs to.
 

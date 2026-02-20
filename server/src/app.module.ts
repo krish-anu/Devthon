@@ -98,5 +98,4 @@ import { WasteTypesModule } from './waste-types/waste-types.module';
     { provide: APP_INTERCEPTOR, useClass: CacheInterceptor },
   ],
 })
-
 export class AppModule {}

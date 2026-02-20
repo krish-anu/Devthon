@@ -62,7 +62,11 @@ export class ChatToolsService {
     };
   }
 
-  async getUserBookings(userId: string, auth: AuthContext, pendingOnly = false) {
+  async getUserBookings(
+    userId: string,
+    auth: AuthContext,
+    pendingOnly = false,
+  ) {
     const authUserId = this.requireAuth(auth);
     this.requireRole(auth, [Role.CUSTOMER], 'getUserBookings');
     if (authUserId !== userId) {
@@ -212,7 +216,11 @@ export class ChatToolsService {
 
   async getAdminBookingSummary(auth: AuthContext) {
     this.requireAuth(auth);
-    this.requireRole(auth, [Role.ADMIN, Role.SUPER_ADMIN], 'getAdminBookingSummary');
+    this.requireRole(
+      auth,
+      [Role.ADMIN, Role.SUPER_ADMIN],
+      'getAdminBookingSummary',
+    );
 
     const [total, grouped, unassigned] = await Promise.all([
       this.prisma.booking.count(),
@@ -230,11 +238,14 @@ export class ChatToolsService {
       }),
     ]);
 
-    const countsByStatus = grouped.reduce<Record<string, number>>((acc, row) => {
-      acc[normalizeBookingStatus(row.status)] =
-        (acc[normalizeBookingStatus(row.status)] ?? 0) + row._count.status;
-      return acc;
-    }, {});
+    const countsByStatus = grouped.reduce<Record<string, number>>(
+      (acc, row) => {
+        acc[normalizeBookingStatus(row.status)] =
+          (acc[normalizeBookingStatus(row.status)] ?? 0) + row._count.status;
+        return acc;
+      },
+      {},
+    );
 
     const pendingCount =
       (countsByStatus[BookingStatus.CREATED] ?? 0) +
@@ -289,7 +300,8 @@ export class ChatToolsService {
         standard: MULTIPLIERS.standard,
       },
       multiplierPolicy: 'Use highest applicable multiplier only.',
-      awardCondition: 'Points are awarded when booking status becomes COMPLETED.',
+      awardCondition:
+        'Points are awarded when booking status becomes COMPLETED.',
       formula: 'round((basePoints + bonusPoints) * multiplier)',
     };
   }
@@ -307,8 +319,7 @@ export class ChatToolsService {
     toolName: string,
   ) {
     const role = auth.role;
-    const hasRole =
-      role !== 'GUEST' && allowedRoles.includes(role as Role);
+    const hasRole = role !== 'GUEST' && allowedRoles.includes(role);
     if (!hasRole) {
       const allowed = allowedRoles.join(', ');
       const reason =

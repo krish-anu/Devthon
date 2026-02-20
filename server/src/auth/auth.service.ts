@@ -256,7 +256,7 @@ export class AuthService {
       });
       return payload as any;
     } catch (err) {
-      this.logger.warn('ID token verification failed', err as any);
+      this.logger.warn('ID token verification failed', err);
       throw new UnauthorizedException('Invalid Google ID token');
     }
   }
@@ -343,7 +343,10 @@ export class AuthService {
         };
 
         if (retryable && attempt < maxAttempts) {
-          this.logger.warn('Google OAuth token exchange network retry', details);
+          this.logger.warn(
+            'Google OAuth token exchange network retry',
+            details,
+          );
           await this.sleep(250 * attempt);
           continue;
         }
@@ -394,7 +397,11 @@ export class AuthService {
    * Google may return `name`, `given_name`, `family_name`, or none.
    */
   private extractGoogleName(googleUser: any): string {
-    if (googleUser.name && typeof googleUser.name === 'string' && googleUser.name.trim()) {
+    if (
+      googleUser.name &&
+      typeof googleUser.name === 'string' &&
+      googleUser.name.trim()
+    ) {
       return googleUser.name.trim();
     }
     const parts: string[] = [];
@@ -507,50 +514,76 @@ export class AuthService {
       // Existing user — ensure a role-specific profile row exists.
       // Users who registered via email/password without a profile, or whose profile
       // was deleted, would otherwise have fullName=null forever.
-      const hasProfile = (user as any).customer || (user as any).driver || (user as any).admin;
+      const hasProfile =
+        (user as any).customer || (user as any).driver || (user as any).admin;
       if (!hasProfile) {
         const displayName = this.extractGoogleName(googleUser);
         this.logger.log(
-          `Existing user ${user!.id} (${user!.email}) has no profile row — creating one with fullName="${displayName}"`,
+          `Existing user ${user.id} (${user.email}) has no profile row — creating one with fullName="${displayName}"`,
         );
         try {
-          if (user!.role === 'ADMIN') {
+          if (user.role === 'ADMIN') {
             await this.prisma.admin.create({
-              data: { id: user!.id, fullName: displayName, phone: '' },
+              data: { id: user.id, fullName: displayName, phone: '' },
             });
-          } else if (user!.role === 'DRIVER') {
+          } else if (user.role === 'DRIVER') {
             await this.prisma.driver.create({
-              data: { id: user!.id, fullName: displayName, phone: '', vehicle: 'Not specified' },
+              data: {
+                id: user.id,
+                fullName: displayName,
+                phone: '',
+                vehicle: 'Not specified',
+              },
             });
           } else {
             await this.prisma.customer.create({
-              data: { id: user!.id, fullName: displayName, phone: '', type: 'HOUSEHOLD' } as any,
+              data: {
+                id: user.id,
+                fullName: displayName,
+                phone: '',
+                type: 'HOUSEHOLD',
+              } as any,
             });
           }
           // Re-fetch with profile included
           user = await this.prisma.user.findUnique({
-            where: { id: user!.id },
+            where: { id: user.id },
             include: USER_PROFILE_INCLUDE,
           });
           await this.syncUserToSupabase(user);
         } catch (err) {
-          this.logger.warn('Failed to create missing profile row for existing user', err as any);
+          this.logger.warn(
+            'Failed to create missing profile row for existing user',
+            err,
+          );
         }
       }
 
       // Existing user — update avatar if Google provides one (or it changed).
       if (googleUser.picture) {
         try {
-          const profile = (user as any).customer || (user as any).driver || (user as any).admin;
+          const profile =
+            (user as any).customer ||
+            (user as any).driver ||
+            (user as any).admin;
           const avatarFromDb = profile?.avatarUrl ?? null;
           if (avatarFromDb !== googleUser.picture) {
             const updateData = { avatarUrl: googleUser.picture } as any;
             if (user!.role === 'DRIVER') {
-              await this.prisma.driver.update({ where: { id: user!.id }, data: updateData });
+              await this.prisma.driver.update({
+                where: { id: user!.id },
+                data: updateData,
+              });
             } else if (user!.role === 'ADMIN') {
-              await this.prisma.admin.update({ where: { id: user!.id }, data: updateData });
+              await this.prisma.admin.update({
+                where: { id: user!.id },
+                data: updateData,
+              });
             } else {
-              await this.prisma.customer.update({ where: { id: user!.id }, data: updateData });
+              await this.prisma.customer.update({
+                where: { id: user!.id },
+                data: updateData,
+              });
             }
 
             // refresh the user object for return
@@ -567,10 +600,7 @@ export class AuthService {
             await this.syncUserToSupabase(userWithProfile ?? user);
           }
         } catch (err) {
-          this.logger.warn(
-            'Failed to update avatar for existing user',
-            err as any,
-          );
+          this.logger.warn('Failed to update avatar for existing user', err);
         }
       }
 
@@ -584,32 +614,75 @@ export class AuthService {
         try {
           // Replace fullName if it's missing, a placeholder, or looks like an email prefix
           const needsName = (profileName: string | null | undefined) => {
-            if (!profileName || profileName.trim() === '' || profileName === 'Google User') return true;
+            if (
+              !profileName ||
+              profileName.trim() === '' ||
+              profileName === 'Google User'
+            )
+              return true;
             // If the current name matches the local part of the email, replace with real name
             const emailPrefix = googleUser.email?.split('@')[0];
             if (emailPrefix && profileName === emailPrefix) return true;
             return false;
           };
-          if ((user as any).customer && needsName((user as any).customer.fullName)) {
-            this.logger.log(`Updating customer fullName to "${displayName}" for user ${user!.id}`);
-            await this.prisma.customer.update({ where: { id: user!.id }, data: { fullName: displayName } as any });
-            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
+          if (
+            (user as any).customer &&
+            needsName((user as any).customer.fullName)
+          ) {
+            this.logger.log(
+              `Updating customer fullName to "${displayName}" for user ${user!.id}`,
+            );
+            await this.prisma.customer.update({
+              where: { id: user!.id },
+              data: { fullName: displayName } as any,
+            });
+            user = await this.prisma.user.findUnique({
+              where: { id: user!.id },
+              include: USER_PROFILE_INCLUDE,
+            });
             await this.syncUserToSupabase(user);
-          } else if ((user as any).driver && needsName((user as any).driver.fullName)) {
-            this.logger.log(`Updating driver fullName to "${displayName}" for user ${user!.id}`);
-            await this.prisma.driver.update({ where: { id: user!.id }, data: { fullName: displayName } as any });
-            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
+          } else if (
+            (user as any).driver &&
+            needsName((user as any).driver.fullName)
+          ) {
+            this.logger.log(
+              `Updating driver fullName to "${displayName}" for user ${user!.id}`,
+            );
+            await this.prisma.driver.update({
+              where: { id: user!.id },
+              data: { fullName: displayName } as any,
+            });
+            user = await this.prisma.user.findUnique({
+              where: { id: user!.id },
+              include: USER_PROFILE_INCLUDE,
+            });
             await this.syncUserToSupabase(user);
-          } else if ((user as any).admin && needsName((user as any).admin.fullName)) {
-            this.logger.log(`Updating admin fullName to "${displayName}" for user ${user!.id}`);
-            await this.prisma.admin.update({ where: { id: user!.id }, data: { fullName: displayName } as any });
-            user = await this.prisma.user.findUnique({ where: { id: user!.id }, include: USER_PROFILE_INCLUDE });
+          } else if (
+            (user as any).admin &&
+            needsName((user as any).admin.fullName)
+          ) {
+            this.logger.log(
+              `Updating admin fullName to "${displayName}" for user ${user!.id}`,
+            );
+            await this.prisma.admin.update({
+              where: { id: user!.id },
+              data: { fullName: displayName } as any,
+            });
+            user = await this.prisma.user.findUnique({
+              where: { id: user!.id },
+              include: USER_PROFILE_INCLUDE,
+            });
             await this.syncUserToSupabase(user);
           } else {
-            this.logger.log(`fullName already set for user ${user!.id}, skipping update`);
+            this.logger.log(
+              `fullName already set for user ${user!.id}, skipping update`,
+            );
           }
         } catch (err) {
-          this.logger.warn('Failed to populate fullName from Google for existing user', err as any);
+          this.logger.warn(
+            'Failed to populate fullName from Google for existing user',
+            err,
+          );
         }
       }
     }

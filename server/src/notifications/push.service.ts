@@ -24,7 +24,9 @@ export class PushService {
   ) {
     const publicKey = this.config.get<string>('VAPID_PUBLIC_KEY');
     const privateKey = this.config.get<string>('VAPID_PRIVATE_KEY');
-    const subject = this.config.get<string>('VAPID_SUBJECT') || 'mailto:admin@trash2treasure.lk';
+    const subject =
+      this.config.get<string>('VAPID_SUBJECT') ||
+      'mailto:admin@trash2treasure.lk';
 
     if (publicKey && privateKey) {
       webpush.setVapidDetails(subject, publicKey, privateKey);
@@ -94,7 +96,11 @@ export class PushService {
         body: payload.body,
         icon: payload.icon ?? '/favicon.svg',
         data: {
-          url: payload.url ?? (payload.bookingId ? `/users/bookings/${payload.bookingId}` : '/users/notifications'),
+          url:
+            payload.url ??
+            (payload.bookingId
+              ? `/users/bookings/${payload.bookingId}`
+              : '/users/notifications'),
           bookingId: payload.bookingId,
           level: payload.level ?? 'INFO',
           notificationId: notification.id,
@@ -126,7 +132,9 @@ export class PushService {
       const sent = results.filter((r) => r.status === 'fulfilled').length;
       const failed = results.filter((r) => r.status === 'rejected').length;
       if (failed > 0) {
-        this.logger.warn(`Push: ${sent} sent, ${failed} failed for user ${userId}`);
+        this.logger.warn(
+          `Push: ${sent} sent, ${failed} failed for user ${userId}`,
+        );
       }
     }
 

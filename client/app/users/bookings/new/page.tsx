@@ -19,6 +19,11 @@ import { toast } from "@/components/ui/use-toast";
 import supabase, { getBookingsBucketName } from "@/lib/supabase";
 import { useAuth } from "@/components/auth/auth-provider";
 import MapComponent from "@/components/shared/map";
+import {
+  ASSISTANT_BOOKING_DRAFT_KEY,
+  AssistantBookingDraft,
+  isAssistantBookingDraft,
+} from "@/lib/assistant-booking-draft";
 
 const weightOptions = [
   { label: "1-5 kg", min: 1, max: 5 },
@@ -44,7 +49,72 @@ const getTodayInputValue = () => {
   return `${year}-${month}-${day}`;
 };
 
+const isPaperLikeCategory = (value: string | undefined) => {
+  const lower = (value ?? "").toLowerCase();
+  return lower.includes("paper") || lower.includes("cardboard");
+};
+
+const getWeightRangeFromDraft = (draft: AssistantBookingDraft) => {
+  if (draft.weightRangeLabel) {
+    const byLabel = weightOptions.find(
+      (option) => option.label.toLowerCase() === draft.weightRangeLabel?.toLowerCase(),
+    );
+    if (byLabel) return byLabel;
+  }
+
+  if (typeof draft.quantityKg === "number" && Number.isFinite(draft.quantityKg)) {
+    const byQty = weightOptions.find(
+      (option) => draft.quantityKg! >= option.min && draft.quantityKg! <= option.max,
+    );
+    if (byQty) return byQty;
+    return draft.quantityKg > 50 ? weightOptions[weightOptions.length - 1] : weightOptions[0];
+  }
+
+  return null;
+};
+
+type GeocodeApiResponse = {
+  status?: string;
+  results?: Array<{
+    geometry?: {
+      location?: {
+        lat?: number;
+        lng?: number;
+      };
+    };
+  }>;
+};
+
+async function geocodeAddressToCoordinates(address: string, apiKey: string) {
+  if (!address.trim() || !apiKey.trim()) return null;
+
+  const endpoint = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+  endpoint.searchParams.set("address", address);
+  endpoint.searchParams.set("key", apiKey);
+
+  const response = await fetch(endpoint.toString());
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as GeocodeApiResponse;
+  if (payload.status !== "OK" || !payload.results?.length) {
+    return null;
+  }
+
+  const location = payload.results[0]?.geometry?.location;
+  if (
+    typeof location?.lat !== "number" ||
+    !Number.isFinite(location.lat) ||
+    typeof location?.lng !== "number" ||
+    !Number.isFinite(location.lng)
+  ) {
+    return null;
+  }
+
+  return { lat: location.lat, lng: location.lng };
+}
+
 export default function NewBookingPage() {
+  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const { user } = useAuth();
   const { data: pricingData, isLoading: pricingLoading } = useQuery({
     queryKey: ["public-pricing"],
@@ -128,6 +198,9 @@ export default function NewBookingPage() {
   }, [selectedItems]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const categoryFileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const [assistantDraft, setAssistantDraft] = useState<AssistantBookingDraft | null>(null);
+  const assistantDraftAppliedRef = useRef(false);
+  const geocodedAddressRef = useRef<string | null>(null);
 
   const estimate = useMemo(() => {
     if (selectedItems.length === 0) return { min: 0, max: 0 };
@@ -157,6 +230,164 @@ export default function NewBookingPage() {
     if (!user?.phone) return;
     setPhoneNumber((prev) => prev || user.phone || "");
   }, [user]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = window.sessionStorage.getItem(ASSISTANT_BOOKING_DRAFT_KEY);
+    if (!stored) return;
+
+    try {
+      const parsed = JSON.parse(stored) as unknown;
+      if (isAssistantBookingDraft(parsed)) {
+        setAssistantDraft(parsed);
+      }
+    } catch {
+      // ignore malformed draft payload
+    }
+  }, []);
+
+  useEffect(() => {
+    if (assistantDraftAppliedRef.current) return;
+    if (!assistantDraft) return;
+    if (!combinedPricing || combinedPricing.length === 0) return;
+
+    const matchedPricing =
+      combinedPricing.find(
+        (item) => item.wasteCategory.id === assistantDraft.wasteCategoryId,
+      ) ??
+      combinedPricing.find((item) => {
+        const draftName = assistantDraft.wasteCategoryName?.toLowerCase().trim();
+        if (!draftName) return false;
+        return item.wasteCategory.name.toLowerCase() === draftName;
+      });
+
+    if (matchedPricing) {
+      setSelectedItems([
+        {
+          id: matchedPricing.id,
+          item: matchedPricing,
+          quantity:
+            typeof assistantDraft.quantityKg === "number" &&
+            Number.isFinite(assistantDraft.quantityKg) &&
+            assistantDraft.quantityKg > 0
+              ? assistantDraft.quantityKg
+              : 1,
+        },
+      ]);
+    }
+
+    const paperDraft =
+      isPaperLikeCategory(assistantDraft.wasteCategoryName) ||
+      isPaperLikeCategory(matchedPricing?.wasteCategory.name);
+
+    if (paperDraft) {
+      const range = getWeightRangeFromDraft(assistantDraft);
+      if (range) {
+        setWeightRange(range);
+      }
+    }
+
+    if (assistantDraft.addressLine1) setAddressLine1(assistantDraft.addressLine1);
+    if (assistantDraft.city) setCity(assistantDraft.city);
+    if (assistantDraft.postalCode) setPostalCode(assistantDraft.postalCode);
+    if (assistantDraft.phone) setPhoneNumber(assistantDraft.phone);
+    if (assistantDraft.specialInstructions) {
+      setSpecialInstructions(assistantDraft.specialInstructions);
+    }
+    if (assistantDraft.scheduledDate) setScheduledDate(assistantDraft.scheduledDate);
+    if (assistantDraft.scheduledTimeSlot) {
+      const validSlot = timeSlots.includes(assistantDraft.scheduledTimeSlot);
+      if (validSlot) setScheduledTimeSlot(assistantDraft.scheduledTimeSlot);
+    }
+
+    if (
+      typeof assistantDraft.lat === "number" &&
+      Number.isFinite(assistantDraft.lat) &&
+      typeof assistantDraft.lng === "number" &&
+      Number.isFinite(assistantDraft.lng)
+    ) {
+      setMapLat(assistantDraft.lat);
+      setMapLng(assistantDraft.lng);
+      setLocationPicked(assistantDraft.locationPicked ?? true);
+    } else {
+      setLocationPicked(false);
+
+      const geocodeQueryParts = [
+        assistantDraft.addressLine1,
+        assistantDraft.city,
+        assistantDraft.postalCode,
+      ].filter((value): value is string => Boolean(value && value.trim()));
+
+      if (geocodeQueryParts.length > 0) {
+        const geocodeQuery = [...geocodeQueryParts, "Sri Lanka"].join(", ");
+        if (mapsApiKey && geocodedAddressRef.current !== geocodeQuery) {
+          geocodedAddressRef.current = geocodeQuery;
+          void geocodeAddressToCoordinates(geocodeQuery, mapsApiKey)
+            .then((coordinates) => {
+              if (!coordinates) return;
+              setMapLat(coordinates.lat);
+              setMapLng(coordinates.lng);
+              setLocationPicked(true);
+            })
+            .catch(() => {
+              geocodedAddressRef.current = null;
+            });
+        }
+      }
+    }
+
+    const locationReady =
+      assistantDraft.locationPicked ??
+      (typeof assistantDraft.lat === "number" &&
+        Number.isFinite(assistantDraft.lat) &&
+        typeof assistantDraft.lng === "number" &&
+        Number.isFinite(assistantDraft.lng));
+
+    const hasCategory = Boolean(matchedPricing);
+    const hasPaperWeight = paperDraft ? Boolean(getWeightRangeFromDraft(assistantDraft)) : true;
+    const hasPickupDetails = Boolean(
+      assistantDraft.addressLine1 &&
+        assistantDraft.city &&
+        assistantDraft.postalCode &&
+        assistantDraft.phone &&
+        locationReady,
+    );
+    const hasDateTime = Boolean(
+      assistantDraft.scheduledDate &&
+        assistantDraft.scheduledTimeSlot &&
+        timeSlots.includes(assistantDraft.scheduledTimeSlot),
+    );
+
+    const computedStep = !hasCategory
+      ? 1
+      : paperDraft && !hasPaperWeight
+        ? 2
+        : !hasPickupDetails
+          ? paperDraft
+            ? 3
+            : 2
+          : !hasDateTime
+            ? paperDraft
+              ? 4
+              : 3
+            : paperDraft
+              ? 5
+              : 4;
+
+    setStep(computedStep);
+
+    assistantDraftAppliedRef.current = true;
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(ASSISTANT_BOOKING_DRAFT_KEY);
+    }
+
+    toast({
+      title: "Assistant prefilled your booking form",
+      description: "Please review details and confirm before submitting.",
+      variant: "success",
+    });
+  }, [assistantDraft, combinedPricing, mapsApiKey]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;

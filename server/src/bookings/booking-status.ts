@@ -10,10 +10,11 @@ export const CANONICAL_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.REFUNDED,
 ];
 
-const LEGACY_BOOKING_STATUS_MAP: Partial<Record<BookingStatus, BookingStatus>> = {
-  [BookingStatus.SCHEDULED]: BookingStatus.CREATED,
-  [BookingStatus.PAID]: BookingStatus.COLLECTED,
-};
+const LEGACY_BOOKING_STATUS_MAP: Partial<Record<BookingStatus, BookingStatus>> =
+  {
+    [BookingStatus.SCHEDULED]: BookingStatus.CREATED,
+    [BookingStatus.PAID]: BookingStatus.COLLECTED,
+  };
 
 const canonicalBookingStatusSet = new Set<BookingStatus>(
   CANONICAL_BOOKING_STATUSES,
@@ -82,7 +83,9 @@ export function canTransition(from: BookingStatus, to: BookingStatus) {
   const toCanonical = normalizeBookingStatus(to);
   if (fromCanonical === toCanonical) return true;
 
-  return (BOOKING_STATUS_TRANSITIONS[fromCanonical] ?? []).includes(toCanonical);
+  return (BOOKING_STATUS_TRANSITIONS[fromCanonical] ?? []).includes(
+    toCanonical,
+  );
 }
 
 export function getTransitionError(from: BookingStatus, to: BookingStatus) {

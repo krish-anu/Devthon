@@ -26,7 +26,10 @@ async function main() {
 
   const limit = parseInt(params.limit ?? '20', 10) || 20;
 
-  console.log('Querying notifications with', JSON.stringify({ where, limit }, null, 2));
+  console.log(
+    'Querying notifications with',
+    JSON.stringify({ where, limit }, null, 2),
+  );
 
   // Try the Prisma model query first; if the DB schema is behind and the bookingId
   // column doesn't exist we fall back to a raw SQL query that selects known columns
@@ -41,51 +44,53 @@ async function main() {
     });
   } catch (err: any) {
     if (err?.code === 'P2022') {
-      console.warn('Notification.bookingId column missing in DB; falling back to raw SQL search.');
+      console.warn(
+        'Notification.bookingId column missing in DB; falling back to raw SQL search.',
+      );
 
       // If bookingId filter was provided, search text in title/message as a fallback
       if (params.bookingId) {
         const like = `%${params.bookingId}%`;
-        items = (await prisma.$queryRaw`
+        items = await prisma.$queryRaw`
           SELECT id, "userId", title, message, "isRead", level, "createdAt"
           FROM "Notification"
           WHERE title ILIKE ${like} OR message ILIKE ${like}
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
-        `) as any[];
+        `;
       } else if (params.userId && params.since) {
         const sinceDate = new Date(params.since);
-        items = (await prisma.$queryRaw`
+        items = await prisma.$queryRaw`
           SELECT id, "userId", title, message, "isRead", level, "createdAt"
           FROM "Notification"
           WHERE "userId" = ${params.userId} AND "createdAt" >= ${sinceDate}
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
-        `) as any[];
+        `;
       } else if (params.userId) {
-        items = (await prisma.$queryRaw`
+        items = await prisma.$queryRaw`
           SELECT id, "userId", title, message, "isRead", level, "createdAt"
           FROM "Notification"
           WHERE "userId" = ${params.userId}
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
-        `) as any[];
+        `;
       } else if (params.since) {
         const sinceDate = new Date(params.since);
-        items = (await prisma.$queryRaw`
+        items = await prisma.$queryRaw`
           SELECT id, "userId", title, message, "isRead", level, "createdAt"
           FROM "Notification"
           WHERE "createdAt" >= ${sinceDate}
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
-        `) as any[];
+        `;
       } else {
-        items = (await prisma.$queryRaw`
+        items = await prisma.$queryRaw`
           SELECT id, "userId", title, message, "isRead", level, "createdAt"
           FROM "Notification"
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
-        `) as any[];
+        `;
       }
 
       // Normalize raw rows to the same shape the Prisma model would have

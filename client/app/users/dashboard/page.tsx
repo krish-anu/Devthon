@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Booking, RewardsSummary } from "@/lib/types";
-import { normalizeBookingStatus } from "@/lib/booking-status";
+import { isBookingCompleted, normalizeBookingStatus } from "@/lib/booking-status";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
-import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
+import { SkeletonTableRows } from "@/components/shared/Skeleton";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+
+function getDisplayWeight(booking: Booking) {
+  if (!isBookingCompleted(booking.status)) return "-";
+  if (typeof booking.actualWeightKg !== "number") return "-";
+  return `${booking.actualWeightKg} kg`;
+}
+
+function getDisplayAmount(booking: Booking) {
+  if (!isBookingCompleted(booking.status)) return "LKR 0.00";
+  if (typeof booking.finalAmountLkr !== "number") return "LKR 0.00";
+  return `LKR ${booking.finalAmountLkr.toFixed(2)}`;
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -32,15 +44,25 @@ export default function DashboardPage() {
     queryFn: () => apiFetch<RewardsSummary>("/rewards/me"),
   });
 
-  const bookings = data?.items ?? [];
+  const bookings = useMemo(() => data?.items ?? [], [data]);
 
   const metrics = useMemo(() => {
     const totalEarned = bookings.reduce(
-      (sum, booking) => sum + (booking.finalAmountLkr ?? 0),
+      (sum, booking) =>
+        sum +
+        (isBookingCompleted(booking.status) &&
+        typeof booking.finalAmountLkr === "number"
+          ? booking.finalAmountLkr
+          : 0),
       0,
     );
     const totalWeight = bookings.reduce(
-      (sum, booking) => sum + (booking.actualWeightKg ?? 0),
+      (sum, booking) =>
+        sum +
+        (isBookingCompleted(booking.status) &&
+        typeof booking.actualWeightKg === "number"
+          ? booking.actualWeightKg
+          : 0),
       0,
     );
     const pending = bookings.filter((booking) =>
@@ -82,7 +104,7 @@ export default function DashboardPage() {
           helper="Scheduled"
         />
         <KpiCard
-          label="CO? Saved"
+          label="CO2 Saved"
           value={`${metrics.co2} kg`}
           helper="Estimated"
         />
@@ -147,10 +169,8 @@ export default function DashboardPage() {
                     <TableCell>
                       {booking.wasteCategory?.name ?? "Unknown"}
                     </TableCell>
-                    <TableCell>{booking.actualWeightKg ?? "0"} kg</TableCell>
-                    <TableCell>
-                      LKR {booking.finalAmountLkr ?? booking.estimatedMaxAmount}
-                    </TableCell>
+                    <TableCell>{getDisplayWeight(booking)}</TableCell>
+                    <TableCell>{getDisplayAmount(booking)}</TableCell>
                     <TableCell>
                       <StatusPill status={booking.status} viewerRole="CUSTOMER" />
                     </TableCell>

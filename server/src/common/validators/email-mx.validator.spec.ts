@@ -12,7 +12,9 @@ describe('IsEmailDomainDeliverableConstraint', () => {
 
   it('returns true when MX records exist', async () => {
     process.env.EMAIL_DNS_CHECK = 'true';
-    mockedDns.resolveMx.mockResolvedValue([{ exchange: 'mx.example.com', priority: 10 }]);
+    mockedDns.resolveMx.mockResolvedValue([
+      { exchange: 'mx.example.com', priority: 10 },
+    ]);
     const c = new IsEmailDomainDeliverableConstraint();
     expect(await c.validate('user@example.com', null as any)).toBe(true);
   });
@@ -31,7 +33,9 @@ describe('IsEmailDomainDeliverableConstraint', () => {
     mockedDns.resolve4.mockRejectedValue(new Error('no a'));
     mockedDns.resolve6.mockRejectedValue(new Error('no aaaa'));
     const c = new IsEmailDomainDeliverableConstraint();
-    expect(await c.validate('user@nonexistentdomain.tld', null as any)).toBe(false);
+    expect(await c.validate('user@nonexistentdomain.tld', null as any)).toBe(
+      false,
+    );
     delete process.env.EMAIL_DNS_CHECK;
   });
 });

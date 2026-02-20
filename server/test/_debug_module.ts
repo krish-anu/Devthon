@@ -3,7 +3,9 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
 
 async function run() {
-  const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const moduleFixture = await Test.createTestingModule({
+    imports: [AppModule],
+  }).compile();
   console.log('Compiled module ok');
   // Try to get PrismaService
   try {
@@ -14,4 +16,7 @@ async function run() {
   }
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

@@ -14,7 +14,11 @@ describe('Auth email DNS check (e2e)', () => {
     app = moduleFixture.createNestApplication();
     // Apply same validation pipe as in main.ts
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
     );
     await app.init();
     return app;
@@ -34,7 +38,9 @@ describe('Auth email DNS check (e2e)', () => {
       .send({ email: 'user@asdfqweqwe123.com', password: 'test-password' })
       .expect(400);
 
-    expect(JSON.stringify(res.body)).toContain('Email domain cannot receive mail');
+    expect(JSON.stringify(res.body)).toContain(
+      'Email domain cannot receive mail',
+    );
   });
 
   it('allows fake domains when EMAIL_DNS_CHECK=false', async () => {
@@ -46,6 +52,8 @@ describe('Auth email DNS check (e2e)', () => {
       .send({ email: 'user@asdfqweqwe123.com', password: 'test-password' })
       .expect(401);
 
-    expect(JSON.stringify(res.body)).not.toContain('Email domain cannot receive mail');
+    expect(JSON.stringify(res.body)).not.toContain(
+      'Email domain cannot receive mail',
+    );
   });
 });

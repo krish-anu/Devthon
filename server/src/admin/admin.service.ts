@@ -582,7 +582,9 @@ export class AdminService {
       fullName: d.fullName,
       phone: d.phone,
       email: d.user?.email ?? '',
-      avatar: d.user ? (d.user as any).avatar ?? (d.user as any).avatarUrl ?? null : null,
+      avatar: d.user
+        ? ((d.user as any).avatar ?? (d.user as any).avatarUrl ?? null)
+        : null,
       rating: d.rating,
       pickupCount: d.pickupCount,
       vehicle: d.vehicle,

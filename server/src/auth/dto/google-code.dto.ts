@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, IsBoolean, IsIn } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsIn,
+} from 'class-validator';
 
 export class GoogleCodeDto {
   @IsString()
