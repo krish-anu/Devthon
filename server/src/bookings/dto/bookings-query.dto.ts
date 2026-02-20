@@ -39,4 +39,18 @@ export class BookingsQueryDto {
   @Type(() => Number)
   @IsNumber()
   pageSize?: number;
+
+  // Cursor-based pagination (after / before are opaque base64 cursors)
+  @IsOptional()
+  @IsString()
+  after?: string;
+
+  @IsOptional()
+  @IsString()
+  before?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number;
 }

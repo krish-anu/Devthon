@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import Pagination from "@/components/ui/pagination";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
@@ -47,20 +48,37 @@ export default function BookingHistoryPage() {
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["public-waste-categories"],
-    queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
+    queryFn: () =>
+      apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["bookings", status, search, category],
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [limit, setLimit] = useState<number>(10);
+
+  const { data, isLoading, isFetching } = useQuery<UserBookingsResponse>({
+    queryKey: [
+      "bookings",
+      status,
+      search,
+      category,
+      afterCursor,
+      beforeCursor,
+      limit,
+    ],
     queryFn: () =>
-      apiFetch<{ items: Booking[] }>(
+      apiFetch<UserBookingsResponse>(
         `/bookings?${new URLSearchParams({
           ...(status ? { status } : {}),
           ...(search ? { search } : {}),
           ...(category ? { category } : {}),
+          limit: String(limit),
+          ...(afterCursor ? { after: afterCursor } : {}),
+          ...(beforeCursor ? { before: beforeCursor } : {}),
         }).toString()}`,
       ),
     refetchInterval: 12000,
+    placeholderData: (previousData) => previousData,
   });
 
   const bookings = useMemo(() => data?.items ?? [], [data]);
@@ -75,8 +93,15 @@ export default function BookingHistoryPage() {
       }),
     onMutate: async (id: string) => {
       setDeletingId(id);
-      await queryClient.cancelQueries({ queryKey: ["bookings", status, search, category] });
-      const previous = queryClient.getQueryData<{ items: Booking[] }>(["bookings", status, search, category]);
+      await queryClient.cancelQueries({
+        queryKey: ["bookings", status, search, category],
+      });
+      const previous = queryClient.getQueryData<{ items: Booking[] }>([
+        "bookings",
+        status,
+        search,
+        category,
+      ]);
       if (previous) {
         queryClient.setQueryData(["bookings", status, search, category], {
           ...previous,
@@ -92,7 +117,11 @@ export default function BookingHistoryPage() {
     ) => {
       queryClient.setQueryData(["bookings", status, search, category], context?.previous);
       setDeletingId(null);
-      toast({ title: "Delete failed", description: "Failed to delete booking.", variant: "error" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete booking.",
+        variant: "error",
+      });
     },
     onSettled: () => {
       setDeletingId(null);
@@ -209,7 +238,11 @@ export default function BookingHistoryPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <Button variant="outline" onClick={exportCsv} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={exportCsv}
+            className="w-full sm:w-auto"
+          >
             Export CSV
           </Button>
         </div>
@@ -299,27 +332,32 @@ export default function BookingHistoryPage() {
               ))}
               {!bookings.length && (
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-center text-(--muted)"
-                  >
+                  <TableCell colSpan={7} className="text-center text-(--muted)">
                     No bookings found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-          <div className="mt-4 flex flex-col gap-3 text-sm text-(--muted) sm:flex-row sm:items-center sm:justify-between">
-            <span>Page 1 of 1</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                Prev
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            nextCursor={data?.nextCursor ?? null}
+            prevCursor={data?.prevCursor ?? null}
+            onNext={() => {
+              setAfterCursor(data?.nextCursor ?? null);
+              setBeforeCursor(null);
+            }}
+            onPrev={() => {
+              setBeforeCursor(data?.prevCursor ?? null);
+              setAfterCursor(null);
+            }}
+            limit={limit}
+            onLimitChange={(n) => {
+              setLimit(n);
+              setAfterCursor(null);
+              setBeforeCursor(null);
+            }}
+            loading={isFetching}
+          />
         </Card>
       )}
     </div>

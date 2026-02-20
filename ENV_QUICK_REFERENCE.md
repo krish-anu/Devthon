@@ -84,6 +84,12 @@ RECAPTCHA_ALLOW_BROWSER_ERROR=false
 # Toggle to enable/disable reCAPTCHA
 NEXT_PUBLIC_RECAPTCHA_ENABLED=true  # Client-side toggle (exposed to browser)
 RECAPTCHA_ENABLED=true               # Server-side toggle (used by backend verification)
+
+# Web Push (VAPID)
+# Generate with: npx web-push generate-vapid-keys
+VAPID_PUBLIC_KEY=your_vapid_public_key_here
+VAPID_PRIVATE_KEY=your_vapid_private_key_here
+VAPID_SUBJECT=mailto:admin@yourdomain.com
 ```
 
 ## Common Issues & Solutions

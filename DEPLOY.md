@@ -109,6 +109,9 @@ Add ALL of these secrets:
 | `GOOGLE_REDIRECT_URI`          | Your OAuth redirect URI for the auth-code flow (server)        |
 | `TEXTLK_API_TOKEN`             | (optional) SMS gateway token                                   |
 | `TEXTLK_SENDER_ID`             | (optional) SMS sender ID                                       |
+| `VAPID_PUBLIC_KEY`             | Web Push VAPID public key                                      |
+| `VAPID_PRIVATE_KEY`            | Web Push VAPID private key                                     |
+| `VAPID_SUBJECT`                | Contact URI, e.g. `mailto:admin@yourdomain.com`               |
 
 ### 5️⃣ Push to Main → Automatic Deployment!
 
@@ -210,4 +213,3 @@ docker compose -f docker-compose.prod.yml exec backend sh
 | Data Transfer   | First 100 GB/mo  | Free tier          |
 
 > 💡 **Tip:** Use a `t3.small` to start. If you need more RAM, upgrade to `t3.medium`.
-

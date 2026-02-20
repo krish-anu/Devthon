@@ -18,7 +18,7 @@ export function Toaster() {
           <ToastClose />
         </Toast>
       ))}
-      <ToastViewport className="bottom-4 left-4 w-auto max-w-sm items-end" />
+      <ToastViewport className="top-4 right-4 w-auto max-w-sm items-end" />
     </ToastProvider>
   );
 }

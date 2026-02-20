@@ -45,8 +45,18 @@ export class AdminController {
   }
 
   @Get('users')
-  listUsers(@Query('search') search?: string, @Query('type') type?: string) {
-    return this.adminService.listUsers(search, type);
+  listUsers(
+    @Query('search') search?: string,
+    @Query('type') type?: string,
+    @Query('after') after?: string,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.listUsers(search, type, {
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Post('users')
@@ -68,8 +78,16 @@ export class AdminController {
   }
 
   @Get('drivers')
-  listDrivers() {
-    return this.adminService.listDrivers();
+  listDrivers(
+    @Query('after') after?: string,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.listDrivers({
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Post('drivers')
@@ -200,8 +218,16 @@ export class AdminController {
 
   @Roles(Role.SUPER_ADMIN)
   @Get('all-users')
-  listAllUsersWithRoles() {
-    return this.adminService.listAllUsersWithRoles();
+  listAllUsersWithRoles(
+    @Query('after') after?: string,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.listAllUsersWithRoles({
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Roles(Role.SUPER_ADMIN)

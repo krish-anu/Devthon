@@ -4,7 +4,7 @@ import * as React from 'react';
 import type { ToastActionElement, ToastProps } from './toast';
 
 const TOAST_LIMIT = 4;
-const TOAST_REMOVE_DELAY = 4000;
+const TOAST_REMOVE_DELAY = 500; // time to wait after dismiss before removing from state (exit animation)
 
 type ToasterToast = ToastProps & {
   id: string;

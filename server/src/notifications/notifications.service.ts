@@ -1,15 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { cursorPaginate } from '../common/pagination';
 
 @Injectable()
 export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
-  async list(userId: string) {
+  async list(
+    userId: string,
+    opts?: { after?: string; before?: string; limit?: number },
+  ) {
+    const where = { OR: [{ userId }, { userId: null }] };
+
+    if (opts?.after || opts?.before || opts?.limit) {
+      const page = await cursorPaginate(
+        (args) => this.prisma.notification.findMany({ ...(args as any) }),
+        () => this.prisma.notification.count({ where }),
+        {
+          where,
+          orderBy: { createdAt: 'desc' },
+          after: opts?.after,
+          before: opts?.before,
+          limit: opts?.limit ?? 10,
+        },
+      );
+
+      return {
+        items: page.items,
+        nextCursor: page.nextCursor,
+        prevCursor: page.prevCursor,
+        hasMore: page.hasMore,
+      } as any;
+    }
+
     return this.prisma.notification.findMany({
-      where: {
-        OR: [{ userId }, { userId: null }],
-      },
+      where,
       orderBy: { createdAt: 'desc' },
     });
   }

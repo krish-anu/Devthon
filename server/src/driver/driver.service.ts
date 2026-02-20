@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { BookingStatus, DriverStatus, Role } from '@prisma/client';
+import { cursorPaginate } from '../common/pagination';
 import { PrismaService } from '../prisma/prisma.service';
 import { flattenUser, USER_PROFILE_INCLUDE } from '../common/utils/user.utils';
 import { calculateMidpointAmountLkr } from '../bookings/booking-amount';
@@ -30,7 +31,40 @@ export class DriverService {
     private pushService: PushService,
   ) {}
 
-  async getBookings(driverId: string) {
+  async getBookings(
+    driverId: string,
+    opts?: { after?: string; before?: string; limit?: number },
+  ) {
+    // Cursor-based pagination when requested
+    if (opts?.after || opts?.before || opts?.limit) {
+      const page = await cursorPaginate(
+        (args) =>
+          this.prisma.booking.findMany({
+            ...(args as any),
+            include: {
+              user: { include: USER_PROFILE_INCLUDE },
+              wasteCategory: true,
+            },
+          }),
+        (where?: any) =>
+          this.prisma.booking.count({ where: where ?? { driverId } }),
+        {
+          where: { driverId },
+          orderBy: { scheduledDate: 'asc' },
+          after: opts?.after,
+          before: opts?.before,
+          limit: opts?.limit ?? 10,
+        },
+      );
+
+      return {
+        items: page.items.map((b: any) => this.toDriverBookingResponse(b)),
+        nextCursor: page.nextCursor,
+        prevCursor: page.prevCursor,
+        hasMore: page.hasMore,
+      } as any;
+    }
+
     const bookings = await this.prisma.booking.findMany({
       where: { driverId },
       include: {
