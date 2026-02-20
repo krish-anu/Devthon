@@ -67,6 +67,11 @@ JWT_REFRESH_EXPIRES=7d                 # Default: 7d
 
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:4000/api  # Default: http://localhost:4000/api
+# Supabase Storage (required if using image uploads in profile/bookings)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_anon_or_publishable_key
+NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=avatars
+NEXT_PUBLIC_SUPABASE_BOOKINGS_BUCKET=bookings
 # reCAPTCHA (v3) - optional for local development, required for protected signup/login flows
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
 RECAPTCHA_SECRET=your_recaptcha_secret_here

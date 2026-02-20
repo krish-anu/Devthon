@@ -104,6 +104,10 @@ Add ALL of these secrets:
 | `CORS_ORIGIN`                  | `http://<EC2_PUBLIC_IP>` (or `https://yourdomain.com` later)   |
 | `NEXT_PUBLIC_API_URL`          | `http://<EC2_PUBLIC_IP>/api` (or `https://yourdomain.com/api`) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Your Google OAuth client ID                                    |
+| `NEXT_PUBLIC_SUPABASE_URL`     | Your Supabase project URL (`https://<project>.supabase.co`)    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase publishable/anon key                            |
+| `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` | Supabase bucket for avatars (e.g. `avatars`)            |
+| `NEXT_PUBLIC_SUPABASE_BOOKINGS_BUCKET` | Supabase bucket for booking images (e.g. `bookings`)    |
 | `GOOGLE_CLIENT_ID`             | Your Google OAuth client ID (server)                           |
 | `GOOGLE_CLIENT_SECRET`         | Your Google OAuth client secret (server)                       |
 | `GOOGLE_REDIRECT_URI`          | Your OAuth redirect URI for the auth-code flow (server)        |
