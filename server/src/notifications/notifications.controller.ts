@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, ServiceUnavailableException, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, ServiceUnavailableException, Param, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 import { PushService } from './push.service';
@@ -13,8 +13,17 @@ export class NotificationsController {
   ) {}
 
   @Get()
-  list(@Req() req: any) {
-    return this.notificationsService.list(req.user.sub);
+  list(
+    @Req() req: any,
+    @Query('after') after?: string,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.notificationsService.list(req.user.sub, {
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Post('mark-all-read')

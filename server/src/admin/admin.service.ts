@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { BookingStatus, CustomerType, NotificationLevel, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { cursorPaginate } from '../common/pagination';
 import { PushService } from '../notifications/push.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
@@ -247,7 +248,7 @@ export class AdminService {
     };
   }
 
-  async listUsers(search?: string, type?: string) {
+  async listUsers(search?: string, type?: string, pagination?: { after?: string; before?: string; limit?: number }) {
     // Build the customer filter for type
     const typeValue: CustomerType | null =
       type === 'HOUSEHOLD' || type === 'BUSINESS'
@@ -267,7 +268,7 @@ export class AdminService {
     }
 
     if (hasSearch) {
-      const term = search.trim();
+      const term = search!.trim();
       where.OR = [
         {
           customer: {
@@ -278,14 +279,42 @@ export class AdminService {
       ];
     }
 
+    // Cursor-based pagination when requested
+    if (pagination?.after || pagination?.before || pagination?.limit) {
+      const page = await cursorPaginate(
+        (args) =>
+          this.prisma.user.findMany({
+            ...(args as any),
+            include: {
+              ...USER_PROFILE_INCLUDE,
+              _count: { select: { bookings: true } },
+            },
+          }),
+        (w?: any) => this.prisma.user.count({ where: w ?? where }),
+        {
+          where,
+          orderBy: { createdAt: 'desc' },
+          after: pagination?.after,
+          before: pagination?.before,
+          limit: pagination?.limit ?? 10,
+        },
+      );
+
+      return {
+        items: page.items.map((user: any) => ({ ...flattenUser(user), _count: user._count })),
+        nextCursor: page.nextCursor,
+        prevCursor: page.prevCursor,
+        hasMore: page.hasMore,
+      } as any;
+    }
+
+    // Legacy (unchanged) behaviour — return full array
     const users = await this.prisma.user.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         ...USER_PROFILE_INCLUDE,
-        _count: {
-          select: { bookings: true },
-        },
+        _count: { select: { bookings: true } },
       },
     });
 
@@ -478,7 +507,33 @@ export class AdminService {
     return { success: true };
   }
 
-  async listDrivers() {
+  async listDrivers(pagination?: { after?: string; before?: string; limit?: number }) {
+    if (pagination?.after || pagination?.before || pagination?.limit) {
+      const page = await cursorPaginate(
+        (args) => this.prisma.driver.findMany({ ...(args as any), include: { user: true } }),
+        () => this.prisma.driver.count(),
+        { orderBy: { createdAt: 'desc' }, after: pagination?.after, before: pagination?.before, limit: pagination?.limit ?? 10 },
+      );
+
+      return {
+        items: page.items.map((d: any) => ({
+          id: d.id,
+          fullName: d.fullName,
+          phone: d.phone,
+          email: d.user?.email ?? '',
+          rating: d.rating,
+          pickupCount: d.pickupCount,
+          vehicle: d.vehicle,
+          status: d.status,
+          approved: d.approved,
+          createdAt: d.createdAt,
+        })),
+        nextCursor: page.nextCursor,
+        prevCursor: page.prevCursor,
+        hasMore: page.hasMore,
+      } as any;
+    }
+
     const drivers = await this.prisma.driver.findMany({
       orderBy: { createdAt: 'desc' },
       include: { user: { include: USER_PROFILE_INCLUDE } },
@@ -1218,7 +1273,22 @@ export class AdminService {
   }
 
   /** List every user with their role (for the manage-roles page). */
-  async listAllUsersWithRoles() {
+  async listAllUsersWithRoles(pagination?: { after?: string; before?: string; limit?: number }) {
+    if (pagination?.after || pagination?.before || pagination?.limit) {
+      const page = await cursorPaginate(
+        (args) => this.prisma.user.findMany({ ...(args as any), include: USER_PROFILE_INCLUDE }),
+        () => this.prisma.user.count(),
+        { orderBy: { createdAt: 'desc' }, after: pagination?.after, before: pagination?.before, limit: pagination?.limit ?? 10 },
+      );
+
+      return {
+        items: page.items.map((u: any) => flattenUser(u)),
+        nextCursor: page.nextCursor,
+        prevCursor: page.prevCursor,
+        hasMore: page.hasMore,
+      } as any;
+    }
+
     const users = await this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       include: USER_PROFILE_INCLUDE,

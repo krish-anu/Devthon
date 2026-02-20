@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import Skeleton, { SkeletonTableRows } from "@/components/shared/Skeleton";
@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Pagination from '@/components/ui/pagination';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,13 @@ interface User {
   _count?: { bookings: number };
 }
 
+type AdminUsersResponse = {
+  items: User[];
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+  hasMore?: boolean;
+};
+
 export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState<"ALL" | "HOUSEHOLD" | "BUSINESS">("ALL");
@@ -64,16 +72,36 @@ export default function AdminUsersPage() {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-users", search, type],
-    queryFn: () => {
-      let url = "/admin/users";
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [limit, setLimit] = useState<number>(10);
+
+  // reset cursors when search/type change
+  useEffect(() => {
+    setAfterCursor(null);
+    setBeforeCursor(null);
+  }, [search, type]);
+
+  const { data, isLoading, isFetching } = useQuery<AdminUsersResponse>({
+    queryKey: ["admin-users", search, type, afterCursor, beforeCursor, limit],
+    queryFn: async () => {
       const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (type !== "ALL") params.append("type", type);
-      if (params.toString()) url += `?${params.toString()}`;
-      return apiFetch<User[]>(url);
+      params.append('limit', String(limit));
+      if (search) params.append('search', search);
+      if (type !== 'ALL') params.append('type', type);
+      if (afterCursor) params.append('after', afterCursor);
+      if (beforeCursor) params.append('before', beforeCursor);
+
+      const res = await apiFetch<User[] | AdminUsersResponse>(`/admin/users?${params.toString()}`);
+
+      // Support legacy array response for non-paginated callers
+      if (Array.isArray(res)) {
+        return { items: res, nextCursor: null, prevCursor: null };
+      }
+
+      return res;
     },
+    placeholderData: (previousData) => previousData,
   });
 
   const createUserMutation = useMutation({
@@ -231,59 +259,81 @@ export default function AdminUsersPage() {
           <SkeletonTableRows columns={7} rows={6} />
         </Card>
       ) : (
-        <Card>
-          <Table className="md:min-w-[700px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Bookings</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(data ?? []).map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.fullName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{formatPhoneForDisplay(user.phone)}</TableCell>
-                  <TableCell>{user.type}</TableCell>
-                  <TableCell>{user._count?.bookings ?? "--"}</TableCell>
-                  <TableCell>{user.status}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="rounded-full border border-(--border) p-2 text-(--muted)">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openDeleteConfirm(user)}
-                          disabled={deletingUserId === user.id}
-                          className="text-red-600 flex items-center"
-                        >
-                          {deletingUserId === user.id ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Deleting...
-                            </>
-                          ) : (
-                            "Delete"
-                          )}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <>
+          <Card>
+            <Table className="md:min-w-[700px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Bookings</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {(data?.items ?? []).map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.fullName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{formatPhoneForDisplay(user.phone)}</TableCell>
+                    <TableCell>{user.type}</TableCell>
+                    <TableCell>{user._count?.bookings ?? "--"}</TableCell>
+                    <TableCell>{user.status}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="rounded-full border border-(--border) p-2 text-(--muted)">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => openDeleteConfirm(user)}
+                            disabled={deletingUserId === user.id}
+                            className="text-red-600 flex items-center"
+                          >
+                            {deletingUserId === user.id ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Deleting...
+                              </>
+                            ) : (
+                              "Delete"
+                            )}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+
+          <Pagination
+            nextCursor={data?.nextCursor ?? null}
+            prevCursor={data?.prevCursor ?? null}
+            onNext={() => {
+              setAfterCursor(data?.nextCursor ?? null);
+              setBeforeCursor(null);
+            }}
+            onPrev={() => {
+              setBeforeCursor(data?.prevCursor ?? null);
+              setAfterCursor(null);
+            }}
+            limit={limit}
+            onLimitChange={(n) => {
+              setLimit(n);
+              setAfterCursor(null);
+              setBeforeCursor(null);
+            }}
+            loading={isFetching}
+          />
+        </>
       )}
 
       {/* Modal */}

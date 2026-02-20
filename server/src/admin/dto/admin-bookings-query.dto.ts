@@ -4,7 +4,9 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsNumber,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { BookingStatus } from '@prisma/client';
 
 export class AdminBookingsQueryDto {
@@ -27,4 +29,18 @@ export class AdminBookingsQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  // Cursor-based pagination
+  @IsOptional()
+  @IsString()
+  after?: string;
+
+  @IsOptional()
+  @IsString()
+  before?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number;
 }

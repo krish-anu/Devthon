@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import Pagination from '@/components/ui/pagination';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -12,7 +13,7 @@ import {
   canAdminRefund,
   normalizeBookingStatus,
 } from "@/lib/booking-status";
-import { BookingStatus } from "@/lib/types";
+import { BookingStatus, Booking } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,12 @@ const STATUS_FILTERS: BookingStatus[] = [
   "CANCELLED",
   "REFUNDED",
 ];
+
+type AdminBookingsResponse = {
+  items: Booking[];
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+};
 
 export default function AdminBookingsPage() {
   const [search, setSearch] = useState("");
@@ -158,12 +165,17 @@ export default function AdminBookingsPage() {
     },
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-bookings", status, search, dateFilter],
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [limit, setLimit] = useState<number>(10);
+
+  const { data, isLoading, isFetching } = useQuery<AdminBookingsResponse>({
+    queryKey: ["admin-bookings", status, search, dateFilter, afterCursor, beforeCursor, limit],
     queryFn: () => {
       const params = new URLSearchParams();
       if (status) params.append("status", status);
       if (search) params.append("search", search);
+      params.append('limit', String(limit));
 
       if (dateFilter === "thisMonth") {
         const now = new Date();
@@ -174,10 +186,19 @@ export default function AdminBookingsPage() {
         params.append("to", lastDay.toISOString().split("T")[0]);
       }
 
-      return apiFetch<any[]>(`/admin/bookings?${params.toString()}`);
+      if (afterCursor) params.append('after', afterCursor);
+      if (beforeCursor) params.append('before', beforeCursor);
+
+      return apiFetch<AdminBookingsResponse>(`/admin/bookings?${params.toString()}`);
     },
     refetchInterval: 12000,
+    placeholderData: (previousData) => previousData,
   });
+
+  useEffect(() => {
+    setAfterCursor(null);
+    setBeforeCursor(null);
+  }, [status, search, dateFilter]);
 
   const handleAssign = (bookingId: string, driverId: string) => {
     if (!driverId) return;
@@ -257,7 +278,7 @@ export default function AdminBookingsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(data ?? []).map((booking) => {
+              {(data?.items ?? []).map((booking) => {
                 const normalizedStatus = normalizeBookingStatus(booking.status);
                 const canAssignDriver = canAdminAssign(booking.status);
                 const canCompleteBooking = canAdminComplete(booking.status);
@@ -367,7 +388,17 @@ export default function AdminBookingsPage() {
                 );
               })}
             </TableBody>
-          </Table>
+            </Table>
+
+          <Pagination
+            nextCursor={data?.nextCursor ?? null}
+            prevCursor={data?.prevCursor ?? null}
+            onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
+            onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+            limit={limit}
+            onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+            loading={isFetching}
+          />
         </Card>
       )}
     </div>

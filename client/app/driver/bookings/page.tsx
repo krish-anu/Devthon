@@ -12,6 +12,7 @@ import {
 import { Booking, WasteType } from "@/lib/types";
 import { getWasteById } from "@/lib/wasteTypeUtils";
 import { Card } from "@/components/ui/card";
+import Pagination from '@/components/ui/pagination';
 import {
   Table,
   TableBody,
@@ -34,6 +35,12 @@ import { StatusPill } from "@/components/shared/status-pill";
 import { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { useToast } from "@/components/ui/use-toast";
 
+type DriverBookingsResponse = {
+  items: Booking[];
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+};
+
 export default function DriverBookingsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -42,10 +49,21 @@ export default function DriverBookingsPage() {
   const [weightKg, setWeightKg] = useState("");
   const [wasteCategoryId, setWasteCategoryId] = useState("");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["driver-bookings-list"],
-    queryFn: () => apiFetch<Booking[]>("/driver/bookings"),
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [limit, setLimit] = useState<number>(10);
+
+  const { data, isLoading, isFetching } = useQuery<DriverBookingsResponse>({
+    queryKey: ["driver-bookings-list", afterCursor, beforeCursor, limit],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.append('limit', String(limit));
+      if (afterCursor) params.append('after', afterCursor);
+      if (beforeCursor) params.append('before', beforeCursor);
+      return apiFetch<DriverBookingsResponse>(`/driver/bookings?${params.toString()}`);
+    },
     refetchInterval: 12000,
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: wasteTypes } = useQuery({
@@ -54,7 +72,12 @@ export default function DriverBookingsPage() {
     staleTime: 60000,
   });
 
-  const bookings = data ?? [];
+  const bookings = data?.items ?? [];
+
+  useEffect(() => {
+    setAfterCursor(null);
+    setBeforeCursor(null);
+  }, []);
   const selectedBooking = bookings.find((booking) => booking.id === collectBookingId) ?? null;
 
   useEffect(() => {
@@ -268,6 +291,16 @@ export default function DriverBookingsPage() {
               )}
             </TableBody>
           </Table>
+
+          <Pagination
+            nextCursor={data?.nextCursor ?? null}
+            prevCursor={data?.prevCursor ?? null}
+            onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
+            onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+            limit={limit}
+            onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+            loading={isFetching}
+          />
         </Card>
       )}
 

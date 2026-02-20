@@ -11,6 +11,7 @@ import { SupabaseService } from '../common/supabase/supabase.service';
 import { TransactionLogger } from '../common/logger/transaction-logger.service';
 import { PushService } from '../notifications/push.service';
 import { BookingsQueryDto } from './dto/bookings-query.dto';
+import { cursorPaginate, encodeCursor, decodeCursor } from '../common/pagination';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import {
@@ -40,9 +41,6 @@ export class BookingsService {
       userId,
       query,
     });
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 10;
-
     const where: any = { userId };
     if (query.status) {
       where.status = { in: expandBookingStatusFilter(query.status) };
@@ -60,6 +58,42 @@ export class BookingsService {
         { city: { contains: query.search, mode: 'insensitive' } },
       ];
     }
+
+    // If any cursor params are present, use cursor-based pagination.
+    if (query.after || query.before || query.limit) {
+      const pageResult = await cursorPaginate(
+        (args) =>
+          this.prisma.booking.findMany({
+            ...(args as any),
+            include: { wasteCategory: true, driver: true },
+          }),
+        (whereArg?: any) => this.prisma.booking.count({ where: whereArg ?? where }),
+        {
+          where,
+          orderBy: { createdAt: 'desc' },
+          after: query.after,
+          before: query.before,
+          limit: query.limit ?? 10,
+        },
+      );
+
+      this.transactionLogger.logTransaction('booking.list.success', {
+        userId,
+        count: pageResult.items.length,
+      });
+
+      return {
+        items: pageResult.items.map((item) => this.normalizeBookingForRead(item)),
+        nextCursor: pageResult.nextCursor,
+        prevCursor: pageResult.prevCursor,
+        hasMore: pageResult.hasMore,
+        limit: query.limit ?? 10,
+      } as any;
+    }
+
+    // Fallback to legacy page/pageSize offset pagination for backward compatibility
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
 
     try {
       const [items, total] = await Promise.all([

@@ -2,11 +2,14 @@
 # NestJS Backend Dockerfile (Development)
 # ============================================
 
-# Use Node.js 20 Alpine for smaller image size
-FROM node:20-alpine
+# Use Node.js 20 Debian slim
+FROM node:20-bookworm-slim
 
 # Install OpenSSL, CA certificates and runtime deps needed by Prisma
-RUN apk add --no-cache openssl ca-certificates libc6-compat curl bash && update-ca-certificates || true
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl ca-certificates curl bash \
+    && (update-ca-certificates || true) \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app

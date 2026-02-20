@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import Pagination from '@/components/ui/pagination';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
@@ -27,6 +28,12 @@ import {
 } from "@/components/ui/table";
 import { StatusPill } from "@/components/shared/status-pill";
 
+type UserBookingsResponse = {
+  items: Booking[];
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+};
+
 export default function BookingHistoryPage() {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
@@ -37,20 +44,33 @@ export default function BookingHistoryPage() {
     queryFn: () => apiFetch<WasteCategory[]>("/public/waste-categories", {}, false),
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["bookings", status, search, category],
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [limit, setLimit] = useState<number>(10);
+
+  const { data, isLoading, isFetching } = useQuery<UserBookingsResponse>({
+    queryKey: ["bookings", status, search, category, afterCursor, beforeCursor, limit],
     queryFn: () =>
-      apiFetch<{ items: Booking[] }>(
+      apiFetch<UserBookingsResponse>(
         `/bookings?${new URLSearchParams({
           ...(status ? { status } : {}),
           ...(search ? { search } : {}),
           ...(category ? { category } : {}),
+          limit: String(limit),
+          ...(afterCursor ? { after: afterCursor } : {}),
+          ...(beforeCursor ? { before: beforeCursor } : {}),
         }).toString()}`,
       ),
     refetchInterval: 12000,
+    placeholderData: (previousData) => previousData,
   });
 
   const bookings = data?.items ?? [];
+
+  useEffect(() => {
+    setAfterCursor(null);
+    setBeforeCursor(null);
+  }, [status, search, category]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -285,17 +305,15 @@ export default function BookingHistoryPage() {
               )}
             </TableBody>
           </Table>
-          <div className="mt-4 flex flex-col gap-3 text-sm text-(--muted) sm:flex-row sm:items-center sm:justify-between">
-            <span>Page 1 of 1</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                Prev
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            nextCursor={data?.nextCursor ?? null}
+            prevCursor={data?.prevCursor ?? null}
+            onNext={() => { setAfterCursor(data?.nextCursor ?? null); setBeforeCursor(null); }}
+            onPrev={() => { setBeforeCursor(data?.prevCursor ?? null); setAfterCursor(null); }}
+            limit={limit}
+            onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+            loading={isFetching}
+          />
         </Card>
       )}
     </div>

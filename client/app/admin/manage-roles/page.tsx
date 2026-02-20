@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Pagination from '@/components/ui/pagination';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/card";
@@ -18,12 +19,25 @@ export default function ManageRolesPage() {
   const [nonCustomerOnly, setNonCustomerOnly] = useState(false);
   const [search, setSearch] = useState("");
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-all-users"],
-    queryFn: () => apiFetch<any[]>("/admin/all-users"),
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [limit, setLimit] = useState<number>(10);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["admin-all-users", afterCursor, beforeCursor, limit],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.append('limit', String(limit));
+      if (afterCursor) params.append('after', afterCursor);
+      if (beforeCursor) params.append('before', beforeCursor);
+      return apiFetch<any>(`/admin/all-users?${params.toString()}`);
+    },
+    placeholderData: (previousData) => previousData,
   });
 
-  const displayedUsers = (users ?? []).filter((u: any) => {
+  const users = (data?.items ?? data) ?? [];
+
+  const displayedUsers = users.filter((u: any) => {
     if (nonCustomerOnly && u.role === "CUSTOMER") return false;
     if (search && !(u.email?.toLowerCase().includes(search.toLowerCase()) || (u.fullName ?? "").toLowerCase().includes(search.toLowerCase()))) return false;
     return true;
@@ -75,44 +89,56 @@ export default function ManageRolesPage() {
         {isLoading ? (
           <div className="py-8 text-center text-(--muted)">Loading users...</div>
         ) : (
-          <Table className="md:min-w-[720px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedUsers.map((u: any) => (
-                <TableRow key={u.id}>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>{u.fullName ?? "-"}</TableCell>
-                  <TableCell>
-                    <select
-                      value={editing[u.id] ?? u.role}
-                      onChange={(e) => setEditing((s) => ({ ...s, [u.id]: e.target.value }))}
-                      className="h-9 rounded-xl border border-(--border) bg-(--surface-soft) px-2 text-sm"
-                    >
-                      {ROLE_OPTIONS.map((r) => (
-                        <option value={r} key={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleSave(u.id)} disabled={changeRoleMutation.isPending}>
-                        Save
-                      </Button>
-                    </div>
-                  </TableCell>
+          <>
+            <Table className="md:min-w-[720px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {displayedUsers.map((u: any) => (
+                  <TableRow key={u.id}>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>{u.fullName ?? "-"}</TableCell>
+                    <TableCell>
+                      <select
+                        value={editing[u.id] ?? u.role}
+                        onChange={(e) => setEditing((s) => ({ ...s, [u.id]: e.target.value }))}
+                        className="h-9 rounded-xl border border-(--border) bg-(--surface-soft) px-2 text-sm"
+                      >
+                        {ROLE_OPTIONS.map((r) => (
+                          <option value={r} key={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleSave(u.id)} disabled={changeRoleMutation.isPending}>
+                          Save
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <Pagination
+              nextCursor={(data as any)?.nextCursor ?? null}
+              prevCursor={(data as any)?.prevCursor ?? null}
+              onNext={() => { setAfterCursor((data as any)?.nextCursor ?? null); setBeforeCursor(null); }}
+              onPrev={() => { setBeforeCursor((data as any)?.prevCursor ?? null); setAfterCursor(null); }}
+              limit={limit}
+              onLimitChange={(n) => { setLimit(n); setAfterCursor(null); setBeforeCursor(null); }}
+              loading={isFetching}
+            />
+          </>
         )}
       </Card>
     </div>

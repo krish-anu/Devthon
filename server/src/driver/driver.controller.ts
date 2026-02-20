@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, Req, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -16,9 +16,18 @@ export class DriverController {
   constructor(private driverService: DriverService) {}
 
   @Get('bookings')
-  getBookings(@Req() req: any) {
+  getBookings(
+    @Req() req: any,
+    @Query('after') after?: string,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
+  ) {
     // req.user.sub is the driver's userId
-    return this.driverService.getBookings(req.user.sub);
+    return this.driverService.getBookings(req.user.sub, {
+      after: after ?? undefined,
+      before: before ?? undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Get('bookings/:id')
