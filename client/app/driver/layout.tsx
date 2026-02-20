@@ -1,18 +1,15 @@
 "use client";
 
 import {
-  LayoutGrid,
-  Truck,
-  ClipboardList,
   Bell,
-  LogOut,
+  LayoutGrid,
+  ClipboardList,
   Settings,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import NotificationNavButton from "@/components/shared/NotificationNavButton";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -23,7 +20,7 @@ export default function DriverLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
   const isPublicSignup = pathname?.startsWith("/driver/signup");
   const navItems = [
@@ -38,14 +35,14 @@ export default function DriverLayout({
       icon: <ClipboardList className="h-4 w-4" />,
     },
     {
-      label: "Notifications",
-      href: "/driver/notifications",
-      icon: <Bell className="h-4 w-4" />,
-    },
-    {
       label: "Settings",
       href: "/driver/settings",
       icon: <Settings className="h-4 w-4" />,
+    },
+    {
+      label: "Notifications",
+      href: "/driver/notifications",
+      icon: <Bell className="h-4 w-4" />,
     },
   ];
 

@@ -28,6 +28,7 @@ import PhoneInput from "@/components/ui/phone-input";
 import { isValidSriLankaPhone } from "@/lib/phone";
 import { toast } from "@/components/ui/use-toast";
 import supabase, { getBucketName } from "@/lib/supabase";
+import ImageCropper from "@/components/ui/ImageCropper";
 import { useForm as useForm2 } from "react-hook-form";
 import { usePasskey } from "@/hooks/usePasskey";
 import { RewardsSummary } from "@/lib/types";
@@ -48,77 +49,52 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function ProfilePage() {
-  const { user, refreshProfile, logout } = useAuth();
+  const { user, refreshProfile, logout, updateUser } = useAuth();
 
-  // Avatar upload helpers
+  // Avatar upload + cropping helpers
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null); // object URL / data URL to crop
+  // Local optimistic preview shown while an upload is in progress (revoked after upload)
+  const [localAvatarPreview, setLocalAvatarPreview] = useState<string | null>(null);
 
   const handleChoosePhoto = () => {
     fileInputRef.current?.click();
   };
 
+  const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5 MB
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
+
+    // Basic MIME/type validation
+    if (!file.type.startsWith("image/") || !ALLOWED_IMAGE_TYPES.includes(file.type)) {
       toast({
         title: "Invalid file",
-        description: "Please choose an image.",
+        description: "Please choose a JPG, PNG or WebP image.",
         variant: "warning",
       });
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    try {
-      setUploading(true);
-
-      // Create a path: avatars/<userId>/<timestamp>_<name>
-      const filename = `${Date.now()}_${file.name}`;
-      const path = `avatars/${user?.id ?? "unknown"}/${filename}`;
-      const bucket = getBucketName();
-      const sb = supabase();
-      if (!sb) throw new Error("Supabase not configured");
-
-      const { data: uploadData, error: uploadErr } = await sb.storage
-        .from(bucket)
-        .upload(path, file as File, { upsert: true });
-      if (uploadErr) throw uploadErr;
-
-      // Build public URL (requires bucket to have public policy) – fall back to signed URL when needed
-      const { data: publicData } = sb.storage
-        .from(bucket)
-        .getPublicUrl(path);
-      let url = (publicData as any)?.publicUrl ?? null;
-
-      // If bucket is private or getPublicUrl returned no public URL, create a signed URL (24h)
-      if (!url) {
-        const { data: signedData, error: signedErr } = await sb.storage
-          .from(bucket)
-          .createSignedUrl(path, 60 * 60 * 24);
-        if (signedErr) throw signedErr;
-        url = (signedData as any)?.signedUrl ?? null;
-      }
-
-      // Persist avatar URL to our server profile
-      await apiFetch("/me", {
-        method: "PATCH",
-        body: JSON.stringify({ avatarUrl: url }),
-      });
-
-      await refreshProfile();
-      toast({ title: "Profile photo updated", variant: "success" });
-    } catch (err: any) {
+    // Size validation
+    if (file.size > MAX_AVATAR_SIZE) {
       toast({
-        title: "Upload failed",
-        description: err?.message ?? "Unable to upload image",
-        variant: "error",
+        title: "File too large",
+        description: "Please choose an image smaller than 5 MB.",
+        variant: "warning",
       });
-    } finally {
-      setUploading(false);
-      // clear input value so the same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
+
+    // Show crop UI with an object URL — actual upload will happen after user crops
+    const url = URL.createObjectURL(file);
+    setCropSrc(url);
+    // leave file input value intact for now; we'll clear it after upload/cancel
   };
   const {
     supported: passkeySupported,
@@ -225,6 +201,72 @@ export default function ProfilePage() {
     }
   };
 
+  // Upload the cropped file to Supabase and persist avatarUrl
+  const handleCroppedFile = async (file: File) => {
+    if (!user) return;
+
+    // show optimistic preview while uploading
+    const previewUrl = URL.createObjectURL(file);
+    setLocalAvatarPreview(previewUrl);
+
+    setUploading(true);
+    try {
+      const filename = `${Date.now()}_${file.name}`;
+      const path = `avatars/${user?.id ?? "unknown"}/${filename}`;
+      const bucket = getBucketName();
+      const sb = supabase();
+      if (!sb) throw new Error("Supabase not configured");
+
+      const { data: uploadData, error: uploadErr } = await sb.storage
+        .from(bucket)
+        .upload(path, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const { data: publicData } = sb.storage.from(bucket).getPublicUrl(path);
+      let url = (publicData as any)?.publicUrl ?? null;
+      if (!url) {
+        const { data: signedData, error: signedErr } = await sb.storage
+          .from(bucket)
+          .createSignedUrl(path, 60 * 60 * 24);
+        if (signedErr) throw signedErr;
+        url = (signedData as any)?.signedUrl ?? null;
+      }
+
+      const updatedUser = await apiFetch<any>("/me", {
+        method: "PATCH",
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+      try {
+        updateUser(updatedUser);
+      } catch {
+        await refreshProfile();
+      }
+      toast({ title: "Profile photo updated", variant: "success" });
+
+      // server persisted — user context will update Avatar; clear optimistic preview
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setLocalAvatarPreview(null);
+      }
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err?.message ?? "Unable to upload image", variant: "error" });
+      // clear optimistic preview on failure
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setLocalAvatarPreview(null);
+      }
+    } finally {
+      setUploading(false);
+      // cleanup cropSrc + clear file input
+      if (cropSrc) {
+        URL.revokeObjectURL(cropSrc);
+        setCropSrc(null);
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+
   // Change password form
   const passwordSchema = z
     .object({
@@ -327,7 +369,7 @@ export default function ProfilePage() {
       <Card className="flex flex-wrap items-center gap-4">
         <div>
           <Avatar
-            src={(user as any)?.avatar ?? (user as any)?.avatarUrl ?? null}
+            src={localAvatarPreview ?? (user as any)?.avatarUrl ?? (user as any)?.avatar ?? null}
             alt={user?.fullName ?? "User"}
             className="h-16 w-16"
           />
@@ -357,11 +399,15 @@ export default function ProfilePage() {
               variant="ghost"
               onClick={async () => {
                 try {
-                  await apiFetch("/me", {
+                  const updatedUser = await apiFetch<any>("/me", {
                     method: "PATCH",
                     body: JSON.stringify({ avatarUrl: null }),
                   });
-                  await refreshProfile();
+                  try {
+                    updateUser(updatedUser);
+                  } catch {
+                    await refreshProfile();
+                  }
                   toast({ title: "Profile photo removed", variant: "success" });
                 } catch (err: any) {
                   toast({
@@ -375,8 +421,37 @@ export default function ProfilePage() {
               Remove
             </Button>
           </div>
+          <p className="mt-2 text-xs text-(--muted)">
+            Allowed formats: JPG, PNG, WebP — max 5 MB. You can crop the image before saving.
+          </p>
         </div>
       </Card>
+
+      {cropSrc && (
+        <ImageCropper
+          src={cropSrc}
+          aspect={1}
+          onCancel={() => {
+            URL.revokeObjectURL(cropSrc);
+            setCropSrc(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            if (localAvatarPreview) {
+              URL.revokeObjectURL(localAvatarPreview);
+              setLocalAvatarPreview(null);
+            }
+          }}
+          onPreviewChange={(blob) => {
+            // parent manages its own preview object URL so it won't be invalidated by cropper internals
+            // revoke previous preview URL when replaced/cleared
+            setLocalAvatarPreview((prev) => {
+              if (prev) URL.revokeObjectURL(prev);
+              if (!blob) return null;
+              return URL.createObjectURL(blob);
+            });
+          }}
+          onCrop={handleCroppedFile}
+        />
+      )}
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">

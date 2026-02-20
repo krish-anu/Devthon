@@ -1,11 +1,12 @@
 "use client";
 
 import { Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { NotificationItem } from "@/lib/types";
 
 /**
  * Header bell that navigates to the appropriate notifications page for the
@@ -13,18 +14,28 @@ import { Button } from "@/components/ui/button";
  */
 export default function NotificationNavButton() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
 
-  // derive target path from role (fallback to users)
+  // Keep users within the current portal first; fall back to role when needed.
+  const normalizedRole = (user?.role ?? "").toUpperCase();
   const target =
-    user?.role === "DRIVER"
+    pathname?.startsWith("/admin")
+      ? "/admin/notifications"
+      : pathname?.startsWith("/driver")
+        ? "/driver/notifications"
+        : pathname?.startsWith("/users")
+          ? "/users/notifications"
+          : normalizedRole === "DRIVER"
       ? "/driver/notifications"
-      : "/users/notifications"; // fallback to users notifications for Admin/other roles (no admin notifications page)
+      : normalizedRole === "ADMIN" || normalizedRole === "SUPER_ADMIN"
+        ? "/admin/notifications"
+        : "/users/notifications";
 
   // lightweight unread count for badge (do not poll aggressively)
   const { data } = useQuery({
     queryKey: ["notifications", "header-unread-count"],
-    queryFn: () => apiFetch<any[]>("/notifications?limit=5"),
+    queryFn: () => apiFetch<NotificationItem[]>("/notifications?limit=5"),
     staleTime: 30_000,
     refetchInterval: 30_000,
     enabled: !!user,

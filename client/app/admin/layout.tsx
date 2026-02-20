@@ -1,12 +1,12 @@
 "use client";
 
 import {
+  Bell,
   LayoutGrid,
   Users,
   Truck,
   ClipboardList,
   Tag,
-  LogOut,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -15,7 +15,6 @@ import {
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { Sidebar } from "@/components/layout/sidebar";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Header } from "@/components/layout/header";
 import NotificationNavButton from "@/components/shared/NotificationNavButton";
@@ -28,10 +27,10 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
   const isPublicSignup = pathname?.startsWith("/admin/signup");
-  const navItems = [
+  const mainNavItems = [
     {
       label: "Dashboard",
       href: "/admin/dashboard",
@@ -69,6 +68,12 @@ export default function AdminLayout({
     },
   ];
 
+  const notificationsNavItem = {
+    label: "Notifications",
+    href: "/admin/notifications",
+    icon: <Bell className="h-4 w-4" />,
+  };
+
   // Super Admin exclusive items
   const superAdminItems =
     user?.role === "SUPER_ADMIN"
@@ -86,7 +91,7 @@ export default function AdminLayout({
         ]
       : [];
 
-  const allNavItems = [...navItems, ...superAdminItems];
+  const allNavItems = [...mainNavItems, ...superAdminItems, notificationsNavItem];
 
   if (isPublicSignup) {
     return (

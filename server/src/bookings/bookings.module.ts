@@ -5,10 +5,11 @@ import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
 import { PickupsController } from './pickups.controller';
 import { RewardsModule } from '../rewards/rewards.module';
+import { BookingImageScreeningService } from './booking-image-screening.service';
 
 @Module({
   imports: [LoggingModule, NotificationsModule, RewardsModule],
   controllers: [BookingsController, PickupsController],
-  providers: [BookingsService],
+  providers: [BookingsService, BookingImageScreeningService],
 })
 export class BookingsModule {}

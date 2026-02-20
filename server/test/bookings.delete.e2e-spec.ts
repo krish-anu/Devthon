@@ -18,6 +18,7 @@ describe('Bookings delete (e2e)', () => {
       .compile();
 
     const _app = moduleFixture.createNestApplication();
+    _app.setGlobalPrefix('api');
     _app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
     await _app.init();
     return _app;
