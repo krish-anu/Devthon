@@ -7,7 +7,7 @@
 set -euo pipefail
 
 echo "──────────────────────────────────"
-echo "  🚀 Trash2Treasure EC2 Setup Script "
+echo "   Trash2Treasure EC2 Setup Script "
 echo "──────────────────────────────────"
 
 # ── 1. System updates ──
@@ -15,7 +15,7 @@ echo "📦 Updating system packages..."
 apt-get update -y && apt-get upgrade -y
 
 # ── 2. Install Docker ──
-echo "🐳 Installing Docker..."
+echo " Installing Docker..."
 if ! command -v docker &> /dev/null; then
     curl -fsSL https://get.docker.com | sh
     systemctl enable docker
@@ -40,7 +40,7 @@ echo "📡 Certbot webroot directory..."
 mkdir -p /var/www/certbot
 
 # ── 5. Install Certbot (for HTTPS) ──
-echo "🔐 Installing Certbot..."
+echo " Installing Certbot..."
 if ! command -v certbot &> /dev/null; then
     apt-get install -y certbot
     echo "✅ Certbot installed"
@@ -55,7 +55,7 @@ chown "${SUDO_USER:-ubuntu}":"${SUDO_USER:-ubuntu}" "$APP_DIR"
 echo "✅ App directory: $APP_DIR"
 
 # ── 7. Firewall (UFW) ──
-echo "🔥 Configuring firewall..."
+echo " Configuring firewall..."
 ufw allow 22/tcp   # SSH
 ufw allow 80/tcp   # HTTP
 ufw allow 443/tcp  # HTTPS
