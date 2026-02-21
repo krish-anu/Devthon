@@ -35,6 +35,8 @@ import {
 import { StatusPill } from "@/components/shared/status-pill";
 import { SkeletonTableRows } from "@/components/shared/Skeleton";
 import { useToast } from "@/components/ui/use-toast";
+// icons for actions
+import { Truck, CheckCheck, X } from "lucide-react";
 
 type DriverBookingsResponse = {
   items: Booking[];
@@ -231,13 +233,13 @@ export default function DriverBookingsPage() {
           <Table className="md:min-w-[640px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Booking ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Pickup Date/Time</TableHead>
-                <TableHead>Waste Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-center">Booking ID</TableHead>
+                <TableHead className="text-center">Customer</TableHead>
+                <TableHead className="text-center">Address</TableHead>
+                <TableHead className="text-center">Pickup Date/Time</TableHead>
+                <TableHead className="text-center">Waste Type</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -274,34 +276,39 @@ export default function DriverBookingsPage() {
                     <TableCell>
                       <StatusPill status={booking.status} viewerRole="DRIVER" />
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
+                    <TableCell className="w-auto whitespace-nowrap">
+                      <div className="flex flex-nowrap gap-2">
                         <Button
                           size="sm"
+                          title="Start pickup"
                           onClick={() => startMutation.mutate(booking.id)}
                           disabled={!canDriverStart(booking.status) || loading}
                         >
-                          Start Pickup
+                          <Truck className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
+                          title={
+                            normalizedStatus === "COLLECTED"
+                              ? "Edit collected booking"
+                              : "Mark collected"
+                          }
                           onClick={() => setCollectBookingId(booking.id)}
                           disabled={
                             !canDriverCollect(booking.status) || loading
                           }
                         >
-                          {normalizedStatus === "COLLECTED"
-                            ? "Collected / Edit"
-                            : "Collected"}
+                          <CheckCheck className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
+                          title="Cancel booking"
                           onClick={() => cancelMutation.mutate(booking.id)}
                           disabled={!canDriverCancel(booking.status) || loading}
                         >
-                          Cancel
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -396,12 +403,14 @@ export default function DriverBookingsPage() {
               variant="outline"
               onClick={() => setCollectBookingId(null)}
               disabled={collectMutation.isPending}
+              title="Close dialog"
             >
               Close
             </Button>
             <Button
               onClick={submitCollect}
               disabled={collectMutation.isPending}
+              title="Confirm collected booking"
             >
               {collectMutation.isPending ? "Saving..." : "Confirm Collected"}
             </Button>
